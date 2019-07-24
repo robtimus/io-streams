@@ -17,7 +17,7 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.AppendableWriter.asWriter;
+import static com.github.robtimus.io.stream.StreamUtils.writer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -64,7 +64,7 @@ public final class TeeReader extends Reader {
     public TeeReader(Reader input, Appendable tee, boolean closeTee) {
         this.input = Objects.requireNonNull(input);
         this.tee = tee;
-        this.teeWriter = asWriter(tee);
+        this.teeWriter = writer(tee);
         this.closeTee = closeTee;
 
         mark = 0;

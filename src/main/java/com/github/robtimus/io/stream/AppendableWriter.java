@@ -23,23 +23,12 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.Objects;
 
-/**
- * A {@link Writer} wrapper around an {@link Appendable}. It will delegate all calls to the wrapped {@code Appendable}.
- * This includes {@link #flush()} if the wrapped {@code Appendable} implements {@link Flushable}, and {@link #close()} if the wrapped
- * {@code Appendable} implements {@link Closeable} or {@link AutoCloseable}.
- * <p>
- * Note that the behaviour of closing an {@code AppendableWriter} depends on the wrapped {@code Appendable}. If it does not support closing, or if it
- * still allows text to be appended after closing, then the closed {@code AppendableWriter} allows text to be appended after closing. If it does not
- * allow text to be appended after closing, then neither will the closed {@code AppendableWriter}.
- *
- * @author Rob Spoor
- */
-public final class AppendableWriter extends Writer {
+final class AppendableWriter extends Writer {
 
     private final Appendable appendable;
     private CharArraySequence array;
 
-    private AppendableWriter(Appendable appendable) {
+    AppendableWriter(Appendable appendable) {
         this.appendable = appendable;
     }
 
@@ -116,17 +105,5 @@ public final class AppendableWriter extends Writer {
                 throw new IOException(e);
             }
         }
-    }
-
-    /**
-     * Returns a {@code Writer} for an {@code Appendable}.
-     *
-     * @param appendable The {@code Appendable} to return a {@code Writer} for.
-     * @return The given {@code Appendable} itself if it's already a {@code Writer}, otherwise a wrapper around the given {@code Appendable}.
-     * @throws NullPointerException If the given {@code Appendable} is {@code null}.
-     */
-    public static Writer asWriter(Appendable appendable) {
-        Objects.requireNonNull(appendable);
-        return appendable instanceof Writer ? (Writer) appendable : new AppendableWriter(appendable);
     }
 }

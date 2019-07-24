@@ -17,10 +17,7 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.AppendableWriter.asWriter;
 import static com.github.robtimus.io.stream.TestData.SOURCE;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -31,7 +28,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
@@ -48,7 +44,7 @@ public class AppendableWriterTest {
     @DisplayName("write(int)")
     public void testWriteInt() throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (Writer writer = asWriter(sb)) {
+        try (Writer writer = new AppendableWriter(sb)) {
             for (int i = 0; i < SOURCE.length(); i++) {
                 writer.write(SOURCE.charAt(i));
             }
@@ -60,7 +56,7 @@ public class AppendableWriterTest {
     @DisplayName("write(char[])")
     public void testWriteCharArray() throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (Writer writer = asWriter(sb)) {
+        try (Writer writer = new AppendableWriter(sb)) {
             writer.write(SOURCE.toCharArray());
             writer.write(SOURCE.toCharArray());
         }
@@ -71,7 +67,7 @@ public class AppendableWriterTest {
     @DisplayName("write(char[], int, int)")
     public void testWriteCharArrayRange() throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (Writer writer = asWriter(sb)) {
+        try (Writer writer = new AppendableWriter(sb)) {
             char[] content = SOURCE.toCharArray();
             int index = 0;
             while (index < SOURCE.length()) {
@@ -92,7 +88,7 @@ public class AppendableWriterTest {
     @DisplayName("write(String)")
     public void testWriteString() throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (Writer writer = asWriter(sb)) {
+        try (Writer writer = new AppendableWriter(sb)) {
             writer.write(SOURCE);
         }
         assertEquals(SOURCE, sb.toString());
@@ -102,7 +98,7 @@ public class AppendableWriterTest {
     @DisplayName("write(String, int, int)")
     public void testWriteStringRange() throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (Writer writer = asWriter(sb)) {
+        try (Writer writer = new AppendableWriter(sb)) {
             int index = 0;
             while (index < SOURCE.length()) {
                 int to = Math.min(index + 5, SOURCE.length());
@@ -122,7 +118,7 @@ public class AppendableWriterTest {
     @DisplayName("append(CharSequence)")
     public void testAppendCharSequence() throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (Writer writer = asWriter(sb)) {
+        try (Writer writer = new AppendableWriter(sb)) {
             writer.append(SOURCE);
             writer.append(null);
         }
@@ -133,7 +129,7 @@ public class AppendableWriterTest {
     @DisplayName("append(CharSequence, int, int)")
     public void testAppendCharSequenceRange() throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (Writer writer = asWriter(sb)) {
+        try (Writer writer = new AppendableWriter(sb)) {
             int index = 0;
             while (index < SOURCE.length()) {
                 int to = Math.min(index + 5, SOURCE.length());
@@ -158,7 +154,7 @@ public class AppendableWriterTest {
     @DisplayName("append(char)")
     public void testAppendChar() throws IOException {
         StringBuilder sb = new StringBuilder();
-        try (Writer writer = asWriter(sb)) {
+        try (Writer writer = new AppendableWriter(sb)) {
             for (int i = 0; i < SOURCE.length(); i++) {
                 writer.append(SOURCE.charAt(i));
             }
@@ -172,14 +168,14 @@ public class AppendableWriterTest {
         return new DynamicTest[] {
                 dynamicTest("not Flushable", () -> {
                     Appendable appendable = mock(Appendable.class);
-                    try (Writer writer = asWriter(appendable)) {
+                    try (Writer writer = new AppendableWriter(appendable)) {
                         writer.flush();
                     }
                     verifyNoMoreInteractions(appendable);
                 }),
                 dynamicTest("Flushable", () -> {
                     FlushableAppendable flushable = spy(new FlushableAppendable());
-                    try (Writer writer = asWriter(flushable)) {
+                    try (Writer writer = new AppendableWriter(flushable)) {
                         writer.flush();
                     }
 
@@ -195,7 +191,7 @@ public class AppendableWriterTest {
         return new DynamicTest[] {
                 dynamicTest("not Closeable", () -> {
                     Appendable appendable = mock(Appendable.class);
-                    try (Writer writer = asWriter(appendable)) {
+                    try (Writer writer = new AppendableWriter(appendable)) {
                         // does nothing
                     }
                     verifyNoMoreInteractions(appendable);
@@ -203,7 +199,7 @@ public class AppendableWriterTest {
                 dynamicTest("Closeable, not throwing", () -> {
                     @SuppressWarnings("resource")
                     CloseableAppendable closeable = spy(new CloseableAppendable());
-                    try (Writer writer = asWriter(closeable)) {
+                    try (Writer writer = new AppendableWriter(closeable)) {
                         // does nothing
                     }
                     verify(closeable).close();
@@ -215,7 +211,7 @@ public class AppendableWriterTest {
                     IOException exception = new IOException();
                     doThrow(exception).when(closeable).close();
                     IOException thrown = assertThrows(IOException.class, () -> {
-                        try (Writer writer = asWriter(closeable)) {
+                        try (Writer writer = new AppendableWriter(closeable)) {
                             // does nothing
                         }
                     });
@@ -227,7 +223,7 @@ public class AppendableWriterTest {
                 dynamicTest("AutoCloseable, not throwing", () -> {
                     @SuppressWarnings("resource")
                     AutoCloseableAppendable autoCloseable = spy(new AutoCloseableAppendable());
-                    try (Writer writer = asWriter(autoCloseable)) {
+                    try (Writer writer = new AppendableWriter(autoCloseable)) {
                         // does nothing
                     }
                     verify(autoCloseable).close();
@@ -239,7 +235,7 @@ public class AppendableWriterTest {
                     IOException exception = new IOException();
                     doThrow(exception).when(autoCloseable).close();
                     IOException thrown = assertThrows(IOException.class, () -> {
-                        try (Writer writer = asWriter(autoCloseable)) {
+                        try (Writer writer = new AppendableWriter(autoCloseable)) {
                             // does nothing
                         }
                     });
@@ -254,7 +250,7 @@ public class AppendableWriterTest {
                     IllegalStateException exception = new IllegalStateException();
                     doThrow(exception).when(autoCloseable).close();
                     IOException thrown = assertThrows(IOException.class, () -> {
-                        try (Writer writer = asWriter(autoCloseable)) {
+                        try (Writer writer = new AppendableWriter(autoCloseable)) {
                             // does nothing
                         }
                     });
@@ -262,26 +258,6 @@ public class AppendableWriterTest {
 
                     verify(autoCloseable).close();
                     verifyNoMoreInteractions(autoCloseable);
-                }),
-        };
-    }
-
-    @TestFactory
-    @DisplayName("asWriter")
-    public DynamicTest[] testAsWriter() {
-        return new DynamicTest[] {
-                dynamicTest("Writer", () -> {
-                    Writer writer = new StringWriter();
-                    assertSame(writer, asWriter(writer));
-                }),
-                dynamicTest("StringBuilder", () -> {
-                    StringBuilder sb = new StringBuilder();
-                    @SuppressWarnings("resource")
-                    Writer writer = asWriter(sb);
-                    assertThat(writer, instanceOf(AppendableWriter.class));
-                }),
-                dynamicTest("null", () -> {
-                    assertThrows(NullPointerException.class, () -> asWriter(null));
                 }),
         };
     }
