@@ -24,7 +24,7 @@ import java.io.Writer;
 /**
  * A writer that splits data to two other writers. This class is similar to
  * <a href="https://commons.apache.org/proper/commons-io/javadocs/api-release/org/apache/commons/io/output/TeeOutputStream.html">TeeOutputStream</a>
- * for {@link Writer} instead of {@link OutputStream}.
+ * for {@link Writer} instead of {@link OutputStream}. All operations are delegated to both wrapped writers.
  *
  * @author Rob Spoor
  */

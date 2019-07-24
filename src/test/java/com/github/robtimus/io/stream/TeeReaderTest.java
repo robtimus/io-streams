@@ -45,7 +45,7 @@ public class TeeReaderTest {
 
     @Test
     @DisplayName("read()")
-    public void testRead() throws IOException {
+    public void testReadChar() throws IOException {
         Writer writer = new StringWriter();
         Appendable appendable = new StringBuilder();
         try (Reader reader = new TeeReader(new CharSequenceReader(SOURCE), appendable)) {
@@ -60,7 +60,7 @@ public class TeeReaderTest {
 
     @Test
     @DisplayName("read(char[], int, int)")
-    public void testReadBulk() throws IOException {
+    public void testReadCharArrayRange() throws IOException {
         Writer writer = new StringWriter();
         Appendable appendable = new StringBuilder();
         try (Reader reader = new TeeReader(new CharSequenceReader(SOURCE), appendable)) {

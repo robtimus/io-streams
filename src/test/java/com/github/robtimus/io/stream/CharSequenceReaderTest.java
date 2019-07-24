@@ -36,7 +36,7 @@ public class CharSequenceReaderTest {
 
     @Test
     @DisplayName("read()")
-    public void testRead() throws IOException {
+    public void testReadChar() throws IOException {
         Writer writer = new StringWriter();
         try (Reader reader = new CharSequenceReader(SOURCE, 1, SOURCE.length() - 1)) {
             int c;
@@ -49,7 +49,7 @@ public class CharSequenceReaderTest {
 
     @Test
     @DisplayName("read(char[], int, int)")
-    public void testReadBulk() throws IOException {
+    public void testReadCharArrayRange() throws IOException {
         Writer writer = new StringWriter();
         try (Reader reader = new CharSequenceReader(SOURCE, 1, SOURCE.length() - 1)) {
             assertEquals(0, reader.read(new char[5], 0, 0));
@@ -125,6 +125,7 @@ public class CharSequenceReaderTest {
         assertClosed(() -> reader.ready());
         assertClosed(() -> reader.mark(5));
         assertClosed(() -> reader.reset());
+        reader.close();
     }
 
     private void assertClosed(Executable executable) {

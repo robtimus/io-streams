@@ -345,6 +345,12 @@ public final class StreamUtils {
         }
     }
 
+    static void checkStartAndEnd(byte[] array, int start, int end) {
+        if (start < 0 || end > array.length || start > end) {
+            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidStartOrEnd.get(array.length, start, end));
+        }
+    }
+
     /**
      * Checks whether or not an offset and length are valid for a character array.
      * This method can be used for checking input for {@link Reader#read(char[], int, int)} or {@link Writer#write(char[], int, int)}.
