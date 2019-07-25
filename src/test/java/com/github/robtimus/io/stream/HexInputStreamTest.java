@@ -112,7 +112,7 @@ public class HexInputStreamTest extends TestBase {
             }
             assertArrayEquals(CAFEBABE_BYTES, output.toByteArray());
 
-            // read in bulk
+            // read using a huge array
             output.reset();
             byte[] expected = new byte[CAFEBABE_BYTES.length * 1000];
             StringBuilder content = new StringBuilder(CAFEBABE_STRING.length() * 1000);
@@ -177,7 +177,7 @@ public class HexInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("available()")
-    public void testAvailable() throws IOException{
+    public void testAvailable() throws IOException {
         try (HexInputStream input = new HexInputStream(new CharSequenceReader(CAFEBABE_STRING))) {
             assertEquals(0, input.available());
             while (input.read() != -1) {
@@ -363,7 +363,7 @@ public class HexInputStreamTest extends TestBase {
                 return -1;
             }
             int oldIndex = index;
-            for (int i = off, j = 0, k = 0; j < len && k < increment && index < source.length(); i++, j++,k++) {
+            for (int i = off, j = 0, k = 0; j < len && k < increment && index < source.length(); i++, j++, k++) {
                 cbuf[i] = source.charAt(index++);
             }
             increment = 2;

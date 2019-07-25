@@ -74,7 +74,7 @@ public final class HexOutputStream extends OutputStream {
     @Override
     public void write(int b) throws IOException {
         ensureOpen();
-        if (writeBuffer == null){
+        if (writeBuffer == null) {
             writeBuffer = new char[WRITE_BUFFER_SIZE];
         }
         writeBuffer[0] = high(b, upperCase);
@@ -87,7 +87,7 @@ public final class HexOutputStream extends OutputStream {
         ensureOpen();
         checkOffsetAndLength(b, off, len);
 
-        char cbuf[];
+        char[] cbuf;
         int lenInHex = len * 2;
         if (lenInHex <= WRITE_BUFFER_SIZE) {
             if (writeBuffer == null) {

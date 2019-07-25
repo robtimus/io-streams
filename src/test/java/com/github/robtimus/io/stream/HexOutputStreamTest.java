@@ -135,7 +135,7 @@ public class HexOutputStreamTest extends TestBase {
             }
             assertEquals(cafebabe, appendable.toString());
 
-            // write in bulk
+            // write a huge array
             appendable.delete(0, appendable.length());
             StringBuilder expected = new StringBuilder(cafebabe.length() * 1000);
             try (HexOutputStream output = constructor.apply(appendable)) {

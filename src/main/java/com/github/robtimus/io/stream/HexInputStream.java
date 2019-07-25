@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * An input stream that hex into bytes.
+ * An input stream that converts hex into bytes.
  * <p>
  * When a hex input stream is closed, its source will also be closed.
  *
@@ -87,7 +87,7 @@ public final class HexInputStream extends InputStream {
         ensureOpen();
         checkException();
 
-        char cbuf[];
+        char[] cbuf;
         int lenInHex = len * 2;
         if (lenInHex <= READ_BUFFER_SIZE) {
             if (readBuffer == null) {

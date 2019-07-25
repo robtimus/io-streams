@@ -24,8 +24,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.nio.CharBuffer;
 import java.util.Objects;
+import java.util.function.IntPredicate;
 
 /**
  * Utility methods for {@link InputStream InputStreams}, {@link OutputStream OutputStreams}, {@link Reader Readers} and {@link Writer Writers}.
@@ -73,76 +73,7 @@ public final class StreamUtils {
      */
     public static InputStream dontClose(InputStream input) {
         Objects.requireNonNull(input);
-        return new InputStream() {
-
-            private boolean closed = false;
-
-            private void ensureOpen() throws IOException {
-                if (closed) {
-                    throw streamClosedException();
-                }
-            }
-
-            @Override
-            public int read() throws IOException {
-                ensureOpen();
-                return input.read();
-            }
-
-            @Override
-            public int read(byte[] b) throws IOException {
-                ensureOpen();
-                return input.read(b);
-            }
-
-            @Override
-            public int read(byte[] b, int off, int len) throws IOException {
-                ensureOpen();
-                return input.read(b, off, len);
-            }
-
-            @Override
-            public long skip(long n) throws IOException {
-                ensureOpen();
-                return input.skip(n);
-            }
-
-            @Override
-            public int available() throws IOException {
-                ensureOpen();
-                return input.available();
-            }
-
-            @Override
-            public void close() throws IOException {
-                // don't close input
-                closed = true;
-            }
-
-            @Override
-            public synchronized void mark(int readlimit) {
-                if (!closed) {
-                    input.mark(readlimit);
-                }
-            }
-
-            @Override
-            public synchronized void reset() throws IOException {
-                ensureOpen();
-                input.reset();
-            }
-
-            @Override
-            public boolean markSupported() {
-                return input.markSupported();
-            }
-
-            @Override
-            @SuppressWarnings("nls")
-            public String toString() {
-                return StreamUtils.class.getName() + "#dontClose(" + input + ")";
-            }
-        };
+        return new DontCloseInputStream(input);
     }
 
     /**
@@ -159,52 +90,7 @@ public final class StreamUtils {
      */
     public static OutputStream dontClose(OutputStream output) {
         Objects.requireNonNull(output);
-        return new OutputStream() {
-
-            private boolean closed = false;
-
-            private void ensureOpen() throws IOException {
-                if (closed) {
-                    throw streamClosedException();
-                }
-            }
-
-            @Override
-            public void write(int b) throws IOException {
-                ensureOpen();
-                output.write(b);
-            }
-
-            @Override
-            public void write(byte[] b) throws IOException {
-                ensureOpen();
-                output.write(b);
-            }
-
-            @Override
-            public void write(byte[] b, int off, int len) throws IOException {
-                ensureOpen();
-                output.write(b, off, len);
-            }
-
-            @Override
-            public void flush() throws IOException {
-                ensureOpen();
-                output.flush();
-            }
-
-            @Override
-            public void close() throws IOException {
-                // don't close output
-                closed = true;
-            }
-
-            @Override
-            @SuppressWarnings("nls")
-            public String toString() {
-                return StreamUtils.class.getName() + "#dontClose(" + output + ")";
-            }
-        };
+        return new DontCloseOutputStream(output);
     }
 
     /**
@@ -219,81 +105,7 @@ public final class StreamUtils {
      */
     public static Reader dontClose(Reader input) {
         Objects.requireNonNull(input);
-        return new Reader(input) {
-
-            private boolean closed = false;
-
-            private void ensureOpen() throws IOException {
-                if (closed) {
-                    throw streamClosedException();
-                }
-            }
-
-            @Override
-            public int read(CharBuffer target) throws IOException {
-                ensureOpen();
-                return input.read(target);
-            }
-
-            @Override
-            public int read() throws IOException {
-                ensureOpen();
-                return input.read();
-            }
-
-            @Override
-            public int read(char[] cbuf) throws IOException {
-                ensureOpen();
-                return input.read(cbuf);
-            }
-
-            @Override
-            public int read(char[] cbuf, int off, int len) throws IOException {
-                ensureOpen();
-                return input.read(cbuf, off, len);
-            }
-
-            @Override
-            public long skip(long n) throws IOException {
-                ensureOpen();
-                return input.skip(n);
-            }
-
-            @Override
-            public boolean ready() throws IOException {
-                ensureOpen();
-                return input.ready();
-            }
-
-            @Override
-            public boolean markSupported() {
-                return input.markSupported();
-            }
-
-            @Override
-            public void mark(int readAheadLimit) throws IOException {
-                ensureOpen();
-                input.mark(readAheadLimit);
-            }
-
-            @Override
-            public void reset() throws IOException {
-                ensureOpen();
-                input.reset();
-            }
-
-            @Override
-            public void close() throws IOException {
-                // don't close input
-                closed = true;
-            }
-
-            @Override
-            @SuppressWarnings("nls")
-            public String toString() {
-                return StreamUtils.class.getName() + "#dontClose(" + input + ")";
-            }
-        };
+        return new DontCloseReader(input);
     }
 
     /**
@@ -310,85 +122,81 @@ public final class StreamUtils {
      */
     public static Writer dontClose(Writer output) {
         Objects.requireNonNull(output);
-        return new Writer(output) {
+        return new DontCloseWriter(output);
+    }
 
-            private boolean closed = false;
+    /**
+     * Wraps an {@code InputStream} to filter out bytes.
+     * For instance, to return an {@code InputStream} that does not return any whitespace characters,
+     * call {@code filter(input, Character::isWhitespace)}.
+     * <p>
+     * When the returned {@code InputStream} is closed, the wrapped {@code InputStream} will also be closed.
+     *
+     * @param input The {@code InputStream} to wrap.
+     * @param filter The predicate to use to filter out bytes.
+     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @return An {@code InputStream} that filters out bytes of the given {@code InputStream} that match the given predicate.
+     * @throws NullPointerException If the given {@code InputStream} or predicate is {@code null}.
+     */
+    public static InputStream filter(InputStream input, IntPredicate filter) {
+        Objects.requireNonNull(input);
+        Objects.requireNonNull(filter);
+        return new FilteringInputStream(input, filter);
+    }
 
-            private void ensureOpen() throws IOException {
-                if (closed) {
-                    throw streamClosedException();
-                }
-            }
+    /**
+     * Wraps an {@code OutputStream} to filter out bytes.
+     * For instance, to return an {@code OutputStream} that does not write any whitespace characters,
+     * call {@code filter(output, Character::isWhitespace)}.
+     * <p>
+     * When the returned {@code OutputStream} is closed, the wrapped {@code OutputStream} will also be closed.
+     *
+     * @param output The {@code OutputStream} to wrap.
+     * @param filter The predicate to use to filter out bytes.
+     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @return An {@code OutputStream} that filters out bytes of the given {@code OutputStream} that match the given predicate.
+     * @throws NullPointerException If the given {@code OutputStream} or predicate is {@code null}.
+     */
+    public static OutputStream filter(OutputStream output, IntPredicate filter) {
+        Objects.requireNonNull(output);
+        Objects.requireNonNull(filter);
+        return new FilteringOutputStream(output, filter);
+    }
 
-            @Override
-            public void write(int c) throws IOException {
-                ensureOpen();
-                output.write(c);
-            }
+    /**
+     * Wraps a {@code Reader} to filter out bytes.
+     * For instance, to return a {@code Reader} that does not return any whitespace characters, call {@code filter(input, Character::isWhitespace)}.
+     * <p>
+     * When the returned {@code Reader} is closed, the wrapped {@code Reader} will also be closed.
+     *
+     * @param input The {@code Reader} to wrap.
+     * @param filter The predicate to use to filter out bytes.
+     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @return A {@code Reader} that filters out bytes of the given {@code Reader} that match the given predicate.
+     * @throws NullPointerException If the given {@code Reader} or predicate is {@code null}.
+     */
+    public static Reader filter(Reader input, IntPredicate filter) {
+        Objects.requireNonNull(input);
+        Objects.requireNonNull(filter);
+        return new FilteringReader(input, filter);
+    }
 
-            @Override
-            public void write(char[] cbuf) throws IOException {
-                ensureOpen();
-                output.write(cbuf);
-            }
-
-            @Override
-            public void write(char[] cbuf, int off, int len) throws IOException {
-                ensureOpen();
-                output.write(cbuf, off, len);
-            }
-
-            @Override
-            public void write(String str) throws IOException {
-                ensureOpen();
-                output.write(str);
-            }
-
-            @Override
-            public void write(String str, int off, int len) throws IOException {
-                ensureOpen();
-                output.write(str, off, len);
-            }
-
-            @Override
-            public Writer append(CharSequence csq) throws IOException {
-                ensureOpen();
-                output.append(csq);
-                return this;
-            }
-
-            @Override
-            public Writer append(CharSequence csq, int start, int end) throws IOException {
-                ensureOpen();
-                output.append(csq, start, end);
-                return this;
-            }
-
-            @Override
-            public Writer append(char c) throws IOException {
-                ensureOpen();
-                output.append(c);
-                return this;
-            }
-
-            @Override
-            public void flush() throws IOException {
-                ensureOpen();
-                output.flush();
-            }
-
-            @Override
-            public void close() throws IOException {
-                // don't close output
-                closed = true;
-            }
-
-            @Override
-            @SuppressWarnings("nls")
-            public String toString() {
-                return StreamUtils.class.getName() + "#dontClose(" + output + ")";
-            }
-        };
+    /**
+     * Wraps a {@code Writer} to filter out bytes.
+     * For instance, to return a {@code Writer} that does not write any whitespace characters, call {@code filter(input, Character::isWhitespace)}.
+     * <p>
+     * When the returned {@code Writer} is closed, the wrapped {@code Writer} will also be closed.
+     *
+     * @param output The {@code Writer} to wrap.
+     * @param filter The predicate to use to filter out bytes.
+     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @return A {@code Writer} that filters out bytes of the given {@code Writer} that match the given predicate.
+     * @throws NullPointerException If the given {@code Writer} or predicate is {@code null}.
+     */
+    public static Writer filter(Writer output, IntPredicate filter) {
+        Objects.requireNonNull(output);
+        Objects.requireNonNull(filter);
+        return new FilteringWriter(output, filter);
     }
 
     // index checking

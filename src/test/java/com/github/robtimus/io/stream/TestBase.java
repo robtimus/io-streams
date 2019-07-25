@@ -32,6 +32,15 @@ import org.junit.jupiter.api.function.Executable;
 abstract class TestBase {
 
     static final String SOURCE = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa.";
+    static final String LONG_SOURCE;
+
+    static {
+        StringBuilder sb = new StringBuilder(1000 * SOURCE.length());
+        for (int i = 0; i < 1000; i++) {
+            sb.append(SOURCE);
+        }
+        LONG_SOURCE = sb.toString();
+    }
 
     void copy(InputStream input, OutputStream output) throws IOException {
         copy(input, output, 4096);
