@@ -248,6 +248,23 @@ public final class StreamUtils {
     }
 
     /**
+     * Checks whether or not an offset and length are valid for a {@code CharSequence}.
+     * This method can be used for checking input for {@link Writer#write(String, int, int)}.
+     *
+     * @param sequence The {@code CharSequence} to check for.
+     * @param offset The offset to check, inclusive.
+     * @param length The length to check.
+     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
+     * @throws IndexOutOfBoundsException If the given offset is negative, the given length is negative,
+     *                                       or the given offset and length exceed the given {@code CharSequence}'s length.
+     */
+    public static void checkOffsetAndLength(CharSequence sequence, int offset, int length) {
+        if (offset < 0 || length < 0 || offset + length > sequence.length()) {
+            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength.get(sequence.length(), offset, length));
+        }
+    }
+
+    /**
      * Checks whether or not a start and end index are valid for a {@code CharSequence}.
      * This method can be used for checking input for {@link Writer#append(CharSequence, int, int)}.
      *

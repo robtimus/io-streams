@@ -80,6 +80,18 @@ public class StreamUtilsTest extends TestBase {
     }
 
     @Test
+    @DisplayName("checkOffsetAndLength(CharSequence, int, int)")
+    public void testCheckOffsetAndLengthForCharSequence() {
+        CharSequence sequence = SOURCE;
+        checkOffsetAndLength(sequence, 0, sequence.length());
+        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, -1, sequence.length()));
+        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, 1, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, 0, sequence.length() + 1));
+        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, 1, sequence.length()));
+        checkOffsetAndLength(sequence, 1, 0);
+    }
+
+    @Test
     @DisplayName("checkStartAndEnd(CharSequence, int, int)")
     public void testCheckStartAndEndForCharSequence() {
         checkStartAndEnd(SOURCE, 0, SOURCE.length());
