@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.StreamUtils.filter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.io.IOException;
@@ -36,7 +35,7 @@ public class FilteringReaderTest extends TestBase {
         StringReader input = new StringReader(SOURCE);
         StringBuilder output = new StringBuilder(SOURCE.length());
 
-        try (Reader wrapped = filter(input, Character::isWhitespace)) {
+        try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             int c;
             while ((c = wrapped.read()) != -1) {
                 output.append((char) c);
@@ -52,7 +51,7 @@ public class FilteringReaderTest extends TestBase {
         StringReader input = new StringReader(SOURCE);
         StringBuilder output = new StringBuilder(SOURCE.length());
 
-        try (Reader wrapped = filter(input, Character::isWhitespace)) {
+        try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             char[] buffer = new char[1024];
             final int offset = 100;
             int len;
@@ -68,7 +67,7 @@ public class FilteringReaderTest extends TestBase {
     public void testReady() throws IOException {
         StringReader input = new StringReader(SOURCE);
 
-        try (Reader wrapped = filter(input, Character::isWhitespace)) {
+        try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             assertFalse(wrapped.ready());
         }
     }
@@ -80,7 +79,7 @@ public class FilteringReaderTest extends TestBase {
         StringReader input = new StringReader(SOURCE);
         StringBuilder output = new StringBuilder(SOURCE.length());
 
-        try (Reader wrapped = filter(input, Character::isWhitespace)) {
+        try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             assertEquals(input.markSupported(), wrapped.markSupported());
             wrapped.mark(10);
             char[] buffer = new char[10];

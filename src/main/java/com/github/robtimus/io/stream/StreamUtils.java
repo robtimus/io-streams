@@ -25,7 +25,6 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Objects;
-import java.util.function.IntPredicate;
 
 /**
  * Utility methods for {@link InputStream InputStreams}, {@link OutputStream OutputStreams}, {@link Reader Readers} and {@link Writer Writers}.
@@ -123,80 +122,6 @@ public final class StreamUtils {
     public static Writer dontClose(Writer output) {
         Objects.requireNonNull(output);
         return new DontCloseWriter(output);
-    }
-
-    /**
-     * Wraps an {@code InputStream} to filter out bytes.
-     * For instance, to return an {@code InputStream} that does not return any whitespace characters,
-     * call {@code filter(input, Character::isWhitespace)}.
-     * <p>
-     * When the returned {@code InputStream} is closed, the wrapped {@code InputStream} will also be closed.
-     *
-     * @param input The {@code InputStream} to wrap.
-     * @param filter The predicate to use to filter out bytes.
-     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
-     * @return An {@code InputStream} that filters out bytes of the given {@code InputStream} that match the given predicate.
-     * @throws NullPointerException If the given {@code InputStream} or predicate is {@code null}.
-     */
-    public static InputStream filter(InputStream input, IntPredicate filter) {
-        Objects.requireNonNull(input);
-        Objects.requireNonNull(filter);
-        return new FilteringInputStream(input, filter);
-    }
-
-    /**
-     * Wraps an {@code OutputStream} to filter out bytes.
-     * For instance, to return an {@code OutputStream} that does not write any whitespace characters,
-     * call {@code filter(output, Character::isWhitespace)}.
-     * <p>
-     * When the returned {@code OutputStream} is closed, the wrapped {@code OutputStream} will also be closed.
-     *
-     * @param output The {@code OutputStream} to wrap.
-     * @param filter The predicate to use to filter out bytes.
-     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
-     * @return An {@code OutputStream} that filters out bytes of the given {@code OutputStream} that match the given predicate.
-     * @throws NullPointerException If the given {@code OutputStream} or predicate is {@code null}.
-     */
-    public static OutputStream filter(OutputStream output, IntPredicate filter) {
-        Objects.requireNonNull(output);
-        Objects.requireNonNull(filter);
-        return new FilteringOutputStream(output, filter);
-    }
-
-    /**
-     * Wraps a {@code Reader} to filter out bytes.
-     * For instance, to return a {@code Reader} that does not return any whitespace characters, call {@code filter(input, Character::isWhitespace)}.
-     * <p>
-     * When the returned {@code Reader} is closed, the wrapped {@code Reader} will also be closed.
-     *
-     * @param input The {@code Reader} to wrap.
-     * @param filter The predicate to use to filter out bytes.
-     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
-     * @return A {@code Reader} that filters out bytes of the given {@code Reader} that match the given predicate.
-     * @throws NullPointerException If the given {@code Reader} or predicate is {@code null}.
-     */
-    public static Reader filter(Reader input, IntPredicate filter) {
-        Objects.requireNonNull(input);
-        Objects.requireNonNull(filter);
-        return new FilteringReader(input, filter);
-    }
-
-    /**
-     * Wraps a {@code Writer} to filter out bytes.
-     * For instance, to return a {@code Writer} that does not write any whitespace characters, call {@code filter(input, Character::isWhitespace)}.
-     * <p>
-     * When the returned {@code Writer} is closed, the wrapped {@code Writer} will also be closed.
-     *
-     * @param output The {@code Writer} to wrap.
-     * @param filter The predicate to use to filter out bytes.
-     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
-     * @return A {@code Writer} that filters out bytes of the given {@code Writer} that match the given predicate.
-     * @throws NullPointerException If the given {@code Writer} or predicate is {@code null}.
-     */
-    public static Writer filter(Writer output, IntPredicate filter) {
-        Objects.requireNonNull(output);
-        Objects.requireNonNull(filter);
-        return new FilteringWriter(output, filter);
     }
 
     // index checking
