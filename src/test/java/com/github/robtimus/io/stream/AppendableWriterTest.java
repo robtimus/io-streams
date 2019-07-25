@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.TestData.SOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -33,12 +32,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import com.github.robtimus.io.stream.TestData.AutoCloseableAppendable;
-import com.github.robtimus.io.stream.TestData.CloseableAppendable;
-import com.github.robtimus.io.stream.TestData.FlushableAppendable;
 
 @SuppressWarnings({ "javadoc", "nls" })
-public class AppendableWriterTest {
+public class AppendableWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(int)")

@@ -1,5 +1,5 @@
 /*
- * TestData.java
+ * TestBase.java
  * Copyright 2019 Rob Spoor
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,17 +17,49 @@
 
 package com.github.robtimus.io.stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.Closeable;
 import java.io.Flushable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
+import org.junit.jupiter.api.function.Executable;
 
 @SuppressWarnings("nls")
-final class TestData {
+abstract class TestBase {
 
     static final String SOURCE = "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa.";
 
-    private TestData() {
-        throw new Error("cannot create instances of " + getClass().getName());
+    void copy(InputStream input, OutputStream output) throws IOException {
+        copy(input, output, 4096);
+    }
+
+    void copy(InputStream input, OutputStream output, int bufferSize) throws IOException {
+        byte[] buffer = new byte[bufferSize];
+        int len;
+        while ((len = input.read(buffer)) != -1) {
+            output.write(buffer, 0, len);
+        }
+    }
+
+    void copy(Reader reader, Writer writer) throws IOException {
+        copy(reader, writer, 4096);
+    }
+
+    void copy(Reader reader, Writer writer, int bufferSize) throws IOException {
+        char[] buffer = new char[bufferSize];
+        int len;
+        while ((len = reader.read(buffer)) != -1) {
+            writer.write(buffer, 0, len);
+        }
+    }
+
+    void assertClosed(Executable executable) {
+        IOException thrown = assertThrows(IOException.class, executable);
+        assertEquals(Messages.stream.closed.get(), thrown.getMessage());
     }
 
     // the following classes are not final so they can be spied / mocked

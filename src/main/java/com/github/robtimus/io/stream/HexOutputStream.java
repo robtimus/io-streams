@@ -65,7 +65,7 @@ public final class HexOutputStream extends OutputStream {
         this.upperCase = upperCase;
     }
 
-    private void checkClosed() throws IOException {
+    private void ensureOpen() throws IOException {
         if (destination == null) {
             throw streamClosedException();
         }
@@ -73,7 +73,7 @@ public final class HexOutputStream extends OutputStream {
 
     @Override
     public void write(int b) throws IOException {
-        checkClosed();
+        ensureOpen();
         if (writeBuffer == null){
             writeBuffer = new char[WRITE_BUFFER_SIZE];
         }
@@ -84,7 +84,7 @@ public final class HexOutputStream extends OutputStream {
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        checkClosed();
+        ensureOpen();
         checkOffsetAndLength(b, off, len);
 
         char cbuf[];
@@ -107,7 +107,7 @@ public final class HexOutputStream extends OutputStream {
 
     @Override
     public void flush() throws IOException {
-        checkClosed();
+        ensureOpen();
         destination.flush();
     }
 

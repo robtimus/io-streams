@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.TestData.SOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -29,7 +28,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({ "javadoc", "nls" })
-public class TeeWriterTest {
+public class TeeWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(int)")

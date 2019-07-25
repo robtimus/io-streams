@@ -18,7 +18,6 @@
 package com.github.robtimus.io.stream;
 
 import static com.github.robtimus.io.stream.HexOutputStream.toHex;
-import static com.github.robtimus.io.stream.TestData.SOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.spy;
@@ -30,12 +29,11 @@ import java.util.function.Function;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 @SuppressWarnings({ "javadoc", "nls" })
-public class HexOutputStreamTest {
+public class HexOutputStreamTest extends TestBase {
 
     private static final byte[] CAFEBABE = { (byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE };
 
@@ -62,11 +60,6 @@ public class HexOutputStreamTest {
         assertClosed(() -> output.write(CAFEBABE, 0, 0));
         assertClosed(() -> output.flush());
         output.close();
-    }
-
-    private void assertClosed(Executable executable) {
-        IOException thrown = assertThrows(IOException.class, executable);
-        assertEquals(Messages.stream.closed.get(), thrown.getMessage());
     }
 
     @Nested

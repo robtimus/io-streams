@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.TestData.SOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -38,10 +37,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import com.github.robtimus.io.stream.TestData.CloseableAppendable;
 
 @SuppressWarnings({ "javadoc", "nls" })
-public class TeeReaderTest {
+public class TeeReaderTest extends TestBase {
 
     @Test
     @DisplayName("read()")
@@ -202,17 +200,5 @@ public class TeeReaderTest {
                     verifyNoMoreInteractions(input, appendable);
                 }),
         };
-    }
-
-    private void copy(Reader reader, Writer writer) throws IOException {
-        copy(reader, writer, 4096);
-    }
-
-    private void copy(Reader reader, Writer writer, int bufferSize) throws IOException {
-        char[] buffer = new char[bufferSize];
-        int len;
-        while ((len = reader.read(buffer)) != -1) {
-            writer.write(buffer, 0, len);
-        }
     }
 }

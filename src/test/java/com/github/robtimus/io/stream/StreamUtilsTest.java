@@ -21,7 +21,6 @@ import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
 import static com.github.robtimus.io.stream.StreamUtils.checkStartAndEnd;
 import static com.github.robtimus.io.stream.StreamUtils.dontClose;
 import static com.github.robtimus.io.stream.StreamUtils.writer;
-import static com.github.robtimus.io.stream.TestData.SOURCE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
@@ -57,7 +56,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 @SuppressWarnings({ "javadoc", "nls" })
-public class StreamUtilsTest {
+public class StreamUtilsTest extends TestBase {
 
     @TestFactory
     @DisplayName("writer(Appendable)")
@@ -193,6 +192,29 @@ public class StreamUtilsTest {
         }
 
         @Test
+        @DisplayName("operations on closed stream")
+        public void testOperationsOnClosedStream() throws IOException {
+            byte[] bytes = SOURCE.getBytes();
+            ByteArrayInputStream input = spy(new ByteArrayInputStream(bytes));
+
+            @SuppressWarnings("resource")
+            InputStream wrapped = dontClose(input);
+            wrapped.close();
+            assertClosed(() -> wrapped.read());
+            assertClosed(() -> wrapped.read(new byte[0]));
+            assertClosed(() -> wrapped.read(new byte[0], 0, 0));
+            assertClosed(() -> wrapped.skip(0));
+            assertClosed(() -> wrapped.available());
+            wrapped.markSupported();
+            wrapped.mark(5);
+            assertClosed(() -> wrapped.reset());
+            wrapped.close();
+
+            verify(input, times(1)).markSupported();
+            verify(input, never()).mark(anyInt());
+        }
+
+        @Test
         @DisplayName("toString()")
         public void testToString() throws IOException {
             byte[] bytes = SOURCE.getBytes();
@@ -268,6 +290,21 @@ public class StreamUtilsTest {
             }
             verify(output, times(1)).flush();
             verify(output, never()).close();
+        }
+
+        @Test
+        @DisplayName("operations on closed stream")
+        public void testOperationsOnClosedStream() throws IOException {
+            ByteArrayOutputStream output = spy(new ByteArrayOutputStream());
+
+            @SuppressWarnings("resource")
+            OutputStream wrapped = dontClose(output);
+            wrapped.close();
+            assertClosed(() -> wrapped.write(0));
+            assertClosed(() -> wrapped.write(new byte[0]));
+            assertClosed(() -> wrapped.write(new byte[0], 0, 0));
+            assertClosed(() -> wrapped.flush());
+            wrapped.close();
         }
 
         @Test
@@ -405,6 +442,28 @@ public class StreamUtilsTest {
             verify(input, times(1)).mark(anyInt());
             verify(input, times(1)).reset();
             verify(input, never()).close();
+        }
+
+        @Test
+        @DisplayName("operations on closed stream")
+        public void testOperationsOnClosedStream() throws IOException {
+            StringReader input = spy(new StringReader(SOURCE));
+
+            @SuppressWarnings("resource")
+            Reader wrapped = dontClose(input);
+            wrapped.close();
+            assertClosed(() -> wrapped.read(CharBuffer.allocate(0)));
+            assertClosed(() -> wrapped.read());
+            assertClosed(() -> wrapped.read(new char[0]));
+            assertClosed(() -> wrapped.read(new char[0], 0, 0));
+            assertClosed(() -> wrapped.skip(0));
+            assertClosed(() -> wrapped.ready());
+            wrapped.markSupported();
+            assertClosed(() -> wrapped.mark(5));
+            assertClosed(() -> wrapped.reset());
+            wrapped.close();
+
+            verify(input, times(1)).markSupported();
         }
 
         @Test
@@ -557,6 +616,26 @@ public class StreamUtilsTest {
             }
             verify(output, times(1)).flush();
             verify(output, never()).close();
+        }
+
+        @Test
+        @DisplayName("operations on closed stream")
+        public void testOperationsOnClosedStream() throws IOException {
+            StringWriter output = spy(new StringWriter(SOURCE.length()));
+
+            @SuppressWarnings("resource")
+            Writer wrapped = dontClose(output);
+            wrapped.close();
+            assertClosed(() -> wrapped.write(0));
+            assertClosed(() -> wrapped.write(new char[0]));
+            assertClosed(() -> wrapped.write(new char[0], 0, 0));
+            assertClosed(() -> wrapped.write(""));
+            assertClosed(() -> wrapped.write("", 0, 0));
+            assertClosed(() -> wrapped.append(""));
+            assertClosed(() -> wrapped.append("", 0, 0));
+            assertClosed(() -> wrapped.append('*'));
+            assertClosed(() -> wrapped.flush());
+            wrapped.close();
         }
 
         @Test

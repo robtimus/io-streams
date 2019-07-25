@@ -74,7 +74,7 @@ public final class CharSequenceReader extends Reader {
         mark = index;
     }
 
-    private void checkClosed() throws IOException {
+    private void ensureOpen() throws IOException {
         if (source == null) {
             throw streamClosedException();
         }
@@ -82,13 +82,13 @@ public final class CharSequenceReader extends Reader {
 
     @Override
     public int read() throws IOException {
-        checkClosed();
+        ensureOpen();
         return index < end ? source.charAt(index++) : -1;
     }
 
     @Override
     public int read(char[] cbuf, int off, int len) throws IOException {
-        checkClosed();
+        ensureOpen();
         checkOffsetAndLength(cbuf, off, len);
         if (len == 0) {
             return 0;
@@ -111,7 +111,7 @@ public final class CharSequenceReader extends Reader {
 
     @Override
     public long skip(long n) throws IOException {
-        checkClosed();
+        ensureOpen();
         if (n < 0) {
             throw new IllegalArgumentException(n + " < 0"); //$NON-NLS-1$
         }
@@ -126,7 +126,7 @@ public final class CharSequenceReader extends Reader {
 
     @Override
     public boolean ready() throws IOException {
-        checkClosed();
+        ensureOpen();
         return index < end;
     }
 
@@ -137,13 +137,13 @@ public final class CharSequenceReader extends Reader {
 
     @Override
     public void mark(int readAheadLimit) throws IOException {
-        checkClosed();
+        ensureOpen();
         mark = index;
     }
 
     @Override
     public void reset() throws IOException {
-        checkClosed();
+        ensureOpen();
         index = mark;
     }
 

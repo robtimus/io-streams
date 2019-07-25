@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.TestData.SOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -27,7 +26,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("javadoc")
-public class CharArraySequenceTest {
+public class CharArraySequenceTest extends TestBase {
 
     @Test
     @DisplayName("reset(char[], int, int)")

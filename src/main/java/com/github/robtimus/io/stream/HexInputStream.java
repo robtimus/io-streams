@@ -53,7 +53,7 @@ public final class HexInputStream extends InputStream {
         this.source = Objects.requireNonNull(source);
     }
 
-    private void checkClosed() throws IOException {
+    private void ensureOpen() throws IOException {
         if (source == null) {
             throw streamClosedException();
         }
@@ -67,7 +67,7 @@ public final class HexInputStream extends InputStream {
 
     @Override
     public int read() throws IOException {
-        checkClosed();
+        ensureOpen();
         checkException();
 
         if (readBuffer == null) {
@@ -84,7 +84,7 @@ public final class HexInputStream extends InputStream {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        checkClosed();
+        ensureOpen();
         checkException();
 
         char cbuf[];
@@ -141,7 +141,7 @@ public final class HexInputStream extends InputStream {
 
     @Override
     public int available() throws IOException {
-        checkClosed();
+        ensureOpen();
         return 0;
     }
 

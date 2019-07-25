@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.TestData.SOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -29,10 +28,9 @@ import java.io.StringWriter;
 import java.io.Writer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 
 @SuppressWarnings({ "javadoc", "nls" })
-public class CharSequenceReaderTest {
+public class CharSequenceReaderTest extends TestBase {
 
     @Test
     @DisplayName("read()")
@@ -126,22 +124,5 @@ public class CharSequenceReaderTest {
         assertClosed(() -> reader.mark(5));
         assertClosed(() -> reader.reset());
         reader.close();
-    }
-
-    private void assertClosed(Executable executable) {
-        IOException thrown = assertThrows(IOException.class, executable);
-        assertEquals(Messages.stream.closed.get(), thrown.getMessage());
-    }
-
-    private void copy(Reader reader, Writer writer) throws IOException {
-        copy(reader, writer, 4096);
-    }
-
-    private void copy(Reader reader, Writer writer, int bufferSize) throws IOException {
-        char[] buffer = new char[bufferSize];
-        int len;
-        while ((len = reader.read(buffer)) != -1) {
-            writer.write(buffer, 0, len);
-        }
     }
 }

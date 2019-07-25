@@ -25,17 +25,14 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.function.Executable;
 
 @SuppressWarnings({ "javadoc", "nls" })
-public class HexInputStreamTest {
+public class HexInputStreamTest extends TestBase {
 
     private static final byte[] CAFEBABE_BYTES = { (byte) 0xCA, (byte) 0xFE, (byte) 0xBA, (byte) 0xBE };
     private static final String CAFEBABE_STRING = "CAFEBABE";
@@ -203,11 +200,6 @@ public class HexInputStreamTest {
         input.close();
     }
 
-    private void assertClosed(Executable executable) {
-        IOException thrown = assertThrows(IOException.class, executable);
-        assertEquals(Messages.stream.closed.get(), thrown.getMessage());
-    }
-
     @Nested
     @DisplayName("fromHex(CharSequence)")
     public class FromHex {
@@ -347,14 +339,6 @@ public class HexInputStreamTest {
         @DisplayName("invalid hex")
         public void testInvalidHex() {
             assertEquals(Optional.empty(), tryFromHex("x" + CAFEBABE_STRING + "XAx", 1, CAFEBABE_STRING.length() + 3));
-        }
-    }
-
-    private void copy(InputStream input, OutputStream output, int bufferSize) throws IOException {
-        byte[] buffer = new byte[bufferSize];
-        int len;
-        while ((len = input.read(buffer)) != -1) {
-            output.write(buffer, 0, len);
         }
     }
 

@@ -75,43 +75,60 @@ public final class StreamUtils {
         Objects.requireNonNull(input);
         return new InputStream() {
 
+            private boolean closed = false;
+
+            private void ensureOpen() throws IOException {
+                if (closed) {
+                    throw streamClosedException();
+                }
+            }
+
             @Override
             public int read() throws IOException {
+                ensureOpen();
                 return input.read();
             }
 
             @Override
             public int read(byte[] b) throws IOException {
+                ensureOpen();
                 return input.read(b);
             }
 
             @Override
             public int read(byte[] b, int off, int len) throws IOException {
+                ensureOpen();
                 return input.read(b, off, len);
             }
 
             @Override
             public long skip(long n) throws IOException {
+                ensureOpen();
                 return input.skip(n);
             }
 
             @Override
             public int available() throws IOException {
+                ensureOpen();
                 return input.available();
             }
 
             @Override
             public void close() throws IOException {
                 // don't close input
+                closed = true;
             }
 
             @Override
             public synchronized void mark(int readlimit) {
-                input.mark(readlimit);
+                if (!closed) {
+                    input.mark(readlimit);
+                }
             }
 
             @Override
             public synchronized void reset() throws IOException {
+                ensureOpen();
                 input.reset();
             }
 
@@ -144,29 +161,42 @@ public final class StreamUtils {
         Objects.requireNonNull(output);
         return new OutputStream() {
 
+            private boolean closed = false;
+
+            private void ensureOpen() throws IOException {
+                if (closed) {
+                    throw streamClosedException();
+                }
+            }
+
             @Override
             public void write(int b) throws IOException {
+                ensureOpen();
                 output.write(b);
             }
 
             @Override
             public void write(byte[] b) throws IOException {
+                ensureOpen();
                 output.write(b);
             }
 
             @Override
             public void write(byte[] b, int off, int len) throws IOException {
+                ensureOpen();
                 output.write(b, off, len);
             }
 
             @Override
             public void flush() throws IOException {
+                ensureOpen();
                 output.flush();
             }
 
             @Override
             public void close() throws IOException {
                 // don't close output
+                closed = true;
             }
 
             @Override
@@ -191,33 +221,47 @@ public final class StreamUtils {
         Objects.requireNonNull(input);
         return new Reader(input) {
 
+            private boolean closed = false;
+
+            private void ensureOpen() throws IOException {
+                if (closed) {
+                    throw streamClosedException();
+                }
+            }
+
             @Override
             public int read(CharBuffer target) throws IOException {
+                ensureOpen();
                 return input.read(target);
             }
 
             @Override
             public int read() throws IOException {
+                ensureOpen();
                 return input.read();
             }
 
             @Override
             public int read(char[] cbuf) throws IOException {
+                ensureOpen();
                 return input.read(cbuf);
             }
 
             @Override
             public int read(char[] cbuf, int off, int len) throws IOException {
+                ensureOpen();
                 return input.read(cbuf, off, len);
             }
 
             @Override
             public long skip(long n) throws IOException {
+                ensureOpen();
                 return input.skip(n);
             }
 
             @Override
             public boolean ready() throws IOException {
+                ensureOpen();
                 return input.ready();
             }
 
@@ -228,17 +272,20 @@ public final class StreamUtils {
 
             @Override
             public void mark(int readAheadLimit) throws IOException {
+                ensureOpen();
                 input.mark(readAheadLimit);
             }
 
             @Override
             public void reset() throws IOException {
+                ensureOpen();
                 input.reset();
             }
 
             @Override
             public void close() throws IOException {
                 // don't close input
+                closed = true;
             }
 
             @Override
@@ -265,57 +312,75 @@ public final class StreamUtils {
         Objects.requireNonNull(output);
         return new Writer(output) {
 
+            private boolean closed = false;
+
+            private void ensureOpen() throws IOException {
+                if (closed) {
+                    throw streamClosedException();
+                }
+            }
+
             @Override
             public void write(int c) throws IOException {
+                ensureOpen();
                 output.write(c);
             }
 
             @Override
             public void write(char[] cbuf) throws IOException {
+                ensureOpen();
                 output.write(cbuf);
             }
 
             @Override
             public void write(char[] cbuf, int off, int len) throws IOException {
+                ensureOpen();
                 output.write(cbuf, off, len);
             }
 
             @Override
             public void write(String str) throws IOException {
+                ensureOpen();
                 output.write(str);
             }
 
             @Override
             public void write(String str, int off, int len) throws IOException {
+                ensureOpen();
                 output.write(str, off, len);
             }
 
             @Override
             public Writer append(CharSequence csq) throws IOException {
+                ensureOpen();
                 output.append(csq);
                 return this;
             }
 
             @Override
             public Writer append(CharSequence csq, int start, int end) throws IOException {
+                ensureOpen();
                 output.append(csq, start, end);
                 return this;
             }
 
             @Override
             public Writer append(char c) throws IOException {
+                ensureOpen();
                 output.append(c);
                 return this;
             }
 
             @Override
             public void flush() throws IOException {
+                ensureOpen();
                 output.flush();
             }
 
             @Override
             public void close() throws IOException {
                 // don't close output
+                closed = true;
             }
 
             @Override
