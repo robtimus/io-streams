@@ -193,7 +193,7 @@ public class BinaryPipeTest extends TestBase {
                 assertEquals(5, len);
                 output.write(data, 0, len);
                 assertEquals(0, input.skip(0));
-                assertThrows(IllegalArgumentException.class, () -> input.skip(-1));
+                assertEquals(0, input.skip(-1));
                 assertEquals(5, input.skip(10));
                 // add a small delay to allow the output stream to write something again
                 Thread.sleep(100);

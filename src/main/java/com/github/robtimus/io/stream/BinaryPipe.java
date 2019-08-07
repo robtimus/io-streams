@@ -299,10 +299,7 @@ public final class BinaryPipe {
 
         @Override
         public long skip(long n) throws IOException {
-            if (n < 0) {
-                throw new IllegalArgumentException(n + " < 0"); //$NON-NLS-1$
-            }
-            if (n == 0) {
+            if (n <= 0) {
                 return 0;
             }
             synchronized (buffer) {

@@ -185,7 +185,7 @@ public final class StreamUtils {
      */
     public static void checkOffsetAndLength(CharSequence sequence, int offset, int length) {
         if (offset < 0 || length < 0 || offset + length > sequence.length()) {
-            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength.get(sequence.length(), offset, length));
+            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidOffsetOrLength.get(sequence.length(), offset, length));
         }
     }
 
@@ -203,7 +203,7 @@ public final class StreamUtils {
      */
     public static void checkStartAndEnd(CharSequence sequence, int start, int end) {
         if (start < 0 || end > sequence.length() || start > end) {
-            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidStartOrEnd.get(sequence.length(), start, end));
+            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidStartOrEnd.get(sequence.length(), start, end));
         }
     }
 
