@@ -17,8 +17,12 @@
 
 package com.github.robtimus.io.stream;
 
+import static com.github.robtimus.io.stream.StreamUtils.filtering;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,7 +41,7 @@ public class FilteringInputStreamTest extends TestBase {
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
 
-        try (InputStream wrapped = new FilteringInputStream(input, Character::isWhitespace)) {
+        try (InputStream wrapped = filtering(input, Character::isWhitespace)) {
             int b;
             while ((b = wrapped.read()) != -1) {
                 output.write(b);
@@ -54,7 +58,7 @@ public class FilteringInputStreamTest extends TestBase {
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
 
-        try (InputStream wrapped = new FilteringInputStream(input, Character::isWhitespace)) {
+        try (InputStream wrapped = filtering(input, Character::isWhitespace)) {
             byte[] buffer = new byte[1024];
             final int offset = 100;
             int len;
@@ -72,7 +76,7 @@ public class FilteringInputStreamTest extends TestBase {
         byte[] expected = SOURCE.replaceAll("\\s+", "").getBytes();
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
 
-        try (InputStream wrapped = new FilteringInputStream(input, Character::isWhitespace)) {
+        try (InputStream wrapped = filtering(input, Character::isWhitespace)) {
             assertEquals(expected.length, wrapped.skip(Integer.MAX_VALUE));
             assertEquals(-1, wrapped.read());
         }
@@ -84,7 +88,7 @@ public class FilteringInputStreamTest extends TestBase {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
 
-        try (InputStream wrapped = new FilteringInputStream(input, Character::isWhitespace)) {
+        try (InputStream wrapped = filtering(input, Character::isWhitespace)) {
             assertEquals(0, wrapped.available());
         }
     }
@@ -97,7 +101,7 @@ public class FilteringInputStreamTest extends TestBase {
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
 
-        try (InputStream wrapped = new FilteringInputStream(input, Character::isWhitespace)) {
+        try (InputStream wrapped = filtering(input, Character::isWhitespace)) {
             assertEquals(input.markSupported(), wrapped.markSupported());
             wrapped.mark(10);
             byte[] buffer = new byte[10];
@@ -109,5 +113,16 @@ public class FilteringInputStreamTest extends TestBase {
             }
         }
         assertArrayEquals(expected, output.toByteArray());
+    }
+
+    @Test
+    @DisplayName("close()")
+    public void testClose() throws IOException {
+        ByteArrayInputStream input = spy(new ByteArrayInputStream(new byte[0]));
+        try (InputStream wrapped = filtering(input, Character::isWhitespace)) {
+            // don't do anything
+        }
+        verify(input).close();
+        verifyNoMoreInteractions(input);
     }
 }

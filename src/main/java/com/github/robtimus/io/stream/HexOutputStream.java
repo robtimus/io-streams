@@ -29,7 +29,8 @@ import java.io.Writer;
 /**
  * An output stream that converts bytes into hex.
  * <p>
- * When a hex output stream is closed, its wrapped {@link Appendable} will also be closed if it implements {@link Closeable} or {@link AutoCloseable}.
+ * When a hex output stream is closed, its wrapped {@link Appendable} will be closed as well if it implements {@link Closeable} or
+ * {@link AutoCloseable}.
  *
  * @author Rob Spoor
  */
@@ -126,8 +127,8 @@ public final class HexOutputStream extends OutputStream {
      * @return The hex representation of the given byte array.
      * @throws NullPointerException If the given byte array is {@code null}.
      */
-    public static String toHex(byte[] b) {
-        return toHex(b, 0, b.length);
+    public static String encode(byte[] b) {
+        return encode(b, 0, b.length);
     }
 
     /**
@@ -141,8 +142,8 @@ public final class HexOutputStream extends OutputStream {
      * @throws IndexOutOfBoundsException If the given start index is negative, the given end index is larger than the given array's length,
      *                                       or the given start index is larger than the given end index.
      */
-    public static String toHex(byte[] b, int start, int end) {
-        return toHex(b, start, end, false);
+    public static String encode(byte[] b, int start, int end) {
+        return encode(b, start, end, false);
     }
 
     /**
@@ -153,8 +154,8 @@ public final class HexOutputStream extends OutputStream {
      * @return The hex representation of the given byte array.
      * @throws NullPointerException If the given byte array is {@code null}.
      */
-    public static String toHex(byte[] b, boolean upperCase) {
-        return toHex(b, 0, b.length, upperCase);
+    public static String encode(byte[] b, boolean upperCase) {
+        return encode(b, 0, b.length, upperCase);
     }
 
     /**
@@ -169,7 +170,7 @@ public final class HexOutputStream extends OutputStream {
      * @throws IndexOutOfBoundsException If the given start index is negative, the given end index is larger than the given array's length,
      *                                       or the given start index is larger than the given end index.
      */
-    public static String toHex(byte[] b, int start, int end, boolean upperCase) {
+    public static String encode(byte[] b, int start, int end, boolean upperCase) {
         checkStartAndEnd(b, start, end);
         char[] c = new char[(end - start) * 2];
         for (int i = start, j = 0; i < end; i++, j += 2) {

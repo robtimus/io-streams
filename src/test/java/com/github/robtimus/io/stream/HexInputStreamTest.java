@@ -17,15 +17,19 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.HexInputStream.fromHex;
-import static com.github.robtimus.io.stream.HexInputStream.tryFromHex;
+import static com.github.robtimus.io.stream.HexInputStream.decode;
+import static com.github.robtimus.io.stream.HexInputStream.tryDecode;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -188,6 +192,17 @@ public class HexInputStreamTest extends TestBase {
     }
 
     @Test
+    @DisplayName("close()")
+    public void testClose() throws IOException {
+        StringReader reader = spy(new StringReader(CAFEBABE_STRING));
+        try (HexInputStream input = new HexInputStream(reader)) {
+            // don't do anything
+        }
+        verify(reader).close();
+        verifyNoMoreInteractions(reader);
+    }
+
+    @Test
     @DisplayName("operations on closed stream")
     public void testOperationsOnClosedStream() throws IOException {
         @SuppressWarnings("resource")
@@ -201,65 +216,65 @@ public class HexInputStreamTest extends TestBase {
     }
 
     @Nested
-    @DisplayName("fromHex(CharSequence)")
-    public class FromHex {
+    @DisplayName("decode(CharSequence)")
+    public class Decode {
 
         @Test
         @DisplayName("null")
         public void testNull() {
-            assertThrows(NullPointerException.class, () -> fromHex(null));
+            assertThrows(NullPointerException.class, () -> decode(null));
         }
 
         @Test
         @DisplayName("valid hex")
         public void testValidHex() {
-            assertArrayEquals(CAFEBABE_BYTES, fromHex(CAFEBABE_STRING));
+            assertArrayEquals(CAFEBABE_BYTES, decode(CAFEBABE_STRING));
         }
 
         @Test
         @DisplayName("odd length hex")
         public void testOddLengthHex() {
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> fromHex(CAFEBABE_STRING + "A"));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> decode(CAFEBABE_STRING + "A"));
             assertEquals(Messages.hex.eof.get(), exception.getMessage());
         }
 
         @Test
         @DisplayName("invalid hex")
         public void testInvalidHex() {
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> fromHex(CAFEBABE_STRING + "XA"));
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> decode(CAFEBABE_STRING + "XA"));
             assertEquals(Messages.hex.invalidChar.get('X'), exception.getMessage());
         }
     }
 
     @Nested
-    @DisplayName("fromHex(CharSequence, int, int)")
-    public class FromHexRange {
+    @DisplayName("decode(CharSequence, int, int)")
+    public class DecodeRange {
 
         @Test
         @DisplayName("null")
         public void testNull() {
-            assertThrows(NullPointerException.class, () -> fromHex(null, 0, 0));
+            assertThrows(NullPointerException.class, () -> decode(null, 0, 0));
         }
 
         @Test
         @DisplayName("invalid indexes")
         public void testInvalidIndexes() {
-            assertThrows(IndexOutOfBoundsException.class, () -> fromHex(CAFEBABE_STRING, -1, CAFEBABE_STRING.length()));
-            assertThrows(IndexOutOfBoundsException.class, () -> fromHex(CAFEBABE_STRING, 0, CAFEBABE_STRING.length() + 1));
-            assertThrows(IndexOutOfBoundsException.class, () -> fromHex(CAFEBABE_STRING, 1, 0));
+            assertThrows(IndexOutOfBoundsException.class, () -> decode(CAFEBABE_STRING, -1, CAFEBABE_STRING.length()));
+            assertThrows(IndexOutOfBoundsException.class, () -> decode(CAFEBABE_STRING, 0, CAFEBABE_STRING.length() + 1));
+            assertThrows(IndexOutOfBoundsException.class, () -> decode(CAFEBABE_STRING, 1, 0));
         }
 
         @Test
         @DisplayName("valid hex")
         public void testValidHex() {
-            assertArrayEquals(CAFEBABE_BYTES, fromHex("x" + CAFEBABE_STRING + "x", 1, CAFEBABE_STRING.length() + 1));
+            assertArrayEquals(CAFEBABE_BYTES, decode("x" + CAFEBABE_STRING + "x", 1, CAFEBABE_STRING.length() + 1));
         }
 
         @Test
         @DisplayName("odd length hex")
         public void testOddLengthHex() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                    () -> fromHex("x" + CAFEBABE_STRING + "Ax", 1, CAFEBABE_STRING.length() + 2));
+                    () -> decode("x" + CAFEBABE_STRING + "Ax", 1, CAFEBABE_STRING.length() + 2));
             assertEquals(Messages.hex.eof.get(), exception.getMessage());
         }
 
@@ -267,25 +282,25 @@ public class HexInputStreamTest extends TestBase {
         @DisplayName("invalid hex")
         public void testInvalidHex() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                    () -> fromHex("x" + CAFEBABE_STRING + "XAx", 1, CAFEBABE_STRING.length() + 3));
+                    () -> decode("x" + CAFEBABE_STRING + "XAx", 1, CAFEBABE_STRING.length() + 3));
             assertEquals(Messages.hex.invalidChar.get('X'), exception.getMessage());
         }
     }
 
     @Nested
-    @DisplayName("tryFromHex(CharSequence)")
-    public class TryFromHex {
+    @DisplayName("tryDecode(CharSequence)")
+    public class TryDecode {
 
         @Test
         @DisplayName("null")
         public void testNull() {
-            assertEquals(Optional.empty(), tryFromHex(null));
+            assertEquals(Optional.empty(), tryDecode(null));
         }
 
         @Test
         @DisplayName("valid hex")
         public void testValidHex() {
-            Optional<byte[]> result = tryFromHex(CAFEBABE_STRING);
+            Optional<byte[]> result = tryDecode(CAFEBABE_STRING);
             assertNotEquals(Optional.empty(), result);
             assertArrayEquals(CAFEBABE_BYTES, result.get());
         }
@@ -293,38 +308,38 @@ public class HexInputStreamTest extends TestBase {
         @Test
         @DisplayName("odd length hex")
         public void testOddLengthHex() {
-            assertEquals(Optional.empty(), tryFromHex(CAFEBABE_STRING + "A"));
+            assertEquals(Optional.empty(), tryDecode(CAFEBABE_STRING + "A"));
         }
 
         @Test
         @DisplayName("invalid hex")
         public void testInvalidHex() {
-            assertEquals(Optional.empty(), tryFromHex(CAFEBABE_STRING + "XA"));
+            assertEquals(Optional.empty(), tryDecode(CAFEBABE_STRING + "XA"));
         }
     }
 
     @Nested
-    @DisplayName("tryFromHex(CharSequence, int, int)")
-    public class TryFromHexRange {
+    @DisplayName("tryDecode(CharSequence, int, int)")
+    public class TryDecodeRange {
 
         @Test
         @DisplayName("null")
         public void testNull() {
-            assertEquals(Optional.empty(), tryFromHex(null, 0, 0));
+            assertEquals(Optional.empty(), tryDecode(null, 0, 0));
         }
 
         @Test
         @DisplayName("invalid indexes")
         public void testInvalidIndexes() {
-            assertThrows(IndexOutOfBoundsException.class, () -> tryFromHex(CAFEBABE_STRING, -1, CAFEBABE_STRING.length()));
-            assertThrows(IndexOutOfBoundsException.class, () -> tryFromHex(CAFEBABE_STRING, 0, CAFEBABE_STRING.length() + 1));
-            assertThrows(IndexOutOfBoundsException.class, () -> tryFromHex(CAFEBABE_STRING, 1, 0));
+            assertThrows(IndexOutOfBoundsException.class, () -> tryDecode(CAFEBABE_STRING, -1, CAFEBABE_STRING.length()));
+            assertThrows(IndexOutOfBoundsException.class, () -> tryDecode(CAFEBABE_STRING, 0, CAFEBABE_STRING.length() + 1));
+            assertThrows(IndexOutOfBoundsException.class, () -> tryDecode(CAFEBABE_STRING, 1, 0));
         }
 
         @Test
         @DisplayName("valid hex")
         public void testValidHex() {
-            Optional<byte[]> result = tryFromHex("x" + CAFEBABE_STRING + "x", 1, CAFEBABE_STRING.length() + 1);
+            Optional<byte[]> result = tryDecode("x" + CAFEBABE_STRING + "x", 1, CAFEBABE_STRING.length() + 1);
             assertNotEquals(Optional.empty(), result);
             assertArrayEquals(CAFEBABE_BYTES, result.get());
         }
@@ -332,13 +347,13 @@ public class HexInputStreamTest extends TestBase {
         @Test
         @DisplayName("odd length hex")
         public void testOddLengthHex() {
-            assertEquals(Optional.empty(), tryFromHex("x" + CAFEBABE_STRING + "Ax", 1, CAFEBABE_STRING.length() + 2));
+            assertEquals(Optional.empty(), tryDecode("x" + CAFEBABE_STRING + "Ax", 1, CAFEBABE_STRING.length() + 2));
         }
 
         @Test
         @DisplayName("invalid hex")
         public void testInvalidHex() {
-            assertEquals(Optional.empty(), tryFromHex("x" + CAFEBABE_STRING + "XAx", 1, CAFEBABE_STRING.length() + 3));
+            assertEquals(Optional.empty(), tryDecode("x" + CAFEBABE_STRING + "XAx", 1, CAFEBABE_STRING.length() + 3));
         }
     }
 

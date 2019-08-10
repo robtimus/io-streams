@@ -29,7 +29,7 @@ import java.util.Optional;
 /**
  * An input stream that converts hex into bytes.
  * <p>
- * When a hex input stream is closed, its source will also be closed.
+ * When a hex input stream is closed, its source will be closed as well.
  *
  * @author Rob Spoor
  */
@@ -161,8 +161,8 @@ public final class HexInputStream extends InputStream {
      * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
      * @throws IllegalArgumentException If the given {@code CharSequence} does not contain a valid hex representation.
      */
-    public static byte[] fromHex(CharSequence hex) {
-        return fromHex(hex, 0, hex.length());
+    public static byte[] decode(CharSequence hex) {
+        return decode(hex, 0, hex.length());
     }
 
     /**
@@ -178,7 +178,7 @@ public final class HexInputStream extends InputStream {
      *                                       or the given start index is larger than the given end index.
      * @throws IllegalArgumentException If the given {@code CharSequence} does not contain a valid hex representation.
      */
-    public static byte[] fromHex(CharSequence hex, int start, int end) {
+    public static byte[] decode(CharSequence hex, int start, int end) {
         checkStartAndEnd(hex, start, end);
         int length = end - start;
         if ((length & 1) == 1) {
@@ -212,8 +212,8 @@ public final class HexInputStream extends InputStream {
      *                                       the given end index is larger than the given {@code CharSequence}'s length,
      *                                       or the given start index is larger than the given end index.
      */
-    public static Optional<byte[]> tryFromHex(CharSequence hex) {
-        return hex == null ? Optional.empty() : tryFromHex(hex, 0, hex.length());
+    public static Optional<byte[]> tryDecode(CharSequence hex) {
+        return hex == null ? Optional.empty() : tryDecode(hex, 0, hex.length());
     }
 
     /**
@@ -228,7 +228,7 @@ public final class HexInputStream extends InputStream {
      *                                       the given end index is larger than the given {@code CharSequence}'s length,
      *                                       or the given start index is larger than the given end index.
      */
-    public static Optional<byte[]> tryFromHex(CharSequence hex, int start, int end) {
+    public static Optional<byte[]> tryDecode(CharSequence hex, int start, int end) {
         if (hex == null) {
             return Optional.empty();
         }

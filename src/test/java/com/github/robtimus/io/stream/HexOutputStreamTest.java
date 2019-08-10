@@ -17,7 +17,7 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.HexOutputStream.toHex;
+import static com.github.robtimus.io.stream.HexOutputStream.encode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.spy;
@@ -45,6 +45,17 @@ public class HexOutputStreamTest extends TestBase {
             output.flush();
         }
         verify(writer).flush();
+        verify(writer).close();
+        verifyNoMoreInteractions(writer);
+    }
+
+    @Test
+    @DisplayName("close()")
+    public void testClose() throws IOException {
+        StringWriter writer = spy(new StringWriter());
+        try (HexOutputStream outut = new HexOutputStream(writer)) {
+            // don't do anything
+        }
         verify(writer).close();
         verifyNoMoreInteractions(writer);
     }
@@ -151,22 +162,22 @@ public class HexOutputStreamTest extends TestBase {
     }
 
     @Test
-    @DisplayName("toHex(byte[]")
-    public void testToHex() {
-        assertEquals("cafebabe", toHex(CAFEBABE));
-        assertThrows(NullPointerException.class, () -> toHex(null));
+    @DisplayName("encode(byte[]")
+    public void testEncode() {
+        assertEquals("cafebabe", encode(CAFEBABE));
+        assertThrows(NullPointerException.class, () -> encode(null));
     }
 
     @Test
-    @DisplayName("toHex(byte[], int, int)")
-    public void testRangeToHex() {
+    @DisplayName("encode(byte[], int, int)")
+    public void testEncodeRange() {
         byte[] bytes = new byte[CAFEBABE.length + 2];
         System.arraycopy(CAFEBABE, 0, bytes, 1, CAFEBABE.length);
-        assertEquals("cafebabe", toHex(bytes, 1, CAFEBABE.length + 1));
-        assertThrows(NullPointerException.class, () -> toHex(null));
-        assertThrows(IndexOutOfBoundsException.class, () -> toHex(CAFEBABE, -1, CAFEBABE.length));
-        assertThrows(IndexOutOfBoundsException.class, () -> toHex(CAFEBABE, 0, CAFEBABE.length + 1));
-        assertThrows(IndexOutOfBoundsException.class, () -> toHex(CAFEBABE, 1, 0));
+        assertEquals("cafebabe", encode(bytes, 1, CAFEBABE.length + 1));
+        assertThrows(NullPointerException.class, () -> encode(null));
+        assertThrows(IndexOutOfBoundsException.class, () -> encode(CAFEBABE, -1, CAFEBABE.length));
+        assertThrows(IndexOutOfBoundsException.class, () -> encode(CAFEBABE, 0, CAFEBABE.length + 1));
+        assertThrows(IndexOutOfBoundsException.class, () -> encode(CAFEBABE, 1, 0));
     }
 
     @ParameterizedTest(name = "{0} -> {1}")
@@ -174,10 +185,10 @@ public class HexOutputStreamTest extends TestBase {
         "false, cafebabe",
         "true, CAFEBABE"
     })
-    @DisplayName("toHex(byte[], boolean)")
-    public void testToHex(boolean upperCase, String expected) {
-        assertEquals(expected, toHex(CAFEBABE, upperCase));
-        assertThrows(NullPointerException.class, () -> toHex(null, upperCase));
+    @DisplayName("encode(byte[], boolean)")
+    public void testEncode(boolean upperCase, String expected) {
+        assertEquals(expected, encode(CAFEBABE, upperCase));
+        assertThrows(NullPointerException.class, () -> encode(null, upperCase));
     }
 
     @ParameterizedTest(name = "{0} -> {1}")
@@ -185,11 +196,11 @@ public class HexOutputStreamTest extends TestBase {
         "false, cafebabe",
         "true, CAFEBABE"
     })
-    @DisplayName("toHex(byte[], int, int, boolean)")
-    public void testRangeToHex(boolean upperCase, String expected) {
+    @DisplayName("encode(byte[], int, int, boolean)")
+    public void testEncodeRange(boolean upperCase, String expected) {
         byte[] bytes = new byte[CAFEBABE.length + 2];
         System.arraycopy(CAFEBABE, 0, bytes, 1, CAFEBABE.length);
-        assertEquals(expected, toHex(bytes, 1, CAFEBABE.length + 1, upperCase));
-        assertThrows(NullPointerException.class, () -> toHex(null, upperCase));
+        assertEquals(expected, encode(bytes, 1, CAFEBABE.length + 1, upperCase));
+        assertThrows(NullPointerException.class, () -> encode(null, upperCase));
     }
 }

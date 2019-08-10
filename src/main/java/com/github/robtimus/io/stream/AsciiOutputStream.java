@@ -1,5 +1,5 @@
 /*
- * FilteringOutputStream.java
+ * AsciiOutputStream.java
  * Copyright 2019 Rob Spoor
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,51 +20,42 @@ package com.github.robtimus.io.stream;
 import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.function.IntPredicate;
+import java.io.Writer;
 
-final class FilteringOutputStream extends OutputStream {
+final class AsciiOutputStream extends OutputStream {
 
     private static final int WRITE_BUFFER_SIZE = 1024;
 
-    private final OutputStream output;
-    private final IntPredicate filter;
+    private final Writer output;
 
-    private byte[] writeBuffer;
+    private char[] writeBuffer;
 
-    FilteringOutputStream(OutputStream output, IntPredicate filter) {
+    AsciiOutputStream(Writer output) {
         this.output = output;
-        this.filter = filter;
     }
 
     @Override
     public void write(int b) throws IOException {
-        if (!filter.test((byte) b)) {
-            output.write(b);
-        }
+        output.write(convert((byte) b));
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         checkOffsetAndLength(b, off, len);
 
-        byte[] buffer;
+        char[] c;
         if (len <= WRITE_BUFFER_SIZE) {
             if (writeBuffer == null) {
-                writeBuffer = new byte[WRITE_BUFFER_SIZE];
+                writeBuffer = new char[WRITE_BUFFER_SIZE];
             }
-            buffer = writeBuffer;
+            c = writeBuffer;
         } else {
             // Don't permanently allocate very large buffers.
-            buffer = new byte[len];
+            c = new char[len];
         }
-        int newLen = 0;
-        for (int i = off, j = 0, k = 0; k < len; i++, k++) {
-            if (!filter.test(b[i])) {
-                buffer[j++] = b[i];
-                newLen++;
-            }
-        }
-        output.write(buffer, 0, newLen);
+
+        convert(b, c, off, len);
+        output.write(c, 0, len);
     }
 
     @Override
@@ -75,5 +66,20 @@ final class FilteringOutputStream extends OutputStream {
     @Override
     public void close() throws IOException {
         output.close();
+    }
+
+    private char convert(byte b) throws IOException {
+        // b <= 127 by definition
+        if (b < 0) {
+            throw new IOException(Messages.ascii.invalidByte.get(b));
+        }
+        // 0 <= b <= 127, valid ASCII
+        return (char) b;
+    }
+
+    private void convert(byte[] b, char[] c, int off, int len) throws IOException {
+        for (int i = off, j = 0; j < len; i++, j++) {
+            c[j] = convert(b[i]);
+        }
     }
 }

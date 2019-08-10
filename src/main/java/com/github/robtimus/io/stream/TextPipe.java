@@ -1,5 +1,5 @@
 /*
- * BinaryPipe.java
+ * TextPipe.java
  * Copyright 2019 Rob Spoor
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,32 +19,32 @@ package com.github.robtimus.io.stream;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
+import java.io.PipedReader;
+import java.io.PipedWriter;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A class that pipes an input stream and output stream together.
- * This class behaves somewhat as a combination of {@link PipedInputStream} and {@link PipedOutputStream}, but the pipe will not be broken if the
- * writing thread is no longer alive. As with these streams it is not recommended to write to the pipe and read from the pipe from the same thread.
+ * A class that pipes a reader and writer together.
+ * This class behaves somewhat as a combination of {@link PipedReader} and {@link PipedWriter}, but the pipe will not be broken if the writing thread
+ * is no longer alive. As with these streams it is not recommended to write to the pipe and read from the pipe from the same thread.
  * <p>
  * In addition, it's possible to pass an {@link IOException} from the input to the output or vice versa, by using
- * {@link PipeInputStream#close(IOException)} or {@link PipeOutputStream#close(IOException)}.
+ * {@link PipeReader#close(IOException)} or {@link PipeWriter#close(IOException)}.
  *
  * @author Rob Spoor
  */
-public final class BinaryPipe {
+public final class TextPipe {
 
     private static final int DEFAULT_PIPE_SIZE = 1024;
     private static final long AWAIT_TIME = TimeUnit.SECONDS.toNanos(1);
 
-    private final PipeInputStream input;
-    private final PipeOutputStream output;
+    private final PipeReader input;
+    private final PipeWriter output;
 
-    private final byte[] buffer;
+    private final char[] buffer;
     private int first;
     private int last;
     private int size;
@@ -61,24 +61,24 @@ public final class BinaryPipe {
     private Thread writeThread;
 
     /**
-     * Creates a new binary pipe with a capacity of {@code 1024}.
+     * Creates a new text pipe with a capacity of {@code 1024}.
      */
-    public BinaryPipe() {
+    public TextPipe() {
         this(DEFAULT_PIPE_SIZE);
     }
 
     /**
-     * Creates a new binary pipe.
+     * Creates a new text pipe.
      *
      * @param capacity The capacity of the pipe's buffer.
      * @throws IllegalArgumentException If the given capacity is not at least {@code 1}.
      */
-    public BinaryPipe(int capacity) {
+    public TextPipe(int capacity) {
         if (capacity < 1) {
             throw new IllegalArgumentException(capacity + " < 1"); //$NON-NLS-1$
         }
 
-        buffer = new byte[capacity];
+        buffer = new char[capacity];
         first = 0;
         last = 0;
         size = 0;
@@ -91,25 +91,25 @@ public final class BinaryPipe {
         readError = null;
         writeError = null;
 
-        input = new PipeInputStream(this);
-        output = new PipeOutputStream(this);
+        input = new PipeReader(this);
+        output = new PipeWriter(this);
     }
 
     /**
-     * Returns the pipe's input stream.
+     * Returns the pipe's reader.
      *
-     * @return The pipe's input stream.
+     * @return The pipe's reader.
      */
-    public PipeInputStream input() {
+    public PipeReader input() {
         return input;
     }
 
     /**
-     * Returns the pipe's output stream.
+     * Returns the pipe's writer.
      *
-     * @return The pipe's output stream.
+     * @return The pipe's writer.
      */
-    public PipeOutputStream output() {
+    public PipeWriter output() {
         return output;
     }
 
@@ -138,9 +138,9 @@ public final class BinaryPipe {
             }
             throwWriteError();
             if (size > 0) {
-                byte b = next();
+                char c = next();
                 closedOrNotFull.signalAll();
-                return b & 0xFF;
+                return c & 0xFF;
             }
             if (closed) {
                 return -1;
@@ -151,8 +151,8 @@ public final class BinaryPipe {
         }
     }
 
-    int read(byte[] b, int off, int len) throws IOException {
-        checkOffsetAndLength(b, off, len);
+    int read(char[] cbuf, int off, int len) throws IOException {
+        checkOffsetAndLength(cbuf, off, len);
         if (len == 0) {
             return 0;
         }
@@ -166,7 +166,7 @@ public final class BinaryPipe {
             if (size > 0) {
                 int i = 0;
                 while (i < len && size > 0) {
-                    b[off + i] = next();
+                    cbuf[off + i] = next();
                     i++;
                 }
                 closedOrNotFull.signalAll();
@@ -181,16 +181,19 @@ public final class BinaryPipe {
         }
     }
 
-    private byte next() {
+    private char next() {
         assert size > 0 : "cannot take from empty buffer"; //$NON-NLS-1$
-        byte b = buffer[first];
+        char c = buffer[first];
         first = (first + 1) % buffer.length;
         size--;
-        return b;
+        return c;
     }
 
     long skip(long n) throws IOException {
-        if (n <= 0) {
+        if (n < 0) {
+            throw new IllegalArgumentException(n + " < 0"); //$NON-NLS-1$
+        }
+        if (n == 0) {
             return 0;
         }
         lock.lock();
@@ -215,12 +218,12 @@ public final class BinaryPipe {
         }
     }
 
-    int available() throws IOException {
+    boolean ready() throws IOException {
         lock.lock();
         try {
             readThread = Thread.currentThread();
             throwWriteError();
-            return size;
+            return size > 0;
         } finally {
             lock.unlock();
         }
@@ -277,7 +280,7 @@ public final class BinaryPipe {
             throwReadError();
             throwIfClosed();
             if (size < buffer.length) {
-                add((byte) b);
+                add((char) b);
                 closedOrNotEmpty.signalAll();
                 return;
             }
@@ -287,20 +290,20 @@ public final class BinaryPipe {
         }
     }
 
-    void write(byte[] b, int off, int len) throws IOException {
-        checkOffsetAndLength(b, off, len);
+    void write(char[] cbuf, int off, int len) throws IOException {
+        checkOffsetAndLength(cbuf, off, len);
         int index = off;
         int remaining = len;
         while (remaining > 0) {
             // write in chunks of at most the buffer's capacity, so the buffer will never run out of capacity
             int count = Math.min(remaining, buffer.length);
-            writeBytes(b, index, count);
+            writeChars(cbuf, index, count);
             index += count;
             remaining -= count;
         }
     }
 
-    private void writeBytes(byte[] b, int off, int len) throws IOException {
+    private void writeChars(char[] cbuf, int off, int len) throws IOException {
         lock.lock();
         try {
             writeThread = Thread.currentThread();
@@ -311,7 +314,7 @@ public final class BinaryPipe {
             throwIfClosed();
             if (size <= buffer.length - len) {
                 for (int i = off, j = 0; j < len; i++, j++) {
-                    add(b[i]);
+                    add(cbuf[i]);
                 }
                 closedOrNotEmpty.signalAll();
                 return;
@@ -322,9 +325,63 @@ public final class BinaryPipe {
         }
     }
 
-    void add(byte b) {
+    void write(String str, int off, int len) throws IOException {
+        checkOffsetAndLength(str, off, len);
+        int index = off;
+        int remaining = len;
+        while (remaining > 0) {
+            // write in chunks of at most the buffer's capacity, so the buffer will never run out of capacity
+            int count = Math.min(remaining, buffer.length);
+            writeChars(str, index, count);
+            index += count;
+            remaining -= count;
+        }
+    }
+
+    void append(CharSequence csq) throws IOException {
+        CharSequence cs = csq == null ? "null" : csq; //$NON-NLS-1$
+        append(cs, 0, cs.length());
+    }
+
+    void append(CharSequence csq, int start, int end) throws IOException {
+        CharSequence cs = csq == null ? "null" : csq; //$NON-NLS-1$
+        checkStartAndEnd(cs, start, end);
+        int index = start;
+        int remaining = end - start;
+        while (remaining > 0) {
+            // write in chunks of at most the buffer's capacity, so the buffer will never run out of capacity
+            int count = Math.min(remaining, buffer.length);
+            writeChars(cs, index, count);
+            index += count;
+            remaining -= count;
+        }
+    }
+
+    private void writeChars(CharSequence csq, int off, int len) throws IOException {
+        lock.lock();
+        try {
+            writeThread = Thread.currentThread();
+            while (!closed && size > buffer.length - len && !readerDied()) {
+                await(closedOrNotFull);
+            }
+            throwReadError();
+            throwIfClosed();
+            if (size <= buffer.length - len) {
+                for (int i = off, j = 0; j < len; i++, j++) {
+                    add(csq.charAt(i));
+                }
+                closedOrNotEmpty.signalAll();
+                return;
+            }
+            throw readerDiedException();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    void add(char c) {
         assert size < buffer.length : "cannot add to full buffer"; //$NON-NLS-1$
-        buffer[last] = b;
+        buffer[last] = c;
         last = (last + 1) % buffer.length;
         size++;
     }
@@ -394,9 +451,21 @@ public final class BinaryPipe {
 
     // general purpose methods
 
-    private void checkOffsetAndLength(byte[] array, int offset, int length) {
+    private void checkOffsetAndLength(char[] array, int offset, int length) {
         if (offset < 0 || length < 0 || offset + length > array.length) {
             throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength.get(array.length, offset, length));
+        }
+    }
+
+    private void checkOffsetAndLength(CharSequence csq, int offset, int length) {
+        if (offset < 0 || length < 0 || offset + length > csq.length()) {
+            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidOffsetOrLength.get(csq.length(), offset, length));
+        }
+    }
+
+    private void checkStartAndEnd(CharSequence sequence, int start, int end) {
+        if (start < 0 || end > sequence.length() || start > end) {
+            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidStartOrEnd.get(sequence.length(), start, end));
         }
     }
 

@@ -24,7 +24,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 import java.util.Objects;
+import java.util.function.IntPredicate;
 
 /**
  * Utility methods for {@link InputStream InputStreams}, {@link OutputStream OutputStreams}, {@link Reader Readers} and {@link Writer Writers}.
@@ -58,6 +61,122 @@ public final class StreamUtils {
     public static Writer writer(Appendable appendable) {
         Objects.requireNonNull(appendable);
         return appendable instanceof Writer ? (Writer) appendable : new AppendableWriter(appendable);
+    }
+
+    /**
+     * Returns an {@code InputStream} that wraps a {@code Reader} that contains only ASCII characters. If the {@code Reader} contains any non-ASCII
+     * characters, the returned {@code InputStream} will throw an {@link IOException}.
+     * <p>
+     * This can be used in code that expects an {@code InputStream} where a {@code Reader} is available. One such example is base64 decoding.
+     * Even though base64 is text, {@link Decoder} can only wrap {@code InputStream}. This method can help:
+     * <pre>InputStream input = Base64.getDecoder().wrap(ascii(reader));</pre>
+     * <p>
+     * When the returned {@code InputStream} is closed, the given {@code Reader} will be closed as well.
+     *
+     * @param input The {@code Reader} to wrap.
+     * @return An {@code InputStream} that reads from the given {@code Reader} and converts all of its ASCII characters to bytes, and throws an
+     *         {@link IOException} for any non-ASCII characters.
+     * @throws NullPointerException If the given {@code Reader} is {@code null}.
+     */
+    public static InputStream ascii(Reader input) {
+        Objects.requireNonNull(input);
+        return new AsciiInputStream(input);
+    }
+
+    /**
+     * Returns an {@code OutputStream} that wraps a {@code Writer} to write only ASCII characters. If any non-ASCII bytes are written to the returned
+     * {@code OutputStream}, it will thrown an {@link IOException}.
+     * <p>
+     * This can be used in code that expects an {@code OutputStream} where a {@code Writer} is available. One such example is base64 encoding.
+     * Even though base64 is text, {@link Encoder} can only wrap {@code OutputStream}. This method can help:
+     * <pre>OutputStream output = Base64.getEncoder().wrap(ascii(writer));</pre>
+     * <p>
+     * When the returned {@code OutputStream} is closed, the given {@code Writer} will be closed as well.
+     *
+     * @param output The {@code Writer} to wrap.
+     * @return An {@code OutputStream} that writes all ASCII bytes written to it to the given {@code Writer}, and throws an {@link IOException} for
+     *         any non-ASCII bytes.
+     * @throws NullPointerException If the given {@code Writer} is {@code null}.
+     */
+    public static OutputStream ascii(Writer output) {
+        Objects.requireNonNull(output);
+        return new AsciiOutputStream(output);
+    }
+
+    /**
+     * Returns an {@code InputStream} that filters the contents of another {@code InputStream}.
+     * For instance, the following can be used to create an {@code InputStream} that does not return any whitespace characters:
+     * <pre>InputStream filtering = filtering(input, Character::isWhitespace);</pre>
+     * <p>
+     * When the returned {@code InputStream} is closed, the given {@code InputStream} will be closed as well.
+     *
+     * @param input The {@code InputStream} to filter.
+     * @param filter The predicate to use to filter out bytes.
+     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @return An {@code InputStream} that filters the contents of the given {@code InputStream} using the given predicate.
+     * @throws NullPointerException If the given {@code InputStream} or predicate is {@code null}.
+     */
+    public static InputStream filtering(InputStream input, IntPredicate filter) {
+        Objects.requireNonNull(input);
+        Objects.requireNonNull(filter);
+        return new FilteringInputStream(input, filter);
+    }
+
+    /**
+     * Returns an {@code OutputStream} that filters the contents of another {@code OutputStream}.
+     * For instance, the following can be used to create an {@code OutputStream} that does not write any whitespace characters:
+     * <pre>OutputStream filtering = filtering(output, Character::isWhitespace);</pre>
+     * <p>
+     * When the returned {@code OutputStream} is closed, the given {@code OutputStream} will be closed as well.
+     *
+     * @param output The {@code OutputStream} to filter.
+     * @param filter The predicate to use to filter out bytes.
+     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @return An {@code OutputStream} that filters contents using the given predicate before writing to the given {@code OutputStream}.
+     * @throws NullPointerException If the given {@code OutputStream} or predicate is {@code null}.
+     */
+    public static OutputStream filtering(OutputStream output, IntPredicate filter) {
+        Objects.requireNonNull(output);
+        Objects.requireNonNull(filter);
+        return new FilteringOutputStream(output, filter);
+    }
+
+    /**
+     * Returns a {@code Reader} that filters the contents of another {@code Reader}.
+     * For instance, the following can be used to create an {@code Reader} that does not return any whitespace characters:
+     * <pre>Reader filtering = filtering(input, Character::isWhitespace);</pre>
+     * <p>
+     * When the returned {@code Reader} is closed, the given {@code Reader} will be closed as well.
+     *
+     * @param input The {@code Reader} to filter.
+     * @param filter The predicate to use to filter out characters.
+     *                   Any character for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @return A {@code Reader} that filters the contents of the given {@code Reader} using the given predicate.
+     * @throws NullPointerException If the given {@code Reader} or predicate is {@code null}.
+     */
+    public static Reader filtering(Reader input, IntPredicate filter) {
+        Objects.requireNonNull(input);
+        Objects.requireNonNull(filter);
+        return new FilteringReader(input, filter);
+    }
+
+    /**
+     * Returns a {@code Writer} that filters the contents of another {@code Writer}.
+     * For instance, the following can be used to create a {@code Writer} that does not write any whitespace characters:
+     * <pre>Writer filtering = filtering(output, Character::isWhitespace);</pre>
+     * <p>
+     * When the returned {@code Writer} is closed, the given {@code Writer} will be closed as well.
+     *
+     * @param output The {@code Writer} to filter.
+     * @param filter The predicate to use to filter out bytes.
+     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @return A {@code Writer} that filters contents using the given predicate before writing to the given {@code Writer}.
+     * @throws NullPointerException If the given {@code Writer} or predicate is {@code null}.
+     */
+    public static Writer filtering(Writer output, IntPredicate filter) {
+        Objects.requireNonNull(output);
+        Objects.requireNonNull(filter);
+        return new FilteringWriter(output, filter);
     }
 
     /**
