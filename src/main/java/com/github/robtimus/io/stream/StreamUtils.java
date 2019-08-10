@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.Writer;
 import java.util.Base64.Decoder;
 import java.util.Base64.Encoder;
@@ -43,6 +44,39 @@ public final class StreamUtils {
     }
 
     // wrapping
+
+    /**
+     * Returns a {@code Reader} wrapper around a {@code CharSequence}. This is a utility method that delegates to
+     * {@link #reader(CharSequence, int, int) reader(sequence, 0, sequence.length())}.
+     *
+     * @param sequence The {@code CharSequence} to return a {@code Reader} for.
+     * @return A {@code Reader} wrapper around the given {@code CharSequence}.
+     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
+     */
+    public static Reader reader(CharSequence sequence) {
+        return reader(sequence, 0, sequence.length());
+    }
+
+    /**
+     * Returns a {@code Reader} wrapper around a portion of a {@code CharSequence}. This {@code Reader} is much like {@link StringReader}, except it
+     * supports any {@code CharSequence} as well as sub sequences. Like {@code StringReader} it supports {@link Reader#mark(int)} and
+     * {@link Reader#reset()}. Unlike {@code StringReader}, it's not thread safe.
+     * <p>
+     * After the returned {@code Reader} has been closed, attempting to read from it will result in an {@link IOException}.
+     *
+     * @param sequence The {@code CharSequence} to return a {@code Reader} for.
+     * @param start The index to start reading at, inclusive.
+     * @param end The index to stop reading at, exclusive.
+     * @return A {@code Reader} wrapper around the given portion of the given {@code CharSequence}.
+     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
+     * @throws IndexOutOfBoundsException If the given start index is negative,
+     *                                       the given end index is larger than the given {@code CharSequence}'s length,
+     *                                       or the given start index is larger than the given end index.
+     */
+    public static Reader reader(CharSequence sequence, int start, int end) {
+        checkStartAndEnd(sequence, start, end);
+        return new CharSequenceReader(sequence, start, end);
+    }
 
     /**
      * Returns an {@code Appendable} as a {@code Writer}. If the given {@code Appendable} is a {@code Writer}, it is returned unmodified.

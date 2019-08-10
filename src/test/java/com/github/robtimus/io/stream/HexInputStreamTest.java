@@ -19,6 +19,7 @@ package com.github.robtimus.io.stream;
 
 import static com.github.robtimus.io.stream.HexInputStream.decode;
 import static com.github.robtimus.io.stream.HexInputStream.tryDecode;
+import static com.github.robtimus.io.stream.StreamUtils.reader;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -50,7 +51,7 @@ public class HexInputStreamTest extends TestBase {
         public void testValidHex() throws IOException {
             ByteArrayOutputStream output = new ByteArrayOutputStream(CAFEBABE_BYTES.length);
 
-            try (HexInputStream input = new HexInputStream(new CharSequenceReader(CAFEBABE_STRING))) {
+            try (HexInputStream input = new HexInputStream(reader(CAFEBABE_STRING))) {
                 int b;
                 while ((b = input.read()) != -1) {
                     output.write(b);
@@ -62,7 +63,7 @@ public class HexInputStreamTest extends TestBase {
         @Test
         @DisplayName("odd length hex")
         public void testOddLengthHex() throws IOException {
-            try (HexInputStream input = new HexInputStream(new CharSequenceReader(CAFEBABE_STRING + "A"))) {
+            try (HexInputStream input = new HexInputStream(reader(CAFEBABE_STRING + "A"))) {
                 IOException exception = assertThrows(IOException.class, () -> {
                     while (input.read() != -1) {
                         // ignore
@@ -78,7 +79,7 @@ public class HexInputStreamTest extends TestBase {
         @Test
         @DisplayName("invalid hex")
         public void testInvalidHex() throws IOException {
-            try (HexInputStream input = new HexInputStream(new CharSequenceReader(CAFEBABE_STRING + "XA"))) {
+            try (HexInputStream input = new HexInputStream(reader(CAFEBABE_STRING + "XA"))) {
                 IOException exception = assertThrows(IOException.class, () -> {
                     while (input.read() != -1) {
                         // ignore
@@ -101,7 +102,7 @@ public class HexInputStreamTest extends TestBase {
         public void testValidHex() throws IOException {
             ByteArrayOutputStream output = new ByteArrayOutputStream(CAFEBABE_BYTES.length);
 
-            try (HexInputStream input = new HexInputStream(new CharSequenceReader(CAFEBABE_STRING))) {
+            try (HexInputStream input = new HexInputStream(reader(CAFEBABE_STRING))) {
                 assertEquals(0, input.read(new byte[5], 0, 0));
                 assertEquals(0, output.size());
                 copy(input, output, 5);
@@ -124,7 +125,7 @@ public class HexInputStreamTest extends TestBase {
                 content.append(CAFEBABE_STRING);
                 System.arraycopy(CAFEBABE_BYTES, 0, expected, j, CAFEBABE_BYTES.length);
             }
-            try (HexInputStream input = new HexInputStream(new CharSequenceReader(content))) {
+            try (HexInputStream input = new HexInputStream(reader(content))) {
                 byte[] buffer = new byte[expected.length];
                 assertEquals(buffer.length, input.read(buffer));
                 assertArrayEquals(expected, buffer);
@@ -134,7 +135,7 @@ public class HexInputStreamTest extends TestBase {
         @Test
         @DisplayName("odd length hex")
         public void testOddLengthHex() throws IOException {
-            try (HexInputStream input = new HexInputStream(new CharSequenceReader(CAFEBABE_STRING + "A"))) {
+            try (HexInputStream input = new HexInputStream(reader(CAFEBABE_STRING + "A"))) {
                 byte[] buffer = new byte[5];
                 IOException exception = assertThrows(IOException.class, () -> {
                     while (input.read(buffer) != -1) {
@@ -164,7 +165,7 @@ public class HexInputStreamTest extends TestBase {
         @Test
         @DisplayName("invalid hex")
         public void testInvalidHex() throws IOException {
-            try (HexInputStream input = new HexInputStream(new CharSequenceReader(CAFEBABE_STRING + "XA"))) {
+            try (HexInputStream input = new HexInputStream(reader(CAFEBABE_STRING + "XA"))) {
                 byte[] buffer = new byte[5];
                 IOException exception = assertThrows(IOException.class, () -> {
                     while (input.read(buffer) != -1) {
@@ -182,7 +183,7 @@ public class HexInputStreamTest extends TestBase {
     @Test
     @DisplayName("available()")
     public void testAvailable() throws IOException {
-        try (HexInputStream input = new HexInputStream(new CharSequenceReader(CAFEBABE_STRING))) {
+        try (HexInputStream input = new HexInputStream(reader(CAFEBABE_STRING))) {
             assertEquals(0, input.available());
             while (input.read() != -1) {
                 assertEquals(0, input.available());
@@ -206,7 +207,7 @@ public class HexInputStreamTest extends TestBase {
     @DisplayName("operations on closed stream")
     public void testOperationsOnClosedStream() throws IOException {
         @SuppressWarnings("resource")
-        HexInputStream input = new HexInputStream(new CharSequenceReader(""));
+        HexInputStream input = new HexInputStream(reader(""));
         input.close();
         assertClosed(() -> input.read());
         assertClosed(() -> input.read(new byte[0]));

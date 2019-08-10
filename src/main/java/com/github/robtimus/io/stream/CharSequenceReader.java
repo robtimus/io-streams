@@ -18,25 +18,11 @@
 package com.github.robtimus.io.stream;
 
 import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
-import static com.github.robtimus.io.stream.StreamUtils.checkStartAndEnd;
 import static com.github.robtimus.io.stream.StreamUtils.streamClosedException;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 
-/**
- * A {@link Reader} implementation backed by a {@link CharSequence}. This is much like {@link StringReader}, except it supports any
- * {@code CharSequence} as well as sub sequences. The latter distinguishes it from
- * <a href="https://commons.apache.org/proper/commons-io/javadocs/api-2.6/org/apache/commons/io/input/CharSequenceReader.html">Common IO's
- * CharSequenceReader</a>, which requires calling {@link CharSequence#subSequence(int, int)} if you want to read only a portion of a
- * {@code CharSequence}. In addition, trying to read from a closed {@code CharSequenceReader} will cause exceptions to be thrown, much like
- * {@code StringReader} does.
- * <p>
- * Like {@code StringReader} it supports {@link #mark(int)} and {@link #reset()}.
- *
- * @author Rob Spoor
- */
-public final class CharSequenceReader extends Reader {
+final class CharSequenceReader extends Reader {
 
     private CharSequence source;
     private final int end;
@@ -44,29 +30,7 @@ public final class CharSequenceReader extends Reader {
     private int index;
     private int mark;
 
-    /**
-     * Creates a new reader that will read from a {@code CharSequence}.
-     *
-     * @param source The {@code CharSequence} to read from.
-     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
-     */
-    public CharSequenceReader(CharSequence source) {
-        this(source, 0, source.length());
-    }
-
-    /**
-     * Creates a new reader that will read from a portion of a {@code CharSequence}.
-     *
-     * @param source The {@code CharSequence} to read from.
-     * @param start The index to start reading at, inclusive.
-     * @param end The index to stop reading at, exclusive.
-     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
-     * @throws IndexOutOfBoundsException If the given start index is negative,
-     *                                       the given end index is larger than the given {@code CharSequence}'s length,
-     *                                       or the given start index is larger than the given end index.
-     */
-    public CharSequenceReader(CharSequence source, int start, int end) {
-        checkStartAndEnd(source, start, end);
+    CharSequenceReader(CharSequence source, int start, int end) {
         this.source = source;
         this.end = end;
 

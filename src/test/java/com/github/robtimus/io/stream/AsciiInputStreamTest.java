@@ -18,6 +18,7 @@
 package com.github.robtimus.io.stream;
 
 import static com.github.robtimus.io.stream.StreamUtils.ascii;
+import static com.github.robtimus.io.stream.StreamUtils.reader;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -99,7 +100,7 @@ public class AsciiInputStreamTest extends TestBase {
     @Test
     @DisplayName("available()")
     public void testAvailable() throws IOException {
-        try (Reader reader = new CharSequenceReader(SOURCE);
+        try (Reader reader = reader(SOURCE);
                 InputStream wrapped = ascii(reader)) {
 
             while (wrapped.read() != -1) {
