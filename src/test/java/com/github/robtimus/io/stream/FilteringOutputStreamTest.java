@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.StreamUtils.filtering;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -38,7 +37,7 @@ public class FilteringOutputStreamTest extends TestBase {
         byte[] expected = SOURCE.replaceAll("\\s+", "").getBytes();
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
 
-        try (OutputStream wrapped = filtering(output, Character::isWhitespace)) {
+        try (OutputStream wrapped = new FilteringOutputStream(output, Character::isWhitespace)) {
             for (byte b : bytes) {
                 wrapped.write(b);
             }
@@ -53,7 +52,7 @@ public class FilteringOutputStreamTest extends TestBase {
         byte[] expected = SOURCE.replaceAll("\\s+", "").getBytes();
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
 
-        try (OutputStream wrapped = filtering(output, Character::isWhitespace)) {
+        try (OutputStream wrapped = new FilteringOutputStream(output, Character::isWhitespace)) {
             int index = 0;
             while (index < bytes.length) {
                 int to = Math.min(index + 5, SOURCE.length());
@@ -67,7 +66,7 @@ public class FilteringOutputStreamTest extends TestBase {
         output.reset();
         bytes = LONG_SOURCE.getBytes();
         expected = LONG_SOURCE.replaceAll("\\s+", "").getBytes();
-        try (OutputStream wrapped = filtering(output, Character::isWhitespace)) {
+        try (OutputStream wrapped = new FilteringOutputStream(output, Character::isWhitespace)) {
             wrapped.write(bytes, 0, bytes.length);
         }
         assertArrayEquals(expected, output.toByteArray());
@@ -78,7 +77,7 @@ public class FilteringOutputStreamTest extends TestBase {
     public void testFlush() throws IOException {
         ByteArrayOutputStream output = spy(new ByteArrayOutputStream());
 
-        try (OutputStream wrapped = filtering(output, Character::isWhitespace)) {
+        try (OutputStream wrapped = new FilteringOutputStream(output, Character::isWhitespace)) {
             wrapped.flush();
         }
         verify(output).flush();
@@ -90,7 +89,7 @@ public class FilteringOutputStreamTest extends TestBase {
     @DisplayName("close()")
     public void testClose() throws IOException {
         ByteArrayOutputStream output = spy(new ByteArrayOutputStream(0));
-        try (OutputStream wrapped = filtering(output, Character::isWhitespace)) {
+        try (OutputStream wrapped = new FilteringOutputStream(output, Character::isWhitespace)) {
             // don't do anything
         }
         verify(output).close();

@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.StreamUtils.ascii;
 import static com.github.robtimus.io.stream.StreamUtils.reader;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -43,7 +42,7 @@ public class AsciiInputStreamTest extends TestBase {
         byte[] expected = SOURCE.getBytes();
         ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
-        try (InputStream wrapped = ascii(new StringReader(SOURCE))) {
+        try (InputStream wrapped = new AsciiInputStream(new StringReader(SOURCE))) {
             int b;
             while ((b = wrapped.read()) != -1) {
                 output.write(b);
@@ -53,7 +52,7 @@ public class AsciiInputStreamTest extends TestBase {
 
         // with invalid ASCII
         String invalid = "é";
-        try (InputStream wrapped = ascii(new StringReader(invalid))) {
+        try (InputStream wrapped = new AsciiInputStream(new StringReader(invalid))) {
             IOException thrown = assertThrows(IOException.class, () -> wrapped.read());
             assertEquals(Messages.ascii.invalidChar.get(invalid.charAt(0)), thrown.getMessage());
         }
@@ -65,7 +64,7 @@ public class AsciiInputStreamTest extends TestBase {
         byte[] expected = SOURCE.getBytes();
         ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
-        try (InputStream wrapped = ascii(new StringReader(SOURCE))) {
+        try (InputStream wrapped = new AsciiInputStream(new StringReader(SOURCE))) {
             byte[] buffer = new byte[1024];
             final int offset = 100;
             int len;
@@ -79,7 +78,7 @@ public class AsciiInputStreamTest extends TestBase {
         output.reset();
         expected = LONG_SOURCE.getBytes();
 
-        try (InputStream wrapped = ascii(new StringReader(LONG_SOURCE))) {
+        try (InputStream wrapped = new AsciiInputStream(new StringReader(LONG_SOURCE))) {
             byte[] buffer = new byte[2048];
             final int offset = 100;
             int len;
@@ -91,7 +90,7 @@ public class AsciiInputStreamTest extends TestBase {
 
         // with invalid ASCII
         String invalid = "hello é";
-        try (InputStream wrapped = ascii(new StringReader(invalid))) {
+        try (InputStream wrapped = new AsciiInputStream(new StringReader(invalid))) {
             IOException thrown = assertThrows(IOException.class, () -> wrapped.read(new byte[1024]));
             assertEquals(Messages.ascii.invalidChar.get(invalid.charAt(invalid.length() - 1)), thrown.getMessage());
         }
@@ -101,7 +100,7 @@ public class AsciiInputStreamTest extends TestBase {
     @DisplayName("available()")
     public void testAvailable() throws IOException {
         try (Reader reader = reader(SOURCE);
-                InputStream wrapped = ascii(reader)) {
+                InputStream wrapped = new AsciiInputStream(reader)) {
 
             while (wrapped.read() != -1) {
                 int expected = reader.ready() ? 1 : 0;
@@ -115,7 +114,7 @@ public class AsciiInputStreamTest extends TestBase {
     @DisplayName("close()")
     public void testClose() throws IOException {
         StringReader input = spy(new StringReader(""));
-        try (InputStream wrapped = ascii(input)) {
+        try (InputStream wrapped = new AsciiInputStream(input)) {
             // don't do anything
         }
         verify(input).close();
@@ -129,7 +128,9 @@ public class AsciiInputStreamTest extends TestBase {
         String base64 = Base64.getEncoder().encodeToString(expected);
         ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
-        try (InputStream decoded = Base64.getDecoder().wrap(ascii(new StringReader(base64)))) {
+        try (InputStream wrapped = new AsciiInputStream(new StringReader(base64));
+                InputStream decoded = Base64.getDecoder().wrap(wrapped)) {
+
             copy(decoded, output);
         }
         assertArrayEquals(expected, output.toByteArray());

@@ -79,7 +79,7 @@ public final class PipeOutputStream extends OutputStream {
      * thrown. Otherwise, the pipe's input stream will continue to consume the data that has been written; if all is consumed it will return
      * {@code -1} from its read methods.
      * <p>
-     * It is possible to call {@code close()} and {@link #close(IOException)} several times. This can be used to change or clear the exception to
+     * It is possible to call {@link #close()} and {@code close(IOException)} several times. This can be used to change or clear the exception to
      * throw when reading from the pipe's input stream.
      *
      * @param error If not {@code null}, the exception to throw when reading from the pipe's input stream.

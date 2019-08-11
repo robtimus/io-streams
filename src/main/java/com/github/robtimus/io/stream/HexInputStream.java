@@ -46,8 +46,8 @@ public final class HexInputStream extends InputStream {
     /**
      * Creates a new hex input stream.
      *
-     * @param source The source of the hex characters.
-     * @throws NullPointerException If the given source is {@code null}.
+     * @param source The reader that forms the source of the hex characters.
+     * @throws NullPointerException If the given reader is {@code null}.
      */
     public HexInputStream(Reader source) {
         this.source = Objects.requireNonNull(source);
@@ -156,10 +156,10 @@ public final class HexInputStream extends InputStream {
     /**
      * Converts a hex representation into a byte array.
      *
-     * @param hex The {@code CharSequence} with the hex representation to convert.
+     * @param hex The character sequence with the hex representation to convert.
      * @return The bytes from the given hex representation.
-     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
-     * @throws IllegalArgumentException If the given {@code CharSequence} does not contain a valid hex representation.
+     * @throws NullPointerException If the given character sequence is {@code null}.
+     * @throws IllegalArgumentException If the given character sequence does not contain a valid hex representation.
      */
     public static byte[] decode(CharSequence hex) {
         return decode(hex, 0, hex.length());
@@ -168,15 +168,15 @@ public final class HexInputStream extends InputStream {
     /**
      * Converts a hex representation into a byte array.
      *
-     * @param hex The {@code CharSequence} with the hex representation to convert.
-     * @param start The start index of the {@code CharSequence} of the hex representation to convert, inclusive.
-     * @param end The end index of the {@code CharSequence} of the hex representation to convert, exclusive.
+     * @param hex The character sequence with the hex representation to convert.
+     * @param start The start index of the character sequence of the hex representation to convert, inclusive.
+     * @param end The end index of the character sequence of the hex representation to convert, exclusive.
      * @return The bytes from the given hex representation.
-     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
+     * @throws NullPointerException If the given character sequence is {@code null}.
      * @throws IndexOutOfBoundsException If the given start index is negative,
-     *                                       the given end index is larger than the given {@code CharSequence}'s length,
+     *                                       the given end index is larger than the given character sequence's length,
      *                                       or the given start index is larger than the given end index.
-     * @throws IllegalArgumentException If the given {@code CharSequence} does not contain a valid hex representation.
+     * @throws IllegalArgumentException If the given character sequence does not contain a valid hex representation.
      */
     public static byte[] decode(CharSequence hex, int start, int end) {
         checkStartAndEnd(hex, start, end);
@@ -205,11 +205,11 @@ public final class HexInputStream extends InputStream {
     /**
      * Attempts to converts a hex representation into a byte array.
      *
-     * @param hex The {@code CharSequence} with the hex representation to convert.
+     * @param hex The character sequence with the hex representation to convert.
      * @return An {@link Optional} with the bytes from the given hex representation,
-     *         or {@link Optional#empty()} if the {@code CharSequence} is {@code null} or does not contain a valid hex representation.
+     *         or {@link Optional#empty()} if the character sequence is {@code null} or does not contain a valid hex representation.
      * @throws IndexOutOfBoundsException If the given start index is negative,
-     *                                       the given end index is larger than the given {@code CharSequence}'s length,
+     *                                       the given end index is larger than the given character sequence's length,
      *                                       or the given start index is larger than the given end index.
      */
     public static Optional<byte[]> tryDecode(CharSequence hex) {
@@ -219,13 +219,13 @@ public final class HexInputStream extends InputStream {
     /**
      * Attempts to converts a hex representation into a byte array.
      *
-     * @param hex The {@code CharSequence} with the hex representation to convert.
-     * @param start The start index of the {@code CharSequence} of the hex representation to convert, inclusive.
-     * @param end The end index of the {@code CharSequence} of the hex representation to convert, exclusive.
+     * @param hex The character sequence with the hex representation to convert.
+     * @param start The start index of the character sequence of the hex representation to convert, inclusive.
+     * @param end The end index of the character sequence of the hex representation to convert, exclusive.
      * @return An {@link Optional} with the bytes from the given hex representation,
-     *         or {@link Optional#empty()} if the {@code CharSequence} is {@code null} or does not contain a valid hex representation.
+     *         or {@link Optional#empty()} if the character sequence is {@code null} or does not contain a valid hex representation.
      * @throws IndexOutOfBoundsException If the given start index is negative,
-     *                                       the given end index is larger than the given {@code CharSequence}'s length,
+     *                                       the given end index is larger than the given character sequence's length,
      *                                       or the given start index is larger than the given end index.
      */
     public static Optional<byte[]> tryDecode(CharSequence hex, int start, int end) {

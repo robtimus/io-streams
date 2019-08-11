@@ -21,8 +21,22 @@ import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.util.Base64.Encoder;
+import java.util.Objects;
 
-final class AsciiOutputStream extends OutputStream {
+/**
+ * An output stream that wraps a writer to write only ASCII characters.
+ * If any non-ASCII bytes are written to an {@code AsciiOutputStream}, it will thrown an {@link IOException}.
+ * <p>
+ * This can be used in code that expects an output stream where a writer is available.
+ * One such example is base64 encoding. Even though base64 is text, {@link Encoder} can only wrap {@link OutputStream}. This method can help:
+ * <pre>OutputStream output = Base64.getEncoder().wrap(new AsciiOutputStream(writer));</pre>
+ * <p>
+ * When an {@code AsciiOutputStream} is closed, the wrapped writer will be closed as well.
+ *
+ * @author Rob Spoor
+ */
+public final class AsciiOutputStream extends OutputStream {
 
     private static final int WRITE_BUFFER_SIZE = 1024;
 
@@ -30,8 +44,14 @@ final class AsciiOutputStream extends OutputStream {
 
     private char[] writeBuffer;
 
-    AsciiOutputStream(Writer output) {
-        this.output = output;
+    /**
+     * Creates a new ASCII output stream.
+     *
+     * @param output The writer to wrap.
+     * @throws NullPointerException If the given writer is {@code null}.
+     */
+    public AsciiOutputStream(Writer output) {
+        this.output = Objects.requireNonNull(output);
     }
 
     @Override

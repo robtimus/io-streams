@@ -20,9 +20,19 @@ package com.github.robtimus.io.stream;
 import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 import java.util.function.IntPredicate;
 
-final class FilteringOutputStream extends OutputStream {
+/**
+ * An output stream that filters the contents of another output stream.
+ * For instance, the following can be used to create an output stream that does not write any whitespace characters:
+ * <pre>OutputStream filtering = new FilteringOutputStream(output, Character::isWhitespace);</pre>
+ * <p>
+ * When a {@code FilteringOutputStream} is closed, the wrapped output stream will be closed as well.
+ *
+ * @author Rob Spoor
+ */
+public final class FilteringOutputStream extends OutputStream {
 
     private static final int WRITE_BUFFER_SIZE = 1024;
 
@@ -31,9 +41,17 @@ final class FilteringOutputStream extends OutputStream {
 
     private byte[] writeBuffer;
 
-    FilteringOutputStream(OutputStream output, IntPredicate filter) {
-        this.output = output;
-        this.filter = filter;
+    /**
+     * Creates a new filtering output stream.
+     *
+     * @param output The output stream to filter.
+     * @param filter The predicate to use to filter out bytes.
+     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @throws NullPointerException If the given output stream or predicate is {@code null}.
+     */
+    public FilteringOutputStream(OutputStream output, IntPredicate filter) {
+        this.output = Objects.requireNonNull(output);
+        this.filter = Objects.requireNonNull(filter);
     }
 
     @Override

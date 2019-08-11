@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.StreamUtils.filtering;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.spy;
@@ -39,7 +38,7 @@ public class FilteringReaderTest extends TestBase {
         StringReader input = new StringReader(SOURCE);
         StringBuilder output = new StringBuilder(SOURCE.length());
 
-        try (Reader wrapped = filtering(input, Character::isWhitespace)) {
+        try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             int c;
             while ((c = wrapped.read()) != -1) {
                 output.append((char) c);
@@ -55,7 +54,7 @@ public class FilteringReaderTest extends TestBase {
         StringReader input = new StringReader(SOURCE);
         StringBuilder output = new StringBuilder(SOURCE.length());
 
-        try (Reader wrapped = filtering(input, Character::isWhitespace)) {
+        try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             char[] buffer = new char[1024];
             final int offset = 100;
             int len;
@@ -71,7 +70,7 @@ public class FilteringReaderTest extends TestBase {
     public void testReady() throws IOException {
         StringReader input = new StringReader(SOURCE);
 
-        try (Reader wrapped = filtering(input, Character::isWhitespace)) {
+        try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             assertFalse(wrapped.ready());
         }
     }
@@ -83,7 +82,7 @@ public class FilteringReaderTest extends TestBase {
         StringReader input = new StringReader(SOURCE);
         StringBuilder output = new StringBuilder(SOURCE.length());
 
-        try (Reader wrapped = filtering(input, Character::isWhitespace)) {
+        try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             assertEquals(input.markSupported(), wrapped.markSupported());
             wrapped.mark(10);
             char[] buffer = new char[10];
@@ -101,7 +100,7 @@ public class FilteringReaderTest extends TestBase {
     @DisplayName("close()")
     public void testClose() throws IOException {
         StringReader input = spy(new StringReader(""));
-        try (Reader wrapped = filtering(input, Character::isWhitespace)) {
+        try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             // don't do anything
         }
         verify(input).close();

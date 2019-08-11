@@ -19,16 +19,34 @@ package com.github.robtimus.io.stream;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Objects;
 import java.util.function.IntPredicate;
 
-final class FilteringReader extends Reader {
+/**
+ * A reader that filters the contents of another reader.
+ * For instance, the following can be used to create a reader that does not return any whitespace characters:
+ * <pre>Reader filtering = new FilteringReader(input, Character::isWhitespace);</pre>
+ * <p>
+ * When a {@code FilteringReader} is closed, the wrapped reader will be closed as well.
+ *
+ * @author Rob Spoor
+ */
+public final class FilteringReader extends Reader {
 
     private final Reader input;
     private final IntPredicate filter;
 
-    FilteringReader(Reader input, IntPredicate filter) {
-        this.input = input;
-        this.filter = filter;
+    /**
+     * Creates a new filtering reader.
+     *
+     * @param input The reader to filter.
+     * @param filter The predicate to use to filter out characters.
+     *                   Any character for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @throws NullPointerException If the given reader or predicate is {@code null}.
+     */
+    public FilteringReader(Reader input, IntPredicate filter) {
+        this.input = Objects.requireNonNull(input);
+        this.filter = Objects.requireNonNull(filter);
     }
 
     @Override

@@ -83,7 +83,7 @@ public final class PipeReader extends Reader {
      * an exception to be thrown. When reading from this reader, {@code -1} is returned, except if an exception is set using
      * {@link PipeWriter#close(IOException)}.
      * <p>
-     * It is possible to call {@code close()} and {@link #close(IOException)} several times. This can be used to change the exception to throw when
+     * It is possible to call {@link #close()} and {@code close(IOException)} several times. This can be used to change the exception to throw when
      * writing to the pipe's writer.
      *
      * @param error If not {@code null}, the exception to throw when writing to the pipe's writer.

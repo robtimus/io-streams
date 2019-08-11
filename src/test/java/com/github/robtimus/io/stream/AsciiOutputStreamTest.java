@@ -17,18 +17,13 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.StreamUtils.ascii;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Base64;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +38,7 @@ public class AsciiOutputStreamTest extends TestBase {
         byte[] bytes = SOURCE.getBytes();
         StringWriter output = new StringWriter(SOURCE.length());
 
-        try (OutputStream wrapped = ascii(output)) {
+        try (OutputStream wrapped = new AsciiOutputStream(output)) {
             for (byte b : bytes) {
                 wrapped.write(b);
             }
@@ -61,7 +56,7 @@ public class AsciiOutputStreamTest extends TestBase {
         byte[] bytes = SOURCE.getBytes();
         StringWriter output = new StringWriter(SOURCE.length());
 
-        try (OutputStream wrapped = ascii(output)) {
+        try (OutputStream wrapped = new AsciiOutputStream(output)) {
             int index = 0;
             while (index < bytes.length) {
                 int to = Math.min(index + 5, SOURCE.length());
@@ -78,7 +73,7 @@ public class AsciiOutputStreamTest extends TestBase {
         // write a huge array
         output.getBuffer().delete(0, SOURCE.length());
         bytes = LONG_SOURCE.getBytes();
-        try (OutputStream wrapped = ascii(output)) {
+        try (OutputStream wrapped = new AsciiOutputStream(output)) {
             wrapped.write(bytes, 0, bytes.length);
         }
         assertEquals(LONG_SOURCE, output.toString());
@@ -88,7 +83,7 @@ public class AsciiOutputStreamTest extends TestBase {
     @DisplayName("flush()")
     public void testFlush() throws IOException {
         StringWriter output = spy(new StringWriter());
-        try (OutputStream wrapped = ascii(output)) {
+        try (OutputStream wrapped = new AsciiOutputStream(output)) {
             wrapped.flush();
         }
         verify(output).flush();
@@ -100,7 +95,7 @@ public class AsciiOutputStreamTest extends TestBase {
     @DisplayName("close()")
     public void testClose() throws IOException {
         StringWriter output = spy(new StringWriter());
-        try (OutputStream wrapped = ascii(output)) {
+        try (OutputStream wrapped = new AsciiOutputStream(output)) {
             // don't do anything
         }
         verify(output).close();
@@ -110,13 +105,15 @@ public class AsciiOutputStreamTest extends TestBase {
     @Test
     @DisplayName("base64")
     public void testBase64() throws IOException {
-        byte[] expected = SOURCE.getBytes();
-        String base64 = Base64.getEncoder().encodeToString(expected);
-        ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
+        byte[] bytes = SOURCE.getBytes();
+        String base64 = Base64.getEncoder().encodeToString(bytes);
+        StringWriter output = new StringWriter(base64.length());
 
-        try (InputStream decoded = Base64.getDecoder().wrap(ascii(new StringReader(base64)))) {
-            copy(decoded, output);
+        try (OutputStream wrapped = new AsciiOutputStream(output);
+                OutputStream encoding = Base64.getEncoder().wrap(wrapped)) {
+
+            encoding.write(bytes);
         }
-        assertArrayEquals(expected, output.toByteArray());
+        assertEquals(base64, output.toString());
     }
 }

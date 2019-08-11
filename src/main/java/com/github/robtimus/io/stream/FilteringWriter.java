@@ -20,9 +20,19 @@ package com.github.robtimus.io.stream;
 import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Objects;
 import java.util.function.IntPredicate;
 
-final class FilteringWriter extends Writer {
+/**
+ * A writer that filters the contents of another writer.
+ * For instance, the following can be used to create a writer that does not write any whitespace characters:
+ * <pre>Writer filtering = new FilteringWriter(output, Character::isWhitespace);</pre>
+ * <p>
+ * When a {@code FilteringWriter} is closed, the wrapped writer will be closed as well.
+ *
+ * @author Rob Spoor
+ */
+public final class FilteringWriter extends Writer {
 
     private static final int WRITE_BUFFER_SIZE = 1024;
 
@@ -31,9 +41,17 @@ final class FilteringWriter extends Writer {
 
     private char[] writeBuffer;
 
-    FilteringWriter(Writer output, IntPredicate filter) {
-        this.output = output;
-        this.filter = filter;
+    /**
+     * Creates a new filtering writer.
+     *
+     * @param output The writer to filter.
+     * @param filter The predicate to use to filter out characters.
+     *                   Any character for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
+     * @throws NullPointerException If the given writer or predicate is {@code null}.
+     */
+    public FilteringWriter(Writer output, IntPredicate filter) {
+        this.output = Objects.requireNonNull(output);
+        this.filter = Objects.requireNonNull(filter);
     }
 
     @Override

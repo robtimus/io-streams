@@ -17,7 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import static com.github.robtimus.io.stream.StreamUtils.filtering;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -37,7 +36,7 @@ public class FilteringWriterTest extends TestBase {
         String expected = SOURCE.replaceAll("\\s+", "");
         StringWriter output = new StringWriter(SOURCE.length());
 
-        try (Writer wrapped = filtering(output, Character::isWhitespace)) {
+        try (Writer wrapped = new FilteringWriter(output, Character::isWhitespace)) {
             for (int i = 0; i < SOURCE.length(); i++) {
                 wrapped.write(SOURCE.charAt(i));
             }
@@ -51,7 +50,7 @@ public class FilteringWriterTest extends TestBase {
         String expected = SOURCE.replaceAll("\\s+", "");
         StringWriter output = new StringWriter(SOURCE.length());
 
-        try (Writer wrapped = filtering(output, Character::isWhitespace)) {
+        try (Writer wrapped = new FilteringWriter(output, Character::isWhitespace)) {
             char[] chars = SOURCE.toCharArray();
             int index = 0;
             while (index < chars.length) {
@@ -65,7 +64,7 @@ public class FilteringWriterTest extends TestBase {
         // write a huge array
         expected = LONG_SOURCE.replaceAll("\\s+", "");
         output = new StringWriter(LONG_SOURCE.length());
-        try (Writer wrapped = filtering(output, Character::isWhitespace)) {
+        try (Writer wrapped = new FilteringWriter(output, Character::isWhitespace)) {
             wrapped.write(LONG_SOURCE.toCharArray(), 0, LONG_SOURCE.length());
         }
         assertEquals(expected, output.toString());
@@ -76,7 +75,7 @@ public class FilteringWriterTest extends TestBase {
     public void testFlush() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
-        try (Writer wrapped = filtering(output, Character::isWhitespace)) {
+        try (Writer wrapped = new FilteringWriter(output, Character::isWhitespace)) {
             wrapped.flush();
         }
         verify(output).flush();
@@ -88,7 +87,7 @@ public class FilteringWriterTest extends TestBase {
     @DisplayName("close()")
     public void testClose() throws IOException {
         StringWriter output = spy(new StringWriter(0));
-        try (Writer wrapped = filtering(output, Character::isWhitespace)) {
+        try (Writer wrapped = new FilteringWriter(output, Character::isWhitespace)) {
             // don't do anything
         }
         verify(output).close();

@@ -21,8 +21,22 @@ import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.Base64.Decoder;
+import java.util.Objects;
 
-final class AsciiInputStream extends InputStream {
+/**
+ * An input stream that wraps a reader that contains only ASCII characters.
+ * If the wrapped reader contains any non-ASCII characters, the wrapping {@code AsciiInputStream} will throw an {@link IOException}.
+ * <p>
+ * This can be used in code that expects an input stream where a reader is available.
+ * One such example is base64 decoding. Even though base64 is text, {@link Decoder} can only wrap {@link InputStream}. This method can help:
+ * <pre>InputStream input = Base64.getDecoder().wrap(new AsciiInputStream(reader));</pre>
+ * <p>
+ * When an {@code AsciiInputStream} is closed, the wrapped reader will be closed as well.
+ *
+ * @author Rob Spoor
+ */
+public final class AsciiInputStream extends InputStream {
 
     private static final int READ_BUFFER_SIZE = 1024;
 
@@ -30,8 +44,14 @@ final class AsciiInputStream extends InputStream {
 
     private char[] readBuffer;
 
-    AsciiInputStream(Reader input) {
-        this.input = input;
+    /**
+     * Creates a new ASCII input stream.
+     *
+     * @param input The reader to wrap.
+     * @throws NullPointerException If the given reader is {@code null}.
+     */
+    public AsciiInputStream(Reader input) {
+        this.input = Objects.requireNonNull(input);
     }
 
     @Override

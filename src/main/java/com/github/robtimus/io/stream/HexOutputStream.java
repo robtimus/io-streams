@@ -38,7 +38,7 @@ public final class HexOutputStream extends OutputStream {
 
     private static final int WRITE_BUFFER_SIZE = 1024;
 
-    private Writer destination;
+    private Writer output;
 
     private final boolean upperCase;
 
@@ -47,8 +47,8 @@ public final class HexOutputStream extends OutputStream {
     /**
      * Creates a new hex output stream. It will write hex in lower case.
      *
-     * @param destination The {@code Appendable} to write to.
-     * @throws NullPointerException If the given {@code Appendable} is {@code null}.
+     * @param destination The appendable to write to.
+     * @throws NullPointerException If the given appendable is {@code null}.
      */
     public HexOutputStream(Appendable destination) {
         this(destination, false);
@@ -57,17 +57,17 @@ public final class HexOutputStream extends OutputStream {
     /**
      * Creates a new hex output stream.
      *
-     * @param destination The {@code Appendable} to write to.
+     * @param destination The appendable to write to.
      * @param upperCase {@code true} to write hex in upper case, or {@code false} to write hex in lower case.
-     * @throws NullPointerException If the given {@code Appendable} is {@code null}.
+     * @throws NullPointerException If the given appendable is {@code null}.
      */
     public HexOutputStream(Appendable destination, boolean upperCase) {
-        this.destination = writer(destination);
+        this.output = writer(destination);
         this.upperCase = upperCase;
     }
 
     private void ensureOpen() throws IOException {
-        if (destination == null) {
+        if (output == null) {
             throw streamClosedException();
         }
     }
@@ -80,7 +80,7 @@ public final class HexOutputStream extends OutputStream {
         }
         writeBuffer[0] = high(b, upperCase);
         writeBuffer[1] = low(b, upperCase);
-        destination.write(writeBuffer, 0, 2);
+        output.write(writeBuffer, 0, 2);
     }
 
     @Override
@@ -103,20 +103,20 @@ public final class HexOutputStream extends OutputStream {
             cbuf[k] = high(b[i], upperCase);
             cbuf[k + 1] = low(b[i], upperCase);
         }
-        destination.write(cbuf, 0, lenInHex);
+        output.write(cbuf, 0, lenInHex);
     }
 
     @Override
     public void flush() throws IOException {
         ensureOpen();
-        destination.flush();
+        output.flush();
     }
 
     @Override
     public void close() throws IOException {
-        if (destination != null) {
-            destination.close();
-            destination = null;
+        if (output != null) {
+            output.close();
+            output = null;
         }
     }
 

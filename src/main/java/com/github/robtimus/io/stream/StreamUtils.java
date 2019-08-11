@@ -25,10 +25,7 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
-import java.util.Base64.Decoder;
-import java.util.Base64.Encoder;
 import java.util.Objects;
-import java.util.function.IntPredicate;
 
 /**
  * Utility methods for {@link InputStream InputStreams}, {@link OutputStream OutputStreams}, {@link Reader Readers} and {@link Writer Writers}.
@@ -46,31 +43,31 @@ public final class StreamUtils {
     // wrapping
 
     /**
-     * Returns a {@code Reader} wrapper around a {@code CharSequence}. This is a utility method that delegates to
+     * Returns a reader wrapper around a character sequence. This is a utility method that delegates to
      * {@link #reader(CharSequence, int, int) reader(sequence, 0, sequence.length())}.
      *
-     * @param sequence The {@code CharSequence} to return a {@code Reader} for.
-     * @return A {@code Reader} wrapper around the given {@code CharSequence}.
-     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
+     * @param sequence The character sequence to return a reader for.
+     * @return A reader wrapper around the given character sequence.
+     * @throws NullPointerException If the given character sequence is {@code null}.
      */
     public static Reader reader(CharSequence sequence) {
         return reader(sequence, 0, sequence.length());
     }
 
     /**
-     * Returns a {@code Reader} wrapper around a portion of a {@code CharSequence}. This {@code Reader} is much like {@link StringReader}, except it
-     * supports any {@code CharSequence} as well as sub sequences. Like {@code StringReader} it supports {@link Reader#mark(int)} and
-     * {@link Reader#reset()}. Unlike {@code StringReader}, it's not thread safe.
+     * Returns a reader wrapper around a portion of a character sequence.
+     * This reader is much like {@link StringReader}, except it supports any character sequence as well as sub sequences.
+     * Like {@code StringReader} it supports {@link Reader#mark(int)} and {@link Reader#reset()}. Unlike {@code StringReader}, it's not thread safe.
      * <p>
-     * After the returned {@code Reader} has been closed, attempting to read from it will result in an {@link IOException}.
+     * After the returned reader has been closed, attempting to read from it will result in an {@link IOException}.
      *
-     * @param sequence The {@code CharSequence} to return a {@code Reader} for.
+     * @param sequence The character sequence to return a reader for.
      * @param start The index to start reading at, inclusive.
      * @param end The index to stop reading at, exclusive.
-     * @return A {@code Reader} wrapper around the given portion of the given {@code CharSequence}.
-     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
+     * @return A reader wrapper around the given portion of the given character sequence.
+     * @throws NullPointerException If the given character sequence is {@code null}.
      * @throws IndexOutOfBoundsException If the given start index is negative,
-     *                                       the given end index is larger than the given {@code CharSequence}'s length,
+     *                                       the given end index is larger than the given character sequence's length,
      *                                       or the given start index is larger than the given end index.
      */
     public static Reader reader(CharSequence sequence, int start, int end) {
@@ -79,18 +76,18 @@ public final class StreamUtils {
     }
 
     /**
-     * Returns an {@code Appendable} as a {@code Writer}. If the given {@code Appendable} is a {@code Writer}, it is returned unmodified.
-     * Otherwise, a wrapper is returned that will delegate all calls to the wrapped {@code Appendable}. This includes {@link Writer#flush() flush()}
-     * if the wrapped {@code Appendable} implements {@link Flushable}, and {@link Writer#close() close()} if the wrapped {@code Appendable} implements
-     * {@link Closeable} or {@link AutoCloseable}.
+     * Returns an appendable as a writer.
+     * If the given appendable is a writer, it is returned unmodified. Otherwise, a wrapper is returned that will delegate all calls to the wrapped
+     * appendable. This includes {@link Writer#flush() flush()} if the wrapped appendable implements {@link Flushable},
+     * and {@link Writer#close() close()} if the wrapped appendable implements {@link Closeable} or {@link AutoCloseable}.
      * <p>
-     * Note that the behaviour of closing a {@code Writer} wrapper depends on the wrapped {@code Appendable}. If it does not support closing,
-     * or if it still allows text to be appended after closing, then the closed {@code AppendableWriter} allows text to be appended after closing.
-     * If it does not allow text to be appended after closing, then neither will the closed {@code Writer} wrapper.
+     * Note that the behaviour of closing a writer wrapper depends on the wrapped appendable. If it does not support closing, or if it still allows
+     * text to be appended after closing, then the closed writer allows text to be appended after closing. If it does not allow text to be appended
+     * after closing, then neither will the closed writer wrapper.
      *
-     * @param appendable The {@code Appendable} to return a {@code Writer} for.
-     * @return The given {@code Appendable} itself if it's already a {@code Writer}, otherwise a wrapper around the given {@code Appendable}.
-     * @throws NullPointerException If the given {@code Appendable} is {@code null}.
+     * @param appendable The appendable to return a writer for.
+     * @return The given appendable itself if it's already a writer, otherwise a wrapper around the given appendable.
+     * @throws NullPointerException If the given appendable is {@code null}.
      */
     public static Writer writer(Appendable appendable) {
         Objects.requireNonNull(appendable);
@@ -98,130 +95,14 @@ public final class StreamUtils {
     }
 
     /**
-     * Returns an {@code InputStream} that wraps a {@code Reader} that contains only ASCII characters. If the {@code Reader} contains any non-ASCII
-     * characters, the returned {@code InputStream} will throw an {@link IOException}.
+     * Wraps an input stream to prevent it from being closed.
+     * This method can be used when a method wants to close a passed input stream while the input stream is still needed.
      * <p>
-     * This can be used in code that expects an {@code InputStream} where a {@code Reader} is available. One such example is base64 decoding.
-     * Even though base64 is text, {@link Decoder} can only wrap {@code InputStream}. This method can help:
-     * <pre>InputStream input = Base64.getDecoder().wrap(ascii(reader));</pre>
-     * <p>
-     * When the returned {@code InputStream} is closed, the given {@code Reader} will be closed as well.
+     * The returned input stream delegates all methods except for {@link InputStream#close() close()} to the given input stream.
      *
-     * @param input The {@code Reader} to wrap.
-     * @return An {@code InputStream} that reads from the given {@code Reader} and converts all of its ASCII characters to bytes, and throws an
-     *         {@link IOException} for any non-ASCII characters.
-     * @throws NullPointerException If the given {@code Reader} is {@code null}.
-     */
-    public static InputStream ascii(Reader input) {
-        Objects.requireNonNull(input);
-        return new AsciiInputStream(input);
-    }
-
-    /**
-     * Returns an {@code OutputStream} that wraps a {@code Writer} to write only ASCII characters. If any non-ASCII bytes are written to the returned
-     * {@code OutputStream}, it will thrown an {@link IOException}.
-     * <p>
-     * This can be used in code that expects an {@code OutputStream} where a {@code Writer} is available. One such example is base64 encoding.
-     * Even though base64 is text, {@link Encoder} can only wrap {@code OutputStream}. This method can help:
-     * <pre>OutputStream output = Base64.getEncoder().wrap(ascii(writer));</pre>
-     * <p>
-     * When the returned {@code OutputStream} is closed, the given {@code Writer} will be closed as well.
-     *
-     * @param output The {@code Writer} to wrap.
-     * @return An {@code OutputStream} that writes all ASCII bytes written to it to the given {@code Writer}, and throws an {@link IOException} for
-     *         any non-ASCII bytes.
-     * @throws NullPointerException If the given {@code Writer} is {@code null}.
-     */
-    public static OutputStream ascii(Writer output) {
-        Objects.requireNonNull(output);
-        return new AsciiOutputStream(output);
-    }
-
-    /**
-     * Returns an {@code InputStream} that filters the contents of another {@code InputStream}.
-     * For instance, the following can be used to create an {@code InputStream} that does not return any whitespace characters:
-     * <pre>InputStream filtering = filtering(input, Character::isWhitespace);</pre>
-     * <p>
-     * When the returned {@code InputStream} is closed, the given {@code InputStream} will be closed as well.
-     *
-     * @param input The {@code InputStream} to filter.
-     * @param filter The predicate to use to filter out bytes.
-     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
-     * @return An {@code InputStream} that filters the contents of the given {@code InputStream} using the given predicate.
-     * @throws NullPointerException If the given {@code InputStream} or predicate is {@code null}.
-     */
-    public static InputStream filtering(InputStream input, IntPredicate filter) {
-        Objects.requireNonNull(input);
-        Objects.requireNonNull(filter);
-        return new FilteringInputStream(input, filter);
-    }
-
-    /**
-     * Returns an {@code OutputStream} that filters the contents of another {@code OutputStream}.
-     * For instance, the following can be used to create an {@code OutputStream} that does not write any whitespace characters:
-     * <pre>OutputStream filtering = filtering(output, Character::isWhitespace);</pre>
-     * <p>
-     * When the returned {@code OutputStream} is closed, the given {@code OutputStream} will be closed as well.
-     *
-     * @param output The {@code OutputStream} to filter.
-     * @param filter The predicate to use to filter out bytes.
-     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
-     * @return An {@code OutputStream} that filters contents using the given predicate before writing to the given {@code OutputStream}.
-     * @throws NullPointerException If the given {@code OutputStream} or predicate is {@code null}.
-     */
-    public static OutputStream filtering(OutputStream output, IntPredicate filter) {
-        Objects.requireNonNull(output);
-        Objects.requireNonNull(filter);
-        return new FilteringOutputStream(output, filter);
-    }
-
-    /**
-     * Returns a {@code Reader} that filters the contents of another {@code Reader}.
-     * For instance, the following can be used to create an {@code Reader} that does not return any whitespace characters:
-     * <pre>Reader filtering = filtering(input, Character::isWhitespace);</pre>
-     * <p>
-     * When the returned {@code Reader} is closed, the given {@code Reader} will be closed as well.
-     *
-     * @param input The {@code Reader} to filter.
-     * @param filter The predicate to use to filter out characters.
-     *                   Any character for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
-     * @return A {@code Reader} that filters the contents of the given {@code Reader} using the given predicate.
-     * @throws NullPointerException If the given {@code Reader} or predicate is {@code null}.
-     */
-    public static Reader filtering(Reader input, IntPredicate filter) {
-        Objects.requireNonNull(input);
-        Objects.requireNonNull(filter);
-        return new FilteringReader(input, filter);
-    }
-
-    /**
-     * Returns a {@code Writer} that filters the contents of another {@code Writer}.
-     * For instance, the following can be used to create a {@code Writer} that does not write any whitespace characters:
-     * <pre>Writer filtering = filtering(output, Character::isWhitespace);</pre>
-     * <p>
-     * When the returned {@code Writer} is closed, the given {@code Writer} will be closed as well.
-     *
-     * @param output The {@code Writer} to filter.
-     * @param filter The predicate to use to filter out bytes.
-     *                   Any byte for which the predicate's {@link IntPredicate#test(int) test} method returns {@code true} will be filtered out.
-     * @return A {@code Writer} that filters contents using the given predicate before writing to the given {@code Writer}.
-     * @throws NullPointerException If the given {@code Writer} or predicate is {@code null}.
-     */
-    public static Writer filtering(Writer output, IntPredicate filter) {
-        Objects.requireNonNull(output);
-        Objects.requireNonNull(filter);
-        return new FilteringWriter(output, filter);
-    }
-
-    /**
-     * Wraps an {@code InputStream} to prevent it from being closed.
-     * This method can be used when a method wants to close a passed {@code InputStream} while the {@code InputStream} is still needed.
-     * <p>
-     * The returned {@code InputStream} delegates all methods except for {@link InputStream#close() close()} to the given {@code InputStream}.
-     *
-     * @param input The {@code InputStream} to wrap.
-     * @return An {@code InputStream} wrapper around the given {@code InputStream} that will delegate all methods except for {@code close()}.
-     * @throws NullPointerException If the given {@code InputStream} is {@code null}.
+     * @param input The input stream to wrap.
+     * @return An input stream wrapper around the given input stream that will delegate all methods except for {@code close()}.
+     * @throws NullPointerException If the given input stream is {@code null}.
      */
     public static InputStream dontClose(InputStream input) {
         Objects.requireNonNull(input);
@@ -229,16 +110,16 @@ public final class StreamUtils {
     }
 
     /**
-     * Wraps an {@code OutputStream} to prevent it from being closed.
-     * This method can be used when a method wants to close a passed {@code OutputStream} while the {@code OutputStream} is still needed.
-     * Another usage is in a try-with-resources block where a wrapping {@code OutputStream} needs to be closed to finish its work, but the wrapped
-     * {@code OutputStream} should still remain open.
+     * Wraps an output stream to prevent it from being closed.
+     * This method can be used when a method wants to close a passed output stream while the output stream is still needed.
+     * Another usage is in a try-with-resources block where a wrapping output stream needs to be closed to finish its work, but the wrapped output
+     * stream should still remain open.
      * <p>
-     * The returned {@code OutputStream} delegates all methods except for {@link OutputStream#close() close()} to the given {@code OutputStream}.
+     * The returned output stream delegates all methods except for {@link OutputStream#close() close()} to the given output stream.
      *
-     * @param output The {@code OutputStream} to wrap.
-     * @return An {@code OutputStream} wrapper around the given {@code OutputStream} that will delegate all methods except for {@code close()}.
-     * @throws NullPointerException If the given {@code OutputStream} is {@code null}.
+     * @param output The output stream to wrap.
+     * @return An output stream wrapper around the given output stream that will delegate all methods except for {@code close()}.
+     * @throws NullPointerException If the given output stream is {@code null}.
      */
     public static OutputStream dontClose(OutputStream output) {
         Objects.requireNonNull(output);
@@ -246,14 +127,14 @@ public final class StreamUtils {
     }
 
     /**
-     * Wraps a {@code Reader} to prevent it from being closed.
-     * This method can be used when a method wants to close a passed {@code Reader} while the {@code Reader} is still needed.
+     * Wraps a reader to prevent it from being closed.
+     * This method can be used when a method wants to close a passed reader while the reader is still needed.
      * <p>
-     * The returned {@code Reader} delegates all methods except for {@link Reader#close() close()} to the given {@code Reader}.
+     * The returned reader delegates all methods except for {@link Reader#close() close()} to the given reader.
      *
-     * @param input The {@code Reader} to wrap.
-     * @return A {@code Reader} wrapper around the given {@code Reader} that will delegate all methods except for {@code close()}.
-     * @throws NullPointerException If the given {@code Reader} is {@code null}.
+     * @param input The reader to wrap.
+     * @return A reader wrapper around the given reader that will delegate all methods except for {@code close()}.
+     * @throws NullPointerException If the given reader is {@code null}.
      */
     public static Reader dontClose(Reader input) {
         Objects.requireNonNull(input);
@@ -261,16 +142,16 @@ public final class StreamUtils {
     }
 
     /**
-     * Wraps a {@code Writer} to prevent it from being closed.
-     * This method can be used when a method wants to close a passed {@code Writer} while the {@code Writer} is still needed.
-     * Another usage is in a try-with-resources block where a wrapping {@code Writer} needs to be closed to finish its work, but the wrapped
-     * {@code Writer} should still remain open.
+     * Wraps a writer to prevent it from being closed.
+     * This method can be used when a method wants to close a passed writer while the writer is still needed.
+     * Another usage is in a try-with-resources block where a wrapping writer needs to be closed to finish its work, but the wrapped writer should
+     * still remain open.
      * <p>
-     * The returned {@code Writer} delegates all methods except for {@link Writer#close() close()} to the given {@code Writer}.
+     * The returned writer delegates all methods except for {@link Writer#close() close()} to the given writer.
      *
-     * @param output The {@code Writer} to wrap.
-     * @return A {@code Writer} wrapper around the given {@code Writer} that will delegate all methods except for {@code close()}.
-     * @throws NullPointerException If the given {@code Writer} is {@code null}.
+     * @param output The writer to wrap.
+     * @return A writer wrapper around the given writer that will delegate all methods except for {@code close()}.
+     * @throws NullPointerException If the given writer is {@code null}.
      */
     public static Writer dontClose(Writer output) {
         Objects.requireNonNull(output);
@@ -326,15 +207,15 @@ public final class StreamUtils {
     }
 
     /**
-     * Checks whether or not an offset and length are valid for a {@code CharSequence}.
+     * Checks whether or not an offset and length are valid for a character sequence.
      * This method can be used for checking input for {@link Writer#write(String, int, int)}.
      *
-     * @param sequence The {@code CharSequence} to check for.
+     * @param sequence The character sequence to check for.
      * @param offset The offset to check, inclusive.
      * @param length The length to check.
-     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
+     * @throws NullPointerException If the given character sequence is {@code null}.
      * @throws IndexOutOfBoundsException If the given offset is negative, the given length is negative,
-     *                                       or the given offset and length exceed the given {@code CharSequence}'s length.
+     *                                       or the given offset and length exceed the given character sequence's length.
      */
     public static void checkOffsetAndLength(CharSequence sequence, int offset, int length) {
         if (offset < 0 || length < 0 || offset + length > sequence.length()) {
@@ -343,15 +224,15 @@ public final class StreamUtils {
     }
 
     /**
-     * Checks whether or not a start and end index are valid for a {@code CharSequence}.
+     * Checks whether or not a start and end index are valid for a character sequence.
      * This method can be used for checking input for {@link Writer#append(CharSequence, int, int)}.
      *
-     * @param sequence The {@code CharSequence} to check for.
+     * @param sequence The character sequence to check for.
      * @param start The start index to check, inclusive.
      * @param end The end index to check, exclusive.
-     * @throws NullPointerException If the given {@code CharSequence} is {@code null}.
+     * @throws NullPointerException If the given character sequence is {@code null}.
      * @throws IndexOutOfBoundsException If the given start index is negative,
-     *                                       the given end index is larger than the given {@code CharSequence}'s length,
+     *                                       the given end index is larger than the given character sequence's length,
      *                                       or the given start index is larger than the given end index.
      */
     public static void checkStartAndEnd(CharSequence sequence, int start, int end) {
