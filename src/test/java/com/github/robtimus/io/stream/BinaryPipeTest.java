@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.DisplayName;
@@ -40,13 +41,6 @@ import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("javadoc")
 public class BinaryPipeTest extends TestBase {
-
-    @Test
-    @DisplayName("BinaryPipe(int)")
-    public void testConstructor() {
-        assertThrows(IllegalArgumentException.class, () -> new BinaryPipe(-1));
-        assertThrows(IllegalArgumentException.class, () -> new BinaryPipe(0));
-    }
 
     @Test
     @DisplayName("closed()")
@@ -90,55 +84,10 @@ public class BinaryPipeTest extends TestBase {
     @DisplayName("input()")
     public class Input {
 
-        private void writeDataByteByByte(BinaryPipe pipe, byte[] data) {
-            try (PipeOutputStream output = pipe.output()) {
-                writeDataByteByByte(output, data);
-            }
-        }
-
-        private void writeDataByteByByte(PipeOutputStream output, byte[] data) {
-            try {
-                Thread.sleep(100);
-                for (byte b : data) {
-                    output.write(b);
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            }
-        }
-
-        private void writeDataInChunks(BinaryPipe pipe, byte[] data, int chunkSize) {
-            try (PipeOutputStream output = pipe.output()) {
-                writeDataInChunks(output, data, chunkSize);
-            }
-        }
-
-        private void writeDataInChunks(PipeOutputStream output, byte[] data, int chunkSize) {
-            try {
-                Thread.sleep(100);
-                int index = 0;
-                int remaining = data.length;
-                while (remaining > 0) {
-                    int count = Math.min(remaining, chunkSize);
-                    output.write(data, index, count);
-                    index += count;
-                    remaining -= count;
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            }
-        }
-
         @Test
         @DisplayName("pipe()")
         public void testPipe() {
-            BinaryPipe pipe = new BinaryPipe(1);
+            BinaryPipe pipe = new BinaryPipe();
             assertSame(pipe, pipe.input().pipe());
         }
 
@@ -148,7 +97,7 @@ public class BinaryPipeTest extends TestBase {
             byte[] expected = SOURCE.getBytes();
             ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
-            BinaryPipe pipe = new BinaryPipe(1);
+            BinaryPipe pipe = new BinaryPipe();
             new Thread(() -> writeDataByteByByte(pipe, expected)).start();
             try (InputStream input = pipe.input()) {
                 int b;
@@ -162,34 +111,29 @@ public class BinaryPipeTest extends TestBase {
         @Test
         @DisplayName("read(byte[], int, int)")
         public void testReadByteArrayRange() throws IOException {
-            testReadByteArrayRange(3, 5);
-            testReadByteArrayRange(5, 3);
-        }
-
-        private void testReadByteArrayRange(int capacity, int chunkSize) throws IOException {
             byte[] expected = SOURCE.getBytes();
             ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
-            BinaryPipe pipe = new BinaryPipe(capacity);
-            new Thread(() -> writeDataInChunks(pipe, expected, capacity)).start();
+            BinaryPipe pipe = new BinaryPipe();
+            new Thread(() -> writeDataInChunks(pipe, expected, 10)).start();
             try (InputStream input = pipe.input()) {
                 assertThrows(IndexOutOfBoundsException.class, () -> input.read(new byte[5], -1, 5));
                 assertThrows(IndexOutOfBoundsException.class, () -> input.read(new byte[5], 0, -1));
                 assertThrows(IndexOutOfBoundsException.class, () -> input.read(new byte[5], 1, 5));
 
                 assertEquals(0, input.read(new byte[5], 0, 0));
-                copy(input, output, chunkSize);
+                copy(input, output, 5);
             }
             assertArrayEquals(expected, output.toByteArray());
         }
 
         @Test
         @DisplayName("skip(long)")
-        public void testSkip() throws IOException, InterruptedException {
+        public void testSkip() throws IOException {
             byte[] expected = (SOURCE.substring(0, 5) + SOURCE.substring(11, SOURCE.length())).getBytes();
             ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
-            BinaryPipe pipe = new BinaryPipe(5);
+            BinaryPipe pipe = new BinaryPipe();
             new Thread(() -> writeDataInChunks(pipe, SOURCE.getBytes(), 5)).start();
             try (InputStream input = pipe.input()) {
                 byte[] data = new byte[10];
@@ -199,8 +143,6 @@ public class BinaryPipeTest extends TestBase {
                 assertEquals(0, input.skip(0));
                 assertEquals(0, input.skip(-1));
                 assertEquals(5, input.skip(10));
-                // add a small delay to allow the output stream to write something again
-                Thread.sleep(100);
                 assertEquals(1, input.skip(1));
                 copy(input, output);
                 assertEquals(0, input.skip(1));
@@ -211,7 +153,7 @@ public class BinaryPipeTest extends TestBase {
         @Test
         @DisplayName("available()")
         public void testAvailable() throws IOException, InterruptedException {
-            BinaryPipe pipe = new BinaryPipe(5);
+            BinaryPipe pipe = new BinaryPipe();
             new Thread(() -> writeDataInChunks(pipe, SOURCE.getBytes(), 5)).start();
             try (InputStream input = pipe.input()) {
                 // add a small delay to allow the output stream to write something
@@ -230,12 +172,10 @@ public class BinaryPipeTest extends TestBase {
         @Test
         @DisplayName("operations with write error")
         public void testOperationsWithWriteError() throws IOException {
-            byte[] bytes = SOURCE.getBytes();
-
             BinaryPipe pipe = new BinaryPipe();
             try (InputStream input = pipe.input()) {
                 IOException error = new IOException();
-                pipe.output().write(bytes);
+                pipe.output().flush();
                 pipe.output().close(error);
 
                 assertSame(error, assertThrows(IOException.class, () -> input.read()));
@@ -252,11 +192,10 @@ public class BinaryPipeTest extends TestBase {
 
                 pipe.output().close(null);
 
-                assertEquals(bytes[0], input.read());
-                assertEquals(5, input.read(new byte[5], 0, 5));
-                assertEquals(5, input.skip(5));
-                assertEquals(bytes[11], input.read());
-                assertEquals(bytes.length - 12, input.available());
+                assertEquals(-1, input.read());
+                assertEquals(-1, input.read(new byte[5], 0, 5));
+                assertEquals(0, input.skip(5));
+                assertEquals(0, input.available());
             }
         }
 
@@ -266,58 +205,47 @@ public class BinaryPipeTest extends TestBase {
 
             @Test
             @DisplayName("read()")
-            public void testReadByte() {
-                byte[] expected = SOURCE.getBytes();
-                ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
-
-                BinaryPipe pipe = new BinaryPipe(1);
-                new Thread(() -> writeDataByteByByte(pipe.output(), expected)).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (InputStream input = pipe.input()) {
-                        int b;
-                        while ((b = input.read()) != -1) {
-                            output.write(b);
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+            public void testReadByte() throws IOException {
+                BinaryPipe pipe = new BinaryPipe();
+                new Thread(() -> writeAndDie(pipe.output())).start();
+                try (InputStream input = pipe.input()) {
+                    // perform one read to consume the data
+                    input.read();
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        input.read();
+                    });
+                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("read(byte[], int, int)")
-            public void testReadByteArrayRange() {
-                testReadByteArrayRange(3, 5);
-                testReadByteArrayRange(5, 3);
-            }
-
-            private void testReadByteArrayRange(int capacity, int chunkSize) {
-                byte[] expected = SOURCE.getBytes();
-                ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
-
-                BinaryPipe pipe = new BinaryPipe(capacity);
-                new Thread(() -> writeDataInChunks(pipe.output(), expected, capacity)).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (InputStream input = pipe.input()) {
-                        assertEquals(0, input.read(new byte[5], 0, 0));
-                        copy(input, output, chunkSize);
-                    }
-                });
-                assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+            public void testReadByteArrayRange() throws IOException {
+                BinaryPipe pipe = new BinaryPipe();
+                new Thread(() -> writeAndDie(pipe.output())).start();
+                try (InputStream input = pipe.input()) {
+                    // perform one read to consume the data
+                    assertEquals(1, input.read(new byte[5], 0, 5));
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        input.read(new byte[5], 0, 5);
+                    });
+                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("skip(long)")
-            public void testSkip() {
-                BinaryPipe pipe = new BinaryPipe(5);
-                new Thread(() -> writeDataInChunks(pipe.output(), SOURCE.getBytes(), 5)).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (InputStream input = pipe.input()) {
-                        while (true) {
-                            input.skip(1);
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+            public void testSkip() throws IOException {
+                BinaryPipe pipe = new BinaryPipe();
+                new Thread(() -> writeAndDie(pipe.output())).start();
+                try (InputStream input = pipe.input()) {
+                    // perform one skip to consume the data
+                    assertEquals(1, input.skip(10));
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        input.skip(1);
+                    });
+                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                }
             }
         }
     }
@@ -329,35 +257,8 @@ public class BinaryPipeTest extends TestBase {
         @Test
         @DisplayName("pipe()")
         public void testPipe() {
-            BinaryPipe pipe = new BinaryPipe(1);
+            BinaryPipe pipe = new BinaryPipe();
             assertSame(pipe, pipe.output().pipe());
-        }
-
-        private void readAll(BinaryPipe pipe, AtomicReference<byte[]> result, CountDownLatch latch) {
-            ByteArrayOutputStream output = new ByteArrayOutputStream();
-
-            try (InputStream input = pipe.input()) {
-                Thread.sleep(100);
-                int b;
-                while ((b = input.read()) != -1) {
-                    output.write(b);
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            }
-            result.set(output.toByteArray());
-            latch.countDown();
-        }
-
-        private void skipAndDie(PipeInputStream input) {
-            try {
-                input.skip(Integer.MAX_VALUE);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
         }
 
         @Test
@@ -365,36 +266,30 @@ public class BinaryPipeTest extends TestBase {
         public void testWriteInt() throws IOException, InterruptedException {
             byte[] expected = SOURCE.getBytes();
 
-            BinaryPipe pipe = new BinaryPipe(1);
+            BinaryPipe pipe = new BinaryPipe();
             AtomicReference<byte[]> result = new AtomicReference<>(null);
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> readAll(pipe, result, latch)).start();
+            CountDownLatch readLatch = new CountDownLatch(1);
+            new Thread(() -> readAll(pipe, result, readLatch)).start();
             try (OutputStream output = pipe.output()) {
                 for (byte b : expected) {
                     output.write(b);
                 }
             }
-            latch.await();
+            readLatch.await();
             assertArrayEquals(expected, result.get());
 
-            assertClosed(() -> pipe.output().write('*'));
+            assertClosed(() -> pipe.output().write(0));
         }
 
         @Test
         @DisplayName("write(byte[], int, int)")
         public void testWriteByteArrayRange() throws IOException, InterruptedException {
-            testWriteByteArrayRange(5, 5);
-            testWriteByteArrayRange(3, 5);
-            testWriteByteArrayRange(5, 3);
-        }
-
-        private void testWriteByteArrayRange(int capacity, int chunkSize) throws IOException, InterruptedException {
             byte[] expected = SOURCE.getBytes();
 
-            BinaryPipe pipe = new BinaryPipe(capacity);
+            BinaryPipe pipe = new BinaryPipe();
             AtomicReference<byte[]> result = new AtomicReference<>(null);
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> readAll(pipe, result, latch)).start();
+            CountDownLatch readLatch = new CountDownLatch(1);
+            new Thread(() -> readAll(pipe, result, readLatch)).start();
             try (OutputStream output = pipe.output()) {
                 assertThrows(IndexOutOfBoundsException.class, () -> output.write(new byte[5], -1, 5));
                 assertThrows(IndexOutOfBoundsException.class, () -> output.write(new byte[5], 0, -1));
@@ -402,12 +297,12 @@ public class BinaryPipeTest extends TestBase {
 
                 int index = 0;
                 while (index < expected.length) {
-                    int to = Math.min(index + chunkSize, expected.length);
+                    int to = Math.min(index + 10, expected.length);
                     output.write(expected, index, to - index);
                     index = to;
                 }
             }
-            latch.await();
+            readLatch.await();
             assertArrayEquals(expected, result.get());
 
             assertClosed(() -> pipe.output().write(expected));
@@ -416,7 +311,7 @@ public class BinaryPipeTest extends TestBase {
         @Test
         @DisplayName("flush()")
         public void testFlush() throws IOException {
-            BinaryPipe pipe = new BinaryPipe(1);
+            BinaryPipe pipe = new BinaryPipe();
             try (OutputStream output = pipe.output()) {
                 output.flush();
             }
@@ -451,66 +346,212 @@ public class BinaryPipeTest extends TestBase {
         }
 
         @Nested
+        @DisplayName("parallel writes")
+        public class ParallelWrites {
+
+            @Test
+            @DisplayName("write(int)")
+            public void testWriteInt() throws InterruptedException {
+                byte[] bytes = SOURCE.getBytes();
+
+                BinaryPipe pipe = new BinaryPipe();
+                AtomicReference<byte[]> result = new AtomicReference<>(null);
+                CountDownLatch readLatch = new CountDownLatch(1);
+                new Thread(() -> readAll(pipe, result, readLatch)).start();
+                int threadCount = 3;
+                CountDownLatch writeLatch = new CountDownLatch(threadCount);
+                CountDownLatch closeLatch = new CountDownLatch(1);
+                for (int i = 0; i < threadCount; i++) {
+                    new Thread(() -> writeDataByteByByte(pipe.output(), bytes, writeLatch, closeLatch)).start();
+                }
+                writeLatch.await();
+                pipe.output().close();
+                closeLatch.countDown();
+                readLatch.await();
+
+                byte[] expected = new byte[bytes.length * 3];
+                System.arraycopy(bytes, 0, expected, 0, bytes.length);
+                System.arraycopy(bytes, 0, expected, bytes.length, bytes.length);
+                System.arraycopy(bytes, 0, expected, 2 * bytes.length, bytes.length);
+                byte[] actual = result.get();
+                Arrays.sort(expected);
+                Arrays.sort(actual);
+                assertArrayEquals(expected, actual);
+
+                assertClosed(() -> pipe.output().write(0));
+            }
+
+            @Test
+            @DisplayName("write(byte[], int, int)")
+            public void testWriteByteArrayRange() throws InterruptedException {
+                byte[] bytes = SOURCE.getBytes();
+
+                BinaryPipe pipe = new BinaryPipe();
+                AtomicReference<byte[]> result = new AtomicReference<>(null);
+                CountDownLatch readLatch = new CountDownLatch(1);
+                new Thread(() -> readAll(pipe, result, readLatch)).start();
+                int threadCount = 3;
+                CountDownLatch writeLatch = new CountDownLatch(threadCount);
+                CountDownLatch closeLatch = new CountDownLatch(1);
+                for (int i = 0; i < threadCount; i++) {
+                    new Thread(() -> writeDataInChunks(pipe.output(), bytes, 10, writeLatch, closeLatch)).start();
+                }
+                writeLatch.await();
+                pipe.output().close();
+                closeLatch.countDown();
+                readLatch.await();
+
+                byte[] expected = new byte[bytes.length * 3];
+                System.arraycopy(bytes, 0, expected, 0, bytes.length);
+                System.arraycopy(bytes, 0, expected, bytes.length, bytes.length);
+                System.arraycopy(bytes, 0, expected, 2 * bytes.length, bytes.length);
+                byte[] actual = result.get();
+                Arrays.sort(expected);
+                Arrays.sort(actual);
+                assertArrayEquals(expected, actual);
+
+                assertClosed(() -> pipe.output().write(bytes));
+            }
+        }
+
+        @Nested
         @DisplayName("reader died")
         public class ReaderDied {
 
             @Test
             @DisplayName("write(int)")
-            public void testWriteInt() {
-                byte[] expected = SOURCE.getBytes();
-
-                BinaryPipe pipe = new BinaryPipe(1);
+            public void testWriteInt() throws IOException {
+                BinaryPipe pipe = new BinaryPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (OutputStream output = pipe.output()) {
-                        for (byte b : expected) {
-                            output.write(b);
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (OutputStream output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.write(0);
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("write(byte[], int, int)")
-            public void testWriteByteArrayRange() {
-                testWriteByteArrayRange(5, 5);
-                testWriteByteArrayRange(3, 5);
-                testWriteByteArrayRange(5, 3);
-            }
-
-            private void testWriteByteArrayRange(int capacity, int chunkSize) {
+            public void testWriteByteArrayRange() throws IOException {
                 byte[] bytes = SOURCE.getBytes();
 
-                BinaryPipe pipe = new BinaryPipe(capacity);
+                BinaryPipe pipe = new BinaryPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (OutputStream output = pipe.output()) {
-                        int index = 0;
-                        while (index < bytes.length) {
-                            int to = Math.min(index + chunkSize, bytes.length);
-                            output.write(bytes, index, to - index);
-                            index = to;
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (OutputStream output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.write(bytes, 0, bytes.length);
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("flush()")
-            public void testFlush() {
-                BinaryPipe pipe = new BinaryPipe(1);
+            public void testFlush() throws IOException {
+                BinaryPipe pipe = new BinaryPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (OutputStream output = pipe.output()) {
-                        while (true) {
-                            output.flush();
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (OutputStream output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.flush();
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
+        }
+    }
+
+    private void writeDataByteByByte(BinaryPipe pipe, byte[] data) {
+        try (PipeOutputStream output = pipe.output()) {
+            for (byte b : data) {
+                output.write(b);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void writeDataByteByByte(PipeOutputStream output, byte[] data, CountDownLatch writeLatch, CountDownLatch closeLatch) {
+        try {
+            for (byte b : data) {
+                output.write(b);
+            }
+            writeLatch.countDown();
+            closeLatch.await();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void writeDataInChunks(BinaryPipe pipe, byte[] data, int chunkSize) {
+        try (PipeOutputStream output = pipe.output()) {
+            int index = 0;
+            int remaining = data.length;
+            while (remaining > 0) {
+                int count = Math.min(remaining, chunkSize);
+                output.write(data, index, count);
+                index += count;
+                remaining -= count;
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void writeDataInChunks(PipeOutputStream output, byte[] data, int chunkSize, CountDownLatch writeLatch, CountDownLatch closeLatch) {
+        try {
+            int index = 0;
+            int remaining = data.length;
+            while (remaining > 0) {
+                int count = Math.min(remaining, chunkSize);
+                output.write(data, index, count);
+                index += count;
+                remaining -= count;
+            }
+            writeLatch.countDown();
+            closeLatch.await();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void writeAndDie(PipeOutputStream output) {
+        try {
+            output.write(0);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void readAll(BinaryPipe pipe, AtomicReference<byte[]> result, CountDownLatch readLatch) {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        try (InputStream input = pipe.input()) {
+            int b;
+            while ((b = input.read()) != -1) {
+                output.write(b);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        result.set(output.toByteArray());
+        readLatch.countDown();
+    }
+
+    private void skipAndDie(PipeInputStream input) {
+        try {
+            input.skip(Integer.MAX_VALUE);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

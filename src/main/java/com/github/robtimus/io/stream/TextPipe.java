@@ -19,7 +19,6 @@ package com.github.robtimus.io.stream;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.PipedReader;
 import java.io.PipedWriter;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -27,31 +26,34 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A class that pipes a reader and writer together.
- * This class behaves somewhat as a combination of {@link PipedReader} and {@link PipedWriter}, but the pipe will not be broken if the writing thread
- * is no longer alive. As with these streams it is not recommended to write to the pipe and read from the pipe from the same thread.
+ * An in-memory pipe. It can be used to connect code expecting a reader with code expecting a writer.
  * <p>
- * In addition, it's possible to pass an {@link IOException} from the input to the output or vice versa, by using
- * {@link PipeReader#close(IOException)} or {@link PipeWriter#close(IOException)}.
+ * This is a port of Go's <a href="https://golang.org/pkg/io/#Pipe">io.Pipe</a>. Like {@code io.Pipe}, each write to a {@link PipedWriter} blocks
+ * until all of its data has been consumed, either through reads or skips. Data is copied directly from the writer to the reader without any internal
+ * buffering.
+ * <p>
+ * Because reads and writes both block, writing to and reading from the pipe should not be done from the same thread. Attempting to do so will
+ * introduce deadlocks.
  *
  * @author Rob Spoor
  */
 public final class TextPipe {
 
-    private static final int DEFAULT_PIPE_SIZE = 1024;
     private static final long AWAIT_TIME = TimeUnit.SECONDS.toNanos(1);
 
     private final PipeReader input;
     private final PipeWriter output;
 
-    private final char[] buffer;
-    private int first;
-    private int last;
-    private int size;
+    private final char[] single;
+    private Data data;
+    private ArrayData arrayData;
+    private CharSequenceData charSequenceData;
+    private int start;
+    private int end;
 
     private final Lock lock;
     private final Condition closedOrNotEmpty;
-    private final Condition closedOrNotFull;
+    private final Condition closedOrEmpty;
 
     private boolean closed;
     private IOException readError;
@@ -61,31 +63,14 @@ public final class TextPipe {
     private Thread writeThread;
 
     /**
-     * Creates a new text pipe with a capacity of {@code 1024}.
+     * Creates a new text pipe.
      */
     public TextPipe() {
-        this(DEFAULT_PIPE_SIZE);
-    }
-
-    /**
-     * Creates a new text pipe.
-     *
-     * @param capacity The capacity of the pipe's buffer.
-     * @throws IllegalArgumentException If the given capacity is not at least {@code 1}.
-     */
-    public TextPipe(int capacity) {
-        if (capacity < 1) {
-            throw new IllegalArgumentException(capacity + " < 1"); //$NON-NLS-1$
-        }
-
-        buffer = new char[capacity];
-        first = 0;
-        last = 0;
-        size = 0;
+        single = new char[1];
 
         lock = new ReentrantLock(true);
         closedOrNotEmpty = lock.newCondition();
-        closedOrNotFull = lock.newCondition();
+        closedOrEmpty = lock.newCondition();
 
         closed = false;
         readError = null;
@@ -133,13 +118,13 @@ public final class TextPipe {
         lock.lock();
         try {
             readThread = Thread.currentThread();
-            while (!closed && size == 0 && !writerDied()) {
+            while (!closed && start == end && !writerDied()) {
                 await(closedOrNotEmpty);
             }
             throwWriteError();
-            if (size > 0) {
-                char c = next();
-                closedOrNotFull.signalAll();
+            if (start < end) {
+                char c = data.charAt(start++);
+                checkEmpty();
                 return c & 0xFF;
             }
             if (closed) {
@@ -159,18 +144,16 @@ public final class TextPipe {
         lock.lock();
         try {
             readThread = Thread.currentThread();
-            while (!closed && size == 0 && !writerDied()) {
+            while (!closed && start == end && !writerDied()) {
                 await(closedOrNotEmpty);
             }
             throwWriteError();
-            if (size > 0) {
-                int i = 0;
-                while (i < len && size > 0) {
-                    cbuf[off + i] = next();
-                    i++;
-                }
-                closedOrNotFull.signalAll();
-                return i;
+            if (start < end) {
+                int result = Math.min(len, end - start);
+                data.copyTo(start, cbuf, off, result);
+                start += result;
+                checkEmpty();
+                return result;
             }
             if (closed) {
                 return -1;
@@ -179,14 +162,6 @@ public final class TextPipe {
         } finally {
             lock.unlock();
         }
-    }
-
-    private char next() {
-        assert size > 0 : "cannot take from empty buffer"; //$NON-NLS-1$
-        char c = buffer[first];
-        first = (first + 1) % buffer.length;
-        size--;
-        return c;
     }
 
     long skip(long n) throws IOException {
@@ -199,17 +174,17 @@ public final class TextPipe {
         lock.lock();
         try {
             readThread = Thread.currentThread();
-            throwWriteError();
-            if (size > 0) {
-                long remaining = n;
-                while (remaining > 0 && size > 0) {
-                    next();
-                    remaining--;
-                }
-                closedOrNotFull.signalAll();
-                return n - remaining;
+            while (!closed && start == end && !writerDied()) {
+                await(closedOrNotEmpty);
             }
-            if (closed || !writerDied()) {
+            throwWriteError();
+            if (start < end) {
+                long result = Math.min(n, end - start);
+                start += result;
+                checkEmpty();
+                return result;
+            }
+            if (closed) {
                 return 0;
             }
             throw writerDiedException();
@@ -218,12 +193,19 @@ public final class TextPipe {
         }
     }
 
+    private void checkEmpty() {
+        if (start == end) {
+            data = null;
+            closedOrEmpty.signalAll();
+        }
+    }
+
     boolean ready() throws IOException {
         lock.lock();
         try {
             readThread = Thread.currentThread();
             throwWriteError();
-            return size > 0;
+            return start < end;
         } finally {
             lock.unlock();
         }
@@ -232,10 +214,10 @@ public final class TextPipe {
     void closeInput() {
         lock.lock();
         try {
-            clear();
+            data = null;
             closed = true;
             closedOrNotEmpty.signalAll();
-            closedOrNotFull.signalAll();
+            closedOrEmpty.signalAll();
         } finally {
             lock.unlock();
         }
@@ -244,11 +226,11 @@ public final class TextPipe {
     void closeInput(IOException error) {
         lock.lock();
         try {
-            clear();
+            data = null;
             closed = true;
             readError = error;
             closedOrNotEmpty.signalAll();
-            closedOrNotFull.signalAll();
+            closedOrEmpty.signalAll();
         } finally {
             lock.unlock();
         }
@@ -270,21 +252,23 @@ public final class TextPipe {
 
     // output methods
 
-    void write(int b) throws IOException {
+    void write(int c) throws IOException {
         lock.lock();
         try {
             writeThread = Thread.currentThread();
-            while (!closed && size >= buffer.length && !readerDied()) {
-                await(closedOrNotFull);
+            while (!closed && start < end && !readerDied()) {
+                await(closedOrEmpty);
             }
             throwReadError();
             throwIfClosed();
-            if (size < buffer.length) {
-                add((char) b);
+            if (start == end) {
+                single[0] = (char) c;
+                data = arrayData(single);
+                start = 0;
+                end = 1;
                 closedOrNotEmpty.signalAll();
-                return;
             }
-            throw readerDiedException();
+            awaitDataRead();
         } finally {
             lock.unlock();
         }
@@ -292,98 +276,88 @@ public final class TextPipe {
 
     void write(char[] cbuf, int off, int len) throws IOException {
         checkOffsetAndLength(cbuf, off, len);
-        int index = off;
-        int remaining = len;
-        while (remaining > 0) {
-            // write in chunks of at most the buffer's capacity, so the buffer will never run out of capacity
-            int count = Math.min(remaining, buffer.length);
-            writeChars(cbuf, index, count);
-            index += count;
-            remaining -= count;
-        }
-    }
-
-    private void writeChars(char[] cbuf, int off, int len) throws IOException {
         lock.lock();
         try {
             writeThread = Thread.currentThread();
-            while (!closed && size > buffer.length - len && !readerDied()) {
-                await(closedOrNotFull);
+            while (!closed && start < end && !readerDied()) {
+                await(closedOrEmpty);
             }
             throwReadError();
             throwIfClosed();
-            if (size <= buffer.length - len) {
-                for (int i = off, j = 0; j < len; i++, j++) {
-                    add(cbuf[i]);
-                }
+            if (start == end) {
+                data = arrayData(cbuf);
+                start = off;
+                end = off + len;
                 closedOrNotEmpty.signalAll();
-                return;
             }
-            throw readerDiedException();
+            awaitDataRead();
         } finally {
             lock.unlock();
         }
     }
 
+    private Data arrayData(char[] array) {
+        if (arrayData == null) {
+            arrayData = new ArrayData();
+        }
+        arrayData.array = array;
+        return arrayData;
+    }
+
     void write(String str, int off, int len) throws IOException {
         checkOffsetAndLength(str, off, len);
-        int index = off;
-        int remaining = len;
-        while (remaining > 0) {
-            // write in chunks of at most the buffer's capacity, so the buffer will never run out of capacity
-            int count = Math.min(remaining, buffer.length);
-            writeChars(str, index, count);
-            index += count;
-            remaining -= count;
-        }
+        writeChars(str, off, len);
     }
 
     void append(CharSequence csq) throws IOException {
         CharSequence cs = csq == null ? "null" : csq; //$NON-NLS-1$
-        append(cs, 0, cs.length());
+        writeChars(cs, 0, cs.length());
     }
 
     void append(CharSequence csq, int start, int end) throws IOException {
         CharSequence cs = csq == null ? "null" : csq; //$NON-NLS-1$
         checkStartAndEnd(cs, start, end);
-        int index = start;
-        int remaining = end - start;
-        while (remaining > 0) {
-            // write in chunks of at most the buffer's capacity, so the buffer will never run out of capacity
-            int count = Math.min(remaining, buffer.length);
-            writeChars(cs, index, count);
-            index += count;
-            remaining -= count;
-        }
+        writeChars(cs, start, end - start);
     }
 
     private void writeChars(CharSequence csq, int off, int len) throws IOException {
         lock.lock();
         try {
             writeThread = Thread.currentThread();
-            while (!closed && size > buffer.length - len && !readerDied()) {
-                await(closedOrNotFull);
+            while (!closed && start < end && !readerDied()) {
+                await(closedOrEmpty);
             }
             throwReadError();
             throwIfClosed();
-            if (size <= buffer.length - len) {
-                for (int i = off, j = 0; j < len; i++, j++) {
-                    add(csq.charAt(i));
-                }
+            if (start == end) {
+                data = charSequenceData(csq);
+                start = off;
+                end = off + len;
                 closedOrNotEmpty.signalAll();
-                return;
             }
-            throw readerDiedException();
+            awaitDataRead();
         } finally {
             lock.unlock();
         }
     }
 
-    void add(char c) {
-        assert size < buffer.length : "cannot add to full buffer"; //$NON-NLS-1$
-        buffer[last] = c;
-        last = (last + 1) % buffer.length;
-        size++;
+    private Data charSequenceData(CharSequence csq) {
+        if (charSequenceData == null) {
+            charSequenceData = new CharSequenceData();
+        }
+        charSequenceData.charSequence = csq;
+        return charSequenceData;
+    }
+
+    private void awaitDataRead() throws IOException {
+        while (!closed && start < end && !readerDied()) {
+            await(closedOrEmpty);
+        }
+        throwReadError();
+        throwIfClosed();
+        if (start < end) {
+            throw readerDiedException();
+        }
     }
 
     void flush() throws IOException {
@@ -401,10 +375,10 @@ public final class TextPipe {
     void closeOutput() {
         lock.lock();
         try {
-            // don't clear the buffer, the input stream may still be active
+            // don't clear the data, the reader may still be active
             closed = true;
             closedOrNotEmpty.signalAll();
-            closedOrNotFull.signalAll();
+            closedOrEmpty.signalAll();
         } finally {
             lock.unlock();
         }
@@ -413,11 +387,11 @@ public final class TextPipe {
     void closeOutput(IOException error) {
         lock.lock();
         try {
-            // don't clear the buffer, the input stream may still be active
+            // don't clear the data, the reader may still be active
             closed = true;
             writeError = error;
             closedOrNotEmpty.signalAll();
-            closedOrNotFull.signalAll();
+            closedOrEmpty.signalAll();
         } finally {
             lock.unlock();
         }
@@ -469,12 +443,6 @@ public final class TextPipe {
         }
     }
 
-    private void clear() {
-        first = 0;
-        last = 0;
-        size = 0;
-    }
-
     private void await(Condition condition) throws IOException {
         try {
             condition.awaitNanos(AWAIT_TIME);
@@ -484,6 +452,53 @@ public final class TextPipe {
             InterruptedIOException exception = new InterruptedIOException(e.getMessage());
             exception.initCause(e);
             throw exception;
+        }
+    }
+
+    private interface Data {
+
+        char charAt(int index);
+
+        void copyTo(int start, char[] cbuf, int off, int len);
+    }
+
+    private static class ArrayData implements Data {
+
+        private char[] array;
+
+        @Override
+        public char charAt(int index) {
+            return array[index];
+        }
+
+        @Override
+        public void copyTo(int start, char[] cbuf, int off, int len) {
+            System.arraycopy(array, start, cbuf, off, len);
+        }
+    }
+
+    private static class CharSequenceData implements Data {
+
+        private CharSequence charSequence;
+
+        @Override
+        public char charAt(int index) {
+            return charSequence.charAt(index);
+        }
+
+        @Override
+        public void copyTo(int start, char[] cbuf, int off, int len) {
+            if (charSequence instanceof String) {
+                ((String) charSequence).getChars(start, start + len, cbuf, off);
+            } else if (charSequence instanceof StringBuilder) {
+                ((StringBuilder) charSequence).getChars(start, start + len, cbuf, off);
+            } else if (charSequence instanceof StringBuffer) {
+                ((StringBuffer) charSequence).getChars(start, start + len, cbuf, off);
+            } else {
+                for (int i = start, j = off, k = 0; k < len; i++, j++, k++) {
+                    cbuf[j] = charSequence.charAt(i);
+                }
+            }
         }
     }
 }

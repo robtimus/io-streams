@@ -19,6 +19,7 @@ package com.github.robtimus.io.stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -31,21 +32,17 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.nio.CharBuffer;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings({ "javadoc", "nls" })
 public class TextPipeTest extends TestBase {
-
-    @Test
-    @DisplayName("TestPipe(int)")
-    public void testConstructor() {
-        assertThrows(IllegalArgumentException.class, () -> new TextPipe(-1));
-        assertThrows(IllegalArgumentException.class, () -> new TextPipe(0));
-    }
 
     @Test
     @DisplayName("closed()")
@@ -89,65 +86,27 @@ public class TextPipeTest extends TestBase {
     @DisplayName("input()")
     public class Input {
 
-        private void writeDataCharByChar(TextPipe pipe, String data) {
-            try (PipeWriter output = pipe.output()) {
-                writeDataCharByChar(output, data);
-            }
-        }
-
-        private void writeDataCharByChar(PipeWriter output, String data) {
-            try {
-                Thread.sleep(100);
-                for (int i = 0; i < data.length(); i++) {
-                    output.write(data.charAt(i));
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            }
-        }
-
-        private void writeDataInChunks(TextPipe pipe, String data, int chunkSize) {
-            try (PipeWriter output = pipe.output()) {
-                writeDataInChunks(output, data, chunkSize);
-            }
-        }
-
-        private void writeDataInChunks(PipeWriter output, String data, int chunkSize) {
-            try {
-                Thread.sleep(100);
-                int index = 0;
-                int remaining = data.length();
-                while (remaining > 0) {
-                    int count = Math.min(remaining, chunkSize);
-                    output.write(data, index, count);
-                    index += count;
-                    remaining -= count;
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            }
-        }
-
         @Test
         @DisplayName("pipe()")
         public void testPipe() {
-            TextPipe pipe = new TextPipe(1);
+            TextPipe pipe = new TextPipe();
             assertSame(pipe, pipe.input().pipe());
         }
 
         @Test
         @DisplayName("read()")
-        public void testReadByte() throws IOException {
+        public void testReadChar() throws IOException {
+            testReadChar(s -> s);
+            testReadChar(StringBuilder::new);
+            testReadChar(StringBuffer::new);
+            testReadChar(CharBuffer::wrap);
+        }
+
+        private void testReadChar(Function<String, CharSequence> mapper) throws IOException {
             StringWriter output = new StringWriter(SOURCE.length());
 
-            TextPipe pipe = new TextPipe(1);
-            new Thread(() -> writeDataCharByChar(pipe, SOURCE)).start();
+            TextPipe pipe = new TextPipe();
+            new Thread(() -> writeDataCharByChar(pipe, mapper.apply(SOURCE))).start();
             try (Reader input = pipe.input()) {
                 int b;
                 while ((b = input.read()) != -1) {
@@ -158,35 +117,37 @@ public class TextPipeTest extends TestBase {
         }
 
         @Test
-        @DisplayName("read(byte[], int, int)")
-        public void testReadByteArrayRange() throws IOException {
-            testReadByteArrayRange(3, 5);
-            testReadByteArrayRange(5, 3);
+        @DisplayName("read(char[], int, int)")
+        public void testReadCharArrayRange() throws IOException {
+            testReadCharArrayRange(s -> s);
+            testReadCharArrayRange(StringBuilder::new);
+            testReadCharArrayRange(StringBuffer::new);
+            testReadCharArrayRange(CharBuffer::wrap);
         }
 
-        private void testReadByteArrayRange(int capacity, int chunkSize) throws IOException {
+        private void testReadCharArrayRange(Function<String, CharSequence> mapper) throws IOException {
             StringWriter output = new StringWriter(SOURCE.length());
 
-            TextPipe pipe = new TextPipe(capacity);
-            new Thread(() -> writeDataInChunks(pipe, SOURCE, capacity)).start();
+            TextPipe pipe = new TextPipe();
+            new Thread(() -> writeDataInChunks(pipe, mapper.apply(SOURCE), 10)).start();
             try (Reader input = pipe.input()) {
                 assertThrows(IndexOutOfBoundsException.class, () -> input.read(new char[5], -1, 5));
                 assertThrows(IndexOutOfBoundsException.class, () -> input.read(new char[5], 0, -1));
                 assertThrows(IndexOutOfBoundsException.class, () -> input.read(new char[5], 1, 5));
 
                 assertEquals(0, input.read(new char[5], 0, 0));
-                copy(input, output, chunkSize);
+                copy(input, output, 5);
             }
             assertEquals(SOURCE, output.toString());
         }
 
         @Test
         @DisplayName("skip(long)")
-        public void testSkip() throws IOException, InterruptedException {
+        public void testSkip() throws IOException {
             String expected = SOURCE.substring(0, 5) + SOURCE.substring(11, SOURCE.length());
             StringWriter output = new StringWriter(expected.length());
 
-            TextPipe pipe = new TextPipe(5);
+            TextPipe pipe = new TextPipe();
             new Thread(() -> writeDataInChunks(pipe, SOURCE, 5)).start();
             try (Reader input = pipe.input()) {
                 char[] data = new char[10];
@@ -196,8 +157,6 @@ public class TextPipeTest extends TestBase {
                 assertEquals(0, input.skip(0));
                 assertThrows(IllegalArgumentException.class, () -> input.skip(-1));
                 assertEquals(5, input.skip(10));
-                // add a small delay to allow the output stream to write something again
-                Thread.sleep(100);
                 assertEquals(1, input.skip(1));
                 copy(input, output);
                 assertEquals(0, input.skip(1));
@@ -208,7 +167,7 @@ public class TextPipeTest extends TestBase {
         @Test
         @DisplayName("ready()")
         public void testAvailable() throws IOException, InterruptedException {
-            TextPipe pipe = new TextPipe(5);
+            TextPipe pipe = new TextPipe();
             new Thread(() -> writeDataInChunks(pipe, SOURCE, 5)).start();
             try (Reader input = pipe.input()) {
                 // add a small delay to allow the writer to write something
@@ -230,7 +189,7 @@ public class TextPipeTest extends TestBase {
             TextPipe pipe = new TextPipe();
             try (Reader input = pipe.input()) {
                 IOException error = new IOException();
-                pipe.output().write(SOURCE);
+                pipe.output().flush();
                 pipe.output().close(error);
 
                 assertSame(error, assertThrows(IOException.class, () -> input.read()));
@@ -247,11 +206,10 @@ public class TextPipeTest extends TestBase {
 
                 pipe.output().close(null);
 
-                assertEquals(SOURCE.charAt(0), input.read());
-                assertEquals(5, input.read(new char[5], 0, 5));
-                assertEquals(5, input.skip(5));
-                assertEquals(SOURCE.charAt(11), input.read());
-                assertTrue(input.ready());
+                assertEquals(-1, input.read());
+                assertEquals(-1, input.read(new char[5], 0, 5));
+                assertEquals(0, input.skip(5));
+                assertFalse(input.ready());
             }
         }
 
@@ -261,56 +219,47 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("read()")
-            public void testReadByte() {
-                StringWriter output = new StringWriter(SOURCE.length());
-
-                TextPipe pipe = new TextPipe(1);
-                new Thread(() -> writeDataCharByChar(pipe.output(), SOURCE)).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Reader input = pipe.input()) {
-                        int c;
-                        while ((c = input.read()) != -1) {
-                            output.write(c);
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+            public void testReadChar() throws IOException {
+                TextPipe pipe = new TextPipe();
+                new Thread(() -> writeAndDie(pipe.output())).start();
+                try (Reader input = pipe.input()) {
+                    // perform one read to consume the data
+                    input.read();
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        input.read();
+                    });
+                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
-            @DisplayName("read(byte[], int, int)")
-            public void testReadByteArrayRange() {
-                testReadByteArrayRange(3, 5);
-                testReadByteArrayRange(5, 3);
-            }
-
-            private void testReadByteArrayRange(int capacity, int chunkSize) {
-                StringWriter output = new StringWriter(SOURCE.length());
-
-                TextPipe pipe = new TextPipe(capacity);
-                new Thread(() -> writeDataInChunks(pipe.output(), SOURCE, capacity)).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Reader input = pipe.input()) {
-                        assertEquals(0, input.read(new char[5], 0, 0));
-                        copy(input, output, chunkSize);
-                    }
-                });
-                assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+            @DisplayName("read(char[], int, int)")
+            public void testReadCharArrayRange() throws IOException {
+                TextPipe pipe = new TextPipe();
+                new Thread(() -> writeAndDie(pipe.output())).start();
+                try (Reader input = pipe.input()) {
+                    // perform one read to consume the data
+                    assertEquals(1, input.read(new char[5], 0, 5));
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        input.read(new char[5], 0, 5);
+                    });
+                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("skip(long)")
-            public void testSkip() {
-                TextPipe pipe = new TextPipe(5);
-                new Thread(() -> writeDataInChunks(pipe.output(), SOURCE, 5)).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Reader input = pipe.input()) {
-                        while (true) {
-                            input.skip(1);
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+            public void testSkip() throws IOException {
+                TextPipe pipe = new TextPipe();
+                new Thread(() -> writeAndDie(pipe.output())).start();
+                try (Reader input = pipe.input()) {
+                    // perform one skip to consume the data
+                    assertEquals(1, input.skip(10));
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        input.skip(1);
+                    });
+                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                }
             }
         }
     }
@@ -322,50 +271,23 @@ public class TextPipeTest extends TestBase {
         @Test
         @DisplayName("pipe()")
         public void testPipe() {
-            TextPipe pipe = new TextPipe(1);
+            TextPipe pipe = new TextPipe();
             assertSame(pipe, pipe.output().pipe());
-        }
-
-        private void readAll(TextPipe pipe, AtomicReference<String> result, CountDownLatch latch) {
-            StringWriter output = new StringWriter();
-
-            try (Reader input = pipe.input()) {
-                Thread.sleep(100);
-                int b;
-                while ((b = input.read()) != -1) {
-                    output.write(b);
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            }
-            result.set(output.toString());
-            latch.countDown();
-        }
-
-        private void skipAndDie(PipeReader input) {
-            try {
-                input.skip(Integer.MAX_VALUE);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
         }
 
         @Test
         @DisplayName("write(int)")
         public void testWriteInt() throws IOException, InterruptedException {
-            TextPipe pipe = new TextPipe(1);
+            TextPipe pipe = new TextPipe();
             AtomicReference<String> result = new AtomicReference<>(null);
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> readAll(pipe, result, latch)).start();
+            CountDownLatch readLatch = new CountDownLatch(1);
+            new Thread(() -> readAll(pipe, result, readLatch)).start();
             try (Writer output = pipe.output()) {
                 for (int i = 0; i < SOURCE.length(); i++) {
                     output.write(SOURCE.charAt(i));
                 }
             }
-            latch.await();
+            readLatch.await();
             assertEquals(SOURCE, result.get());
 
             assertClosed(() -> pipe.output().write('*'));
@@ -374,18 +296,12 @@ public class TextPipeTest extends TestBase {
         @Test
         @DisplayName("write(char[], int, int)")
         public void testWriteCharArrayRange() throws IOException, InterruptedException {
-            testWriteCharArrayRange(5, 5);
-            testWriteCharArrayRange(3, 5);
-            testWriteCharArrayRange(5, 3);
-        }
-
-        private void testWriteCharArrayRange(int capacity, int chunkSize) throws IOException, InterruptedException {
             char[] chars = SOURCE.toCharArray();
 
-            TextPipe pipe = new TextPipe(capacity);
+            TextPipe pipe = new TextPipe();
             AtomicReference<String> result = new AtomicReference<>(null);
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> readAll(pipe, result, latch)).start();
+            CountDownLatch readLatch = new CountDownLatch(1);
+            new Thread(() -> readAll(pipe, result, readLatch)).start();
             try (Writer output = pipe.output()) {
                 assertThrows(IndexOutOfBoundsException.class, () -> output.write(new char[5], -1, 5));
                 assertThrows(IndexOutOfBoundsException.class, () -> output.write(new char[5], 0, -1));
@@ -393,12 +309,12 @@ public class TextPipeTest extends TestBase {
 
                 int index = 0;
                 while (index < SOURCE.length()) {
-                    int to = Math.min(index + chunkSize, SOURCE.length());
+                    int to = Math.min(index + 10, SOURCE.length());
                     output.write(chars, index, to - index);
                     index = to;
                 }
             }
-            latch.await();
+            readLatch.await();
             assertEquals(SOURCE, result.get());
 
             assertClosed(() -> pipe.output().write(chars));
@@ -407,16 +323,10 @@ public class TextPipeTest extends TestBase {
         @Test
         @DisplayName("write(String, int, int)")
         public void testWriteStringRange() throws IOException, InterruptedException {
-            testWriteStringRange(5, 5);
-            testWriteStringRange(3, 5);
-            testWriteStringRange(5, 3);
-        }
-
-        private void testWriteStringRange(int capacity, int chunkSize) throws IOException, InterruptedException {
-            TextPipe pipe = new TextPipe(capacity);
+            TextPipe pipe = new TextPipe();
             AtomicReference<String> result = new AtomicReference<>(null);
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> readAll(pipe, result, latch)).start();
+            CountDownLatch readLatch = new CountDownLatch(1);
+            new Thread(() -> readAll(pipe, result, readLatch)).start();
             try (Writer output = pipe.output()) {
                 assertThrows(IndexOutOfBoundsException.class, () -> output.write("12345", -1, 5));
                 assertThrows(IndexOutOfBoundsException.class, () -> output.write("12345", 0, -1));
@@ -424,12 +334,12 @@ public class TextPipeTest extends TestBase {
 
                 int index = 0;
                 while (index < SOURCE.length()) {
-                    int to = Math.min(index + chunkSize, SOURCE.length());
+                    int to = Math.min(index + 10, SOURCE.length());
                     output.write(SOURCE, index, to - index);
                     index = to;
                 }
             }
-            latch.await();
+            readLatch.await();
             assertEquals(SOURCE, result.get());
 
             assertClosed(() -> pipe.output().write(SOURCE));
@@ -438,26 +348,27 @@ public class TextPipeTest extends TestBase {
         @Test
         @DisplayName("append(CharSequence)")
         public void testAppendCharSequence() throws IOException, InterruptedException {
-            testAppendCharSequence(5, 5);
-            testAppendCharSequence(3, 5);
-            testAppendCharSequence(5, 3);
+            testAppendCharSequence(s -> s);
+            testAppendCharSequence(StringBuilder::new);
+            testAppendCharSequence(StringBuffer::new);
+            testAppendCharSequence(CharBuffer::wrap);
         }
 
-        private void testAppendCharSequence(int capacity, int chunkSize) throws IOException, InterruptedException {
-            TextPipe pipe = new TextPipe(capacity);
+        private void testAppendCharSequence(Function<String, CharSequence> mapper) throws IOException, InterruptedException {
+            TextPipe pipe = new TextPipe();
             AtomicReference<String> result = new AtomicReference<>(null);
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> readAll(pipe, result, latch)).start();
+            CountDownLatch readLatch = new CountDownLatch(1);
+            new Thread(() -> readAll(pipe, result, readLatch)).start();
             try (Writer output = pipe.output()) {
                 int index = 0;
                 while (index < SOURCE.length()) {
-                    int to = Math.min(index + chunkSize, SOURCE.length());
-                    output.append(SOURCE.substring(index, to));
+                    int to = Math.min(index + 10, SOURCE.length());
+                    output.append(mapper.apply(SOURCE.substring(index, to)));
                     index = to;
                 }
                 output.append(null);
             }
-            latch.await();
+            readLatch.await();
             assertEquals(SOURCE + "null", result.get());
 
             assertClosed(() -> pipe.output().append(SOURCE));
@@ -466,30 +377,32 @@ public class TextPipeTest extends TestBase {
         @Test
         @DisplayName("append(CharSequence, int, int)")
         public void testAppendSubSequence() throws IOException, InterruptedException {
-            testAppendSubSequence(5, 5);
-            testAppendSubSequence(3, 5);
-            testAppendSubSequence(5, 3);
+            testAppendSubSequence(s -> s);
+            testAppendSubSequence(StringBuilder::new);
+            testAppendSubSequence(StringBuffer::new);
+            testAppendSubSequence(CharBuffer::wrap);
         }
 
-        private void testAppendSubSequence(int capacity, int chunkSize) throws IOException, InterruptedException {
-            TextPipe pipe = new TextPipe(capacity);
+        private void testAppendSubSequence(Function<String, CharSequence> mapper) throws IOException, InterruptedException {
+            TextPipe pipe = new TextPipe();
             AtomicReference<String> result = new AtomicReference<>(null);
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> readAll(pipe, result, latch)).start();
+            CountDownLatch readLatch = new CountDownLatch(1);
+            new Thread(() -> readAll(pipe, result, readLatch)).start();
             try (Writer output = pipe.output()) {
                 assertThrows(IndexOutOfBoundsException.class, () -> output.append("12345", -1, 5));
                 assertThrows(IndexOutOfBoundsException.class, () -> output.append("12345", 0, -1));
                 assertThrows(IndexOutOfBoundsException.class, () -> output.append("12345", 1, 6));
 
+                CharSequence csq = mapper.apply(SOURCE);
                 int index = 0;
                 while (index < SOURCE.length()) {
-                    int to = Math.min(index + chunkSize, SOURCE.length());
-                    output.append(SOURCE, index, to);
+                    int to = Math.min(index + 10, SOURCE.length());
+                    output.append(csq, index, to);
                     index = to;
                 }
                 output.append(null, 1, 3);
             }
-            latch.await();
+            readLatch.await();
             assertEquals(SOURCE + "ul", result.get());
 
             assertClosed(() -> pipe.output().write(SOURCE, 0, 10));
@@ -498,16 +411,16 @@ public class TextPipeTest extends TestBase {
         @Test
         @DisplayName("append(char)")
         public void testAppendChar() throws IOException, InterruptedException {
-            TextPipe pipe = new TextPipe(1);
+            TextPipe pipe = new TextPipe();
             AtomicReference<String> result = new AtomicReference<>(null);
-            CountDownLatch latch = new CountDownLatch(1);
-            new Thread(() -> readAll(pipe, result, latch)).start();
+            CountDownLatch readLatch = new CountDownLatch(1);
+            new Thread(() -> readAll(pipe, result, readLatch)).start();
             try (Writer output = pipe.output()) {
                 for (int i = 0; i < SOURCE.length(); i++) {
                     output.append(SOURCE.charAt(i));
                 }
             }
-            latch.await();
+            readLatch.await();
             assertEquals(SOURCE, result.get());
 
             assertClosed(() -> pipe.output().write('*'));
@@ -516,7 +429,7 @@ public class TextPipeTest extends TestBase {
         @Test
         @DisplayName("flush()")
         public void testFlush() throws IOException {
-            TextPipe pipe = new TextPipe(1);
+            TextPipe pipe = new TextPipe();
             try (Writer output = pipe.output()) {
                 output.flush();
             }
@@ -563,153 +476,314 @@ public class TextPipeTest extends TestBase {
         }
 
         @Nested
+        @DisplayName("parallel writes")
+        public class ParallelWrites {
+
+            @Test
+            @DisplayName("write(int)")
+            public void testWriteInt() throws InterruptedException {
+                TextPipe pipe = new TextPipe();
+                AtomicReference<String> result = new AtomicReference<>(null);
+                CountDownLatch readLatch = new CountDownLatch(1);
+                new Thread(() -> readAll(pipe, result, readLatch)).start();
+                int threadCount = 3;
+                CountDownLatch writeLatch = new CountDownLatch(threadCount);
+                CountDownLatch closeLatch = new CountDownLatch(1);
+                for (int i = 0; i < threadCount; i++) {
+                    new Thread(() -> writeDataCharByChar(pipe.output(), SOURCE, writeLatch, closeLatch)).start();
+                }
+                writeLatch.await();
+                pipe.output().close();
+                closeLatch.countDown();
+                readLatch.await();
+
+                char[] expected = new char[SOURCE.length() * 3];
+                SOURCE.getChars(0, SOURCE.length(), expected, 0);
+                SOURCE.getChars(0, SOURCE.length(), expected, SOURCE.length());
+                SOURCE.getChars(0, SOURCE.length(), expected, 2 * SOURCE.length());
+                char[] actual = result.get().toCharArray();
+                Arrays.sort(expected);
+                Arrays.sort(actual);
+                assertArrayEquals(expected, actual);
+
+                assertClosed(() -> pipe.output().write(0));
+            }
+
+            @Test
+            @DisplayName("write(char[], int, int)")
+            public void testWriteCharArrayRange() throws InterruptedException {
+                TextPipe pipe = new TextPipe();
+                AtomicReference<String> result = new AtomicReference<>(null);
+                CountDownLatch readLatch = new CountDownLatch(1);
+                new Thread(() -> readAll(pipe, result, readLatch)).start();
+                int threadCount = 3;
+                CountDownLatch writeLatch = new CountDownLatch(threadCount);
+                CountDownLatch closeLatch = new CountDownLatch(1);
+                for (int i = 0; i < threadCount; i++) {
+                    new Thread(() -> writeDataInChunks(pipe.output(), SOURCE.toCharArray(), 10, writeLatch, closeLatch)).start();
+                }
+                writeLatch.await();
+                pipe.output().close();
+                closeLatch.countDown();
+                readLatch.await();
+
+                char[] expected = new char[SOURCE.length() * 3];
+                SOURCE.getChars(0, SOURCE.length(), expected, 0);
+                SOURCE.getChars(0, SOURCE.length(), expected, SOURCE.length());
+                SOURCE.getChars(0, SOURCE.length(), expected, 2 * SOURCE.length());
+                char[] actual = result.get().toCharArray();
+                Arrays.sort(expected);
+                Arrays.sort(actual);
+                assertArrayEquals(expected, actual);
+
+                assertClosed(() -> pipe.output().write(SOURCE));
+            }
+
+            @Test
+            @DisplayName("append(CharSequence, int, int)")
+            public void testAppendSubSequence() throws InterruptedException {
+                TextPipe pipe = new TextPipe();
+                AtomicReference<String> result = new AtomicReference<>(null);
+                CountDownLatch readLatch = new CountDownLatch(1);
+                new Thread(() -> readAll(pipe, result, readLatch)).start();
+                int threadCount = 3;
+                CountDownLatch writeLatch = new CountDownLatch(threadCount);
+                CountDownLatch closeLatch = new CountDownLatch(1);
+                for (int i = 0; i < threadCount; i++) {
+                    new Thread(() -> appendDataInChunks(pipe.output(), SOURCE, 10, writeLatch, closeLatch)).start();
+                }
+                writeLatch.await();
+                pipe.output().close();
+                closeLatch.countDown();
+                readLatch.await();
+
+                char[] expected = new char[SOURCE.length() * 3];
+                SOURCE.getChars(0, SOURCE.length(), expected, 0);
+                SOURCE.getChars(0, SOURCE.length(), expected, SOURCE.length());
+                SOURCE.getChars(0, SOURCE.length(), expected, 2 * SOURCE.length());
+                char[] actual = result.get().toCharArray();
+                Arrays.sort(expected);
+                Arrays.sort(actual);
+                assertArrayEquals(expected, actual);
+
+                assertClosed(() -> pipe.output().write(SOURCE));
+            }
+        }
+
+        @Nested
         @DisplayName("reader died")
         public class ReaderDied {
 
             @Test
             @DisplayName("write(int)")
-            public void testWriteInt() {
-                TextPipe pipe = new TextPipe(1);
+            public void testWriteInt() throws IOException {
+                TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Writer output = pipe.output()) {
-                        for (int i = 0; i < SOURCE.length(); i++) {
-                            output.write(SOURCE.charAt(i));
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (Writer output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.write(0);
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("write(char[], int, int)")
-            public void testWriteCharArrayRange() {
-                testWriteCharArrayRange(5, 5);
-                testWriteCharArrayRange(3, 5);
-                testWriteCharArrayRange(5, 3);
-            }
-
-            private void testWriteCharArrayRange(int capacity, int chunkSize) {
+            public void testWriteCharArrayRange() throws IOException {
                 char[] chars = SOURCE.toCharArray();
 
-                TextPipe pipe = new TextPipe(capacity);
+                TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Writer output = pipe.output()) {
-                        int index = 0;
-                        while (index < SOURCE.length()) {
-                            int to = Math.min(index + chunkSize, SOURCE.length());
-                            output.write(chars, index, to - index);
-                            index = to;
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (Writer output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.write(chars, 0, chars.length);
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("write(String, int, int)")
-            public void testWriteStringRange() {
-                testWriteStringRange(5, 5);
-                testWriteStringRange(3, 5);
-                testWriteStringRange(5, 3);
-            }
-
-            private void testWriteStringRange(int capacity, int chunkSize) {
-                TextPipe pipe = new TextPipe(capacity);
+            public void testWriteStringRange() throws IOException {
+                TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Writer output = pipe.output()) {
-                        int index = 0;
-                        while (index < SOURCE.length()) {
-                            int to = Math.min(index + chunkSize, SOURCE.length());
-                            output.write(SOURCE, index, to - index);
-                            index = to;
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (Writer output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.write(SOURCE, 0, SOURCE.length());
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("append(CharSequence)")
-            public void testAppendCharSequence() {
-                testAppendCharSequence(5, 5);
-                testAppendCharSequence(3, 5);
-                testAppendCharSequence(5, 3);
-            }
-
-            private void testAppendCharSequence(int capacity, int chunkSize) {
-                TextPipe pipe = new TextPipe(capacity);
+            public void testAppendCharSequence() throws IOException {
+                TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Writer output = pipe.output()) {
-                        int index = 0;
-                        while (index < SOURCE.length()) {
-                            int to = Math.min(index + chunkSize, SOURCE.length());
-                            output.append(SOURCE.substring(index, to));
-                            index = to;
-                        }
-                        output.append(null);
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (Writer output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.append(SOURCE);
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("append(CharSequence, int, int)")
-            public void testAppendSubSequence() {
-                testAppendSubSequence(5, 5);
-                testAppendSubSequence(3, 5);
-                testAppendSubSequence(5, 3);
-            }
-
-            private void testAppendSubSequence(int capacity, int chunkSize) {
-                TextPipe pipe = new TextPipe(capacity);
+            public void testAppendSubSequence() throws IOException {
+                TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Writer output = pipe.output()) {
-                        int index = 0;
-                        while (index < SOURCE.length()) {
-                            int to = Math.min(index + chunkSize, SOURCE.length());
-                            output.append(SOURCE, index, to);
-                            index = to;
-                        }
-                        output.append(null, 1, 3);
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (Writer output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.append(SOURCE, 0, SOURCE.length());
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("append(char)")
-            public void testAppendChar() {
-                TextPipe pipe = new TextPipe(1);
+            public void testAppendChar() throws IOException {
+                TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Writer output = pipe.output()) {
-                        for (int i = 0; i < SOURCE.length(); i++) {
-                            output.append(SOURCE.charAt(i));
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (Writer output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.write(0);
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
 
             @Test
             @DisplayName("flush()")
-            public void testFlush() {
-                TextPipe pipe = new TextPipe(1);
+            public void testFlush() throws IOException {
+                TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
-                IOException thrown = assertThrows(IOException.class, () -> {
-                    try (Writer output = pipe.output()) {
-                        while (true) {
-                            output.flush();
-                        }
-                    }
-                });
-                assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                try (Writer output = pipe.output()) {
+                    output.write(0);
+                    IOException thrown = assertThrows(IOException.class, () -> {
+                        output.flush();
+                    });
+                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                }
             }
+        }
+    }
+
+    private void writeDataCharByChar(TextPipe pipe, CharSequence data) {
+        try (PipeWriter output = pipe.output()) {
+            for (int i = 0; i < data.length(); i++) {
+                output.write(data.charAt(i));
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void writeDataCharByChar(PipeWriter output, CharSequence data, CountDownLatch writelatch, CountDownLatch closeLatch) {
+        try {
+            for (int i = 0; i < data.length(); i++) {
+                output.write(data.charAt(i));
+            }
+            writelatch.countDown();
+            closeLatch.await();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void writeDataInChunks(TextPipe pipe, CharSequence data, int chunkSize) {
+        try (PipeWriter output = pipe.output()) {
+            int index = 0;
+            int remaining = data.length();
+            while (remaining > 0) {
+                int count = Math.min(remaining, chunkSize);
+                output.append(data, index, index + count);
+                index += count;
+                remaining -= count;
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void writeDataInChunks(PipeWriter output, char[] data, int chunkSize, CountDownLatch writeLatch, CountDownLatch closeLatch) {
+        try {
+            int index = 0;
+            int remaining = data.length;
+            while (remaining > 0) {
+                int count = Math.min(remaining, chunkSize);
+                output.write(data, index, count);
+                index += count;
+                remaining -= count;
+            }
+            writeLatch.countDown();
+            closeLatch.await();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void appendDataInChunks(PipeWriter output, String data, int chunkSize, CountDownLatch writeLatch, CountDownLatch closeLatch) {
+        try {
+            int index = 0;
+            int remaining = data.length();
+            while (remaining > 0) {
+                int count = Math.min(remaining, chunkSize);
+                output.append(data, index, index + count);
+                index += count;
+                remaining -= count;
+            }
+            writeLatch.countDown();
+            closeLatch.await();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private void writeAndDie(PipeWriter output) {
+        try {
+            output.write(0);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void readAll(TextPipe pipe, AtomicReference<String> result, CountDownLatch readLatch) {
+        StringWriter output = new StringWriter();
+
+        try (Reader input = pipe.input()) {
+            int b;
+            while ((b = input.read()) != -1) {
+                output.write(b);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        result.set(output.toString());
+        readLatch.countDown();
+    }
+
+    private void skipAndDie(PipeReader input) {
+        try {
+            input.skip(Integer.MAX_VALUE);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

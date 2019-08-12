@@ -19,7 +19,6 @@ package com.github.robtimus.io.stream;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -27,31 +26,32 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A class that pipes an input stream and output stream together.
- * This class behaves somewhat as a combination of {@link PipedInputStream} and {@link PipedOutputStream}, but the pipe will not be broken if the
- * writing thread is no longer alive. As with these streams it is not recommended to write to the pipe and read from the pipe from the same thread.
+ * An in-memory pipe. It can be used to connect code expecting an input stream with code expecting an output stream.
  * <p>
- * In addition, it's possible to pass an {@link IOException} from the input to the output or vice versa, by using
- * {@link PipeInputStream#close(IOException)} or {@link PipeOutputStream#close(IOException)}.
+ * This is a port of Go's <a href="https://golang.org/pkg/io/#Pipe">io.Pipe</a>. Like {@code io.Pipe}, each write to a {@link PipedOutputStream}
+ * blocks until all of its data has been consumed, either through reads or skips. Data is copied directly from the output stream to the input stream
+ * without any internal buffering.
+ * <p>
+ * Because reads and writes both block, writing to and reading from the pipe should not be done from the same thread. Attempting to do so will
+ * introduce deadlocks.
  *
  * @author Rob Spoor
  */
 public final class BinaryPipe {
 
-    private static final int DEFAULT_PIPE_SIZE = 1024;
     private static final long AWAIT_TIME = TimeUnit.SECONDS.toNanos(1);
 
     private final PipeInputStream input;
     private final PipeOutputStream output;
 
-    private final byte[] buffer;
-    private int first;
-    private int last;
-    private int size;
+    private final byte[] single;
+    private byte[] data;
+    private int start;
+    private int end;
 
     private final Lock lock;
     private final Condition closedOrNotEmpty;
-    private final Condition closedOrNotFull;
+    private final Condition closedOrEmpty;
 
     private boolean closed;
     private IOException readError;
@@ -61,31 +61,14 @@ public final class BinaryPipe {
     private Thread writeThread;
 
     /**
-     * Creates a new binary pipe with a capacity of {@code 1024}.
+     * Creates a new binary pipe.
      */
     public BinaryPipe() {
-        this(DEFAULT_PIPE_SIZE);
-    }
-
-    /**
-     * Creates a new binary pipe.
-     *
-     * @param capacity The capacity of the pipe's buffer.
-     * @throws IllegalArgumentException If the given capacity is not at least {@code 1}.
-     */
-    public BinaryPipe(int capacity) {
-        if (capacity < 1) {
-            throw new IllegalArgumentException(capacity + " < 1"); //$NON-NLS-1$
-        }
-
-        buffer = new byte[capacity];
-        first = 0;
-        last = 0;
-        size = 0;
+        single = new byte[1];
 
         lock = new ReentrantLock(true);
         closedOrNotEmpty = lock.newCondition();
-        closedOrNotFull = lock.newCondition();
+        closedOrEmpty = lock.newCondition();
 
         closed = false;
         readError = null;
@@ -133,13 +116,13 @@ public final class BinaryPipe {
         lock.lock();
         try {
             readThread = Thread.currentThread();
-            while (!closed && size == 0 && !writerDied()) {
+            while (!closed && start == end && !writerDied()) {
                 await(closedOrNotEmpty);
             }
             throwWriteError();
-            if (size > 0) {
-                byte b = next();
-                closedOrNotFull.signalAll();
+            if (start < end) {
+                byte b = data[start++];
+                checkEmpty();
                 return b & 0xFF;
             }
             if (closed) {
@@ -159,18 +142,16 @@ public final class BinaryPipe {
         lock.lock();
         try {
             readThread = Thread.currentThread();
-            while (!closed && size == 0 && !writerDied()) {
+            while (!closed && start == end && !writerDied()) {
                 await(closedOrNotEmpty);
             }
             throwWriteError();
-            if (size > 0) {
-                int i = 0;
-                while (i < len && size > 0) {
-                    b[off + i] = next();
-                    i++;
-                }
-                closedOrNotFull.signalAll();
-                return i;
+            if (start < end) {
+                int result = Math.min(len, end - start);
+                System.arraycopy(data, start, b, off, result);
+                start += result;
+                checkEmpty();
+                return result;
             }
             if (closed) {
                 return -1;
@@ -181,14 +162,6 @@ public final class BinaryPipe {
         }
     }
 
-    private byte next() {
-        assert size > 0 : "cannot take from empty buffer"; //$NON-NLS-1$
-        byte b = buffer[first];
-        first = (first + 1) % buffer.length;
-        size--;
-        return b;
-    }
-
     long skip(long n) throws IOException {
         if (n <= 0) {
             return 0;
@@ -196,17 +169,17 @@ public final class BinaryPipe {
         lock.lock();
         try {
             readThread = Thread.currentThread();
-            throwWriteError();
-            if (size > 0) {
-                long remaining = n;
-                while (remaining > 0 && size > 0) {
-                    next();
-                    remaining--;
-                }
-                closedOrNotFull.signalAll();
-                return n - remaining;
+            while (!closed && start == end && !writerDied()) {
+                await(closedOrNotEmpty);
             }
-            if (closed || !writerDied()) {
+            throwWriteError();
+            if (start < end) {
+                long result = Math.min(n, end - start);
+                start += result;
+                checkEmpty();
+                return result;
+            }
+            if (closed) {
                 return 0;
             }
             throw writerDiedException();
@@ -215,12 +188,19 @@ public final class BinaryPipe {
         }
     }
 
+    private void checkEmpty() {
+        if (start == end) {
+            data = null;
+            closedOrEmpty.signalAll();
+        }
+    }
+
     int available() throws IOException {
         lock.lock();
         try {
             readThread = Thread.currentThread();
             throwWriteError();
-            return size;
+            return end - start;
         } finally {
             lock.unlock();
         }
@@ -229,10 +209,10 @@ public final class BinaryPipe {
     void closeInput() {
         lock.lock();
         try {
-            clear();
+            data = null;
             closed = true;
             closedOrNotEmpty.signalAll();
-            closedOrNotFull.signalAll();
+            closedOrEmpty.signalAll();
         } finally {
             lock.unlock();
         }
@@ -241,11 +221,11 @@ public final class BinaryPipe {
     void closeInput(IOException error) {
         lock.lock();
         try {
-            clear();
+            data = null;
             closed = true;
             readError = error;
             closedOrNotEmpty.signalAll();
-            closedOrNotFull.signalAll();
+            closedOrEmpty.signalAll();
         } finally {
             lock.unlock();
         }
@@ -271,17 +251,19 @@ public final class BinaryPipe {
         lock.lock();
         try {
             writeThread = Thread.currentThread();
-            while (!closed && size >= buffer.length && !readerDied()) {
-                await(closedOrNotFull);
+            while (!closed && start < end && !readerDied()) {
+                await(closedOrEmpty);
             }
             throwReadError();
             throwIfClosed();
-            if (size < buffer.length) {
-                add((byte) b);
+            if (start == end) {
+                single[0] = (byte) b;
+                data = single;
+                start = 0;
+                end = 1;
                 closedOrNotEmpty.signalAll();
-                return;
             }
-            throw readerDiedException();
+            awaitDataRead();
         } finally {
             lock.unlock();
         }
@@ -289,44 +271,36 @@ public final class BinaryPipe {
 
     void write(byte[] b, int off, int len) throws IOException {
         checkOffsetAndLength(b, off, len);
-        int index = off;
-        int remaining = len;
-        while (remaining > 0) {
-            // write in chunks of at most the buffer's capacity, so the buffer will never run out of capacity
-            int count = Math.min(remaining, buffer.length);
-            writeBytes(b, index, count);
-            index += count;
-            remaining -= count;
-        }
-    }
 
-    private void writeBytes(byte[] b, int off, int len) throws IOException {
         lock.lock();
         try {
             writeThread = Thread.currentThread();
-            while (!closed && size > buffer.length - len && !readerDied()) {
-                await(closedOrNotFull);
+            while (!closed && start < end && !readerDied()) {
+                await(closedOrEmpty);
             }
             throwReadError();
             throwIfClosed();
-            if (size <= buffer.length - len) {
-                for (int i = off, j = 0; j < len; i++, j++) {
-                    add(b[i]);
-                }
+            if (start == end) {
+                data = b;
+                start = off;
+                end = off + len;
                 closedOrNotEmpty.signalAll();
-                return;
             }
-            throw readerDiedException();
+            awaitDataRead();
         } finally {
             lock.unlock();
         }
     }
 
-    void add(byte b) {
-        assert size < buffer.length : "cannot add to full buffer"; //$NON-NLS-1$
-        buffer[last] = b;
-        last = (last + 1) % buffer.length;
-        size++;
+    private void awaitDataRead() throws IOException {
+        while (!closed && start < end && !readerDied()) {
+            await(closedOrEmpty);
+        }
+        throwReadError();
+        throwIfClosed();
+        if (start < end) {
+            throw readerDiedException();
+        }
     }
 
     void flush() throws IOException {
@@ -344,10 +318,10 @@ public final class BinaryPipe {
     void closeOutput() {
         lock.lock();
         try {
-            // don't clear the buffer, the input stream may still be active
+            // don't clear the data, the input stream may still be active
             closed = true;
             closedOrNotEmpty.signalAll();
-            closedOrNotFull.signalAll();
+            closedOrEmpty.signalAll();
         } finally {
             lock.unlock();
         }
@@ -356,11 +330,11 @@ public final class BinaryPipe {
     void closeOutput(IOException error) {
         lock.lock();
         try {
-            // don't clear the buffer, the input stream may still be active
+            // don't clear the data, the input stream may still be active
             closed = true;
             writeError = error;
             closedOrNotEmpty.signalAll();
-            closedOrNotFull.signalAll();
+            closedOrEmpty.signalAll();
         } finally {
             lock.unlock();
         }
@@ -398,12 +372,6 @@ public final class BinaryPipe {
         if (offset < 0 || length < 0 || offset + length > array.length) {
             throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength.get(array.length, offset, length));
         }
-    }
-
-    private void clear() {
-        first = 0;
-        last = 0;
-        size = 0;
     }
 
     private void await(Condition condition) throws IOException {
