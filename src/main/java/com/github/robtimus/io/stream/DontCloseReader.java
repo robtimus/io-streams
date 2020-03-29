@@ -21,13 +21,14 @@ import static com.github.robtimus.io.stream.StreamUtils.streamClosedException;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.CharBuffer;
+import java.util.Objects;
 
 final class DontCloseReader extends Reader {
 
     private Reader input;
 
     DontCloseReader(Reader input) {
-        this.input = input;
+        this.input = Objects.requireNonNull(input);
     }
 
     private void ensureOpen() throws IOException {

@@ -105,7 +105,6 @@ public final class StreamUtils {
      * @throws NullPointerException If the given input stream is {@code null}.
      */
     public static InputStream dontClose(InputStream input) {
-        Objects.requireNonNull(input);
         return new DontCloseInputStream(input);
     }
 
@@ -122,7 +121,6 @@ public final class StreamUtils {
      * @throws NullPointerException If the given output stream is {@code null}.
      */
     public static OutputStream dontClose(OutputStream output) {
-        Objects.requireNonNull(output);
         return new DontCloseOutputStream(output);
     }
 
@@ -137,7 +135,6 @@ public final class StreamUtils {
      * @throws NullPointerException If the given reader is {@code null}.
      */
     public static Reader dontClose(Reader input) {
-        Objects.requireNonNull(input);
         return new DontCloseReader(input);
     }
 
@@ -154,7 +151,6 @@ public final class StreamUtils {
      * @throws NullPointerException If the given writer is {@code null}.
      */
     public static Writer dontClose(Writer output) {
-        Objects.requireNonNull(output);
         return new DontCloseWriter(output);
     }
 

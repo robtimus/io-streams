@@ -88,7 +88,9 @@ public class BinaryPipeTest extends TestBase {
         @DisplayName("pipe()")
         public void testPipe() {
             BinaryPipe pipe = new BinaryPipe();
-            assertSame(pipe, pipe.input().pipe());
+            @SuppressWarnings("resource")
+            PipeInputStream input = pipe.input();
+            assertSame(pipe, input.pipe());
         }
 
         @Test
@@ -175,22 +177,25 @@ public class BinaryPipeTest extends TestBase {
             BinaryPipe pipe = new BinaryPipe();
             try (InputStream input = pipe.input()) {
                 IOException error = new IOException();
-                pipe.output().flush();
-                pipe.output().close(error);
+
+                @SuppressWarnings("resource")
+                PipeOutputStream output = pipe.output();
+                output.flush();
+                output.close(error);
 
                 assertSame(error, assertThrows(IOException.class, () -> input.read()));
                 assertSame(error, assertThrows(IOException.class, () -> input.read(new byte[5], 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.skip(5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.available()));
 
-                pipe.output().close();
+                output.close();
 
                 assertSame(error, assertThrows(IOException.class, () -> input.read()));
                 assertSame(error, assertThrows(IOException.class, () -> input.read(new byte[5], 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.skip(5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.available()));
 
-                pipe.output().close(null);
+                output.close(null);
 
                 assertEquals(-1, input.read());
                 assertEquals(-1, input.read(new byte[5], 0, 5));
@@ -258,7 +263,9 @@ public class BinaryPipeTest extends TestBase {
         @DisplayName("pipe()")
         public void testPipe() {
             BinaryPipe pipe = new BinaryPipe();
-            assertSame(pipe, pipe.output().pipe());
+            @SuppressWarnings("resource")
+            PipeOutputStream output = pipe.output();
+            assertSame(pipe, output.pipe());
         }
 
         @Test

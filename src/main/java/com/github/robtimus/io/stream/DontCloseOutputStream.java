@@ -20,13 +20,14 @@ package com.github.robtimus.io.stream;
 import static com.github.robtimus.io.stream.StreamUtils.streamClosedException;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 
 final class DontCloseOutputStream extends OutputStream {
 
     private OutputStream output;
 
     DontCloseOutputStream(OutputStream output) {
-        this.output = output;
+        this.output = Objects.requireNonNull(output);
     }
 
     private void ensureOpen() throws IOException {

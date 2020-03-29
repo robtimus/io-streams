@@ -58,19 +58,19 @@ public final class PipeWriter extends Writer {
     }
 
     @Override
-    public Writer append(CharSequence csq) throws IOException {
+    public PipeWriter append(CharSequence csq) throws IOException {
         pipe.append(csq);
         return this;
     }
 
     @Override
-    public Writer append(CharSequence csq, int start, int end) throws IOException {
+    public PipeWriter append(CharSequence csq, int start, int end) throws IOException {
         pipe.append(csq, start, end);
         return this;
     }
 
     @Override
-    public Writer append(char c) throws IOException {
+    public PipeWriter append(char c) throws IOException {
         write(c);
         return this;
     }

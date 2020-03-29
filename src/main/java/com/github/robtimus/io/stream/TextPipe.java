@@ -215,6 +215,8 @@ public final class TextPipe {
         lock.lock();
         try {
             data = null;
+            start = 0;
+            end = 0;
             closed = true;
             closedOrNotEmpty.signalAll();
             closedOrEmpty.signalAll();
@@ -227,6 +229,8 @@ public final class TextPipe {
         lock.lock();
         try {
             data = null;
+            start = 0;
+            end = 0;
             closed = true;
             readError = error;
             closedOrNotEmpty.signalAll();

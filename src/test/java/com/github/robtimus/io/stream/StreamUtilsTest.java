@@ -41,7 +41,9 @@ public class StreamUtilsTest extends TestBase {
         return new DynamicTest[] {
                 dynamicTest("Writer", () -> {
                     Writer writer = new StringWriter();
-                    assertSame(writer, writer(writer));
+                    @SuppressWarnings("resource")
+                    Writer writer2 = writer(writer);
+                    assertSame(writer, writer2);
                 }),
                 dynamicTest("StringBuilder", () -> {
                     StringBuilder sb = new StringBuilder();

@@ -90,7 +90,9 @@ public class TextPipeTest extends TestBase {
         @DisplayName("pipe()")
         public void testPipe() {
             TextPipe pipe = new TextPipe();
-            assertSame(pipe, pipe.input().pipe());
+            @SuppressWarnings("resource")
+            PipeReader input = pipe.input();
+            assertSame(pipe, input.pipe());
         }
 
         @Test
@@ -189,22 +191,25 @@ public class TextPipeTest extends TestBase {
             TextPipe pipe = new TextPipe();
             try (Reader input = pipe.input()) {
                 IOException error = new IOException();
-                pipe.output().flush();
-                pipe.output().close(error);
+
+                @SuppressWarnings("resource")
+                PipeWriter output = pipe.output();
+                output.flush();
+                output.close(error);
 
                 assertSame(error, assertThrows(IOException.class, () -> input.read()));
                 assertSame(error, assertThrows(IOException.class, () -> input.read(new char[5], 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.skip(5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.ready()));
 
-                pipe.output().close();
+                output.close();
 
                 assertSame(error, assertThrows(IOException.class, () -> input.read()));
                 assertSame(error, assertThrows(IOException.class, () -> input.read(new char[5], 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.skip(5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.ready()));
 
-                pipe.output().close(null);
+                output.close(null);
 
                 assertEquals(-1, input.read());
                 assertEquals(-1, input.read(new char[5], 0, 5));
@@ -272,7 +277,9 @@ public class TextPipeTest extends TestBase {
         @DisplayName("pipe()")
         public void testPipe() {
             TextPipe pipe = new TextPipe();
-            assertSame(pipe, pipe.output().pipe());
+            @SuppressWarnings("resource")
+            PipeWriter output = pipe.output();
+            assertSame(pipe, output.pipe());
         }
 
         @Test
@@ -707,7 +714,7 @@ public class TextPipeTest extends TestBase {
             int remaining = data.length();
             while (remaining > 0) {
                 int count = Math.min(remaining, chunkSize);
-                output.append(data, index, index + count);
+                appendData(data, output, index, count);
                 index += count;
                 remaining -= count;
             }
@@ -742,7 +749,7 @@ public class TextPipeTest extends TestBase {
             int remaining = data.length();
             while (remaining > 0) {
                 int count = Math.min(remaining, chunkSize);
-                output.append(data, index, index + count);
+                appendData(data, output, index, count);
                 index += count;
                 remaining -= count;
             }
@@ -785,5 +792,10 @@ public class TextPipeTest extends TestBase {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    @SuppressWarnings("resource")
+    private void appendData(CharSequence data, PipeWriter output, int index, int count) throws IOException {
+        output.append(data, index, index + count);
     }
 }
