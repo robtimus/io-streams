@@ -104,7 +104,9 @@ public final class StreamUtils {
      * @return An input stream wrapper around the given input stream that will delegate all methods except for {@code close()}.
      * @throws NullPointerException If the given input stream is {@code null}.
      */
+    @SuppressWarnings("resource")
     public static InputStream dontClose(InputStream input) {
+        Objects.requireNonNull(input);
         return new DontCloseInputStream(input);
     }
 
@@ -120,7 +122,9 @@ public final class StreamUtils {
      * @return An output stream wrapper around the given output stream that will delegate all methods except for {@code close()}.
      * @throws NullPointerException If the given output stream is {@code null}.
      */
+    @SuppressWarnings("resource")
     public static OutputStream dontClose(OutputStream output) {
+        Objects.requireNonNull(output);
         return new DontCloseOutputStream(output);
     }
 
@@ -134,7 +138,9 @@ public final class StreamUtils {
      * @return A reader wrapper around the given reader that will delegate all methods except for {@code close()}.
      * @throws NullPointerException If the given reader is {@code null}.
      */
+    @SuppressWarnings("resource")
     public static Reader dontClose(Reader input) {
+        Objects.requireNonNull(input);
         return new DontCloseReader(input);
     }
 
@@ -150,7 +156,9 @@ public final class StreamUtils {
      * @return A writer wrapper around the given writer that will delegate all methods except for {@code close()}.
      * @throws NullPointerException If the given writer is {@code null}.
      */
+    @SuppressWarnings("resource")
     public static Writer dontClose(Writer output) {
+        Objects.requireNonNull(output);
         return new DontCloseWriter(output);
     }
 
