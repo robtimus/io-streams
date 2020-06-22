@@ -182,8 +182,8 @@ public class HexOutputStreamTest extends TestBase {
 
     @ParameterizedTest(name = "{0} -> {1}")
     @CsvSource({
-        "false, cafebabe",
-        "true, CAFEBABE"
+            "false, cafebabe",
+            "true, CAFEBABE"
     })
     @DisplayName("encode(byte[], boolean)")
     public void testEncode(boolean upperCase, String expected) {
@@ -193,8 +193,8 @@ public class HexOutputStreamTest extends TestBase {
 
     @ParameterizedTest(name = "{0} -> {1}")
     @CsvSource({
-        "false, cafebabe",
-        "true, CAFEBABE"
+            "false, cafebabe",
+            "true, CAFEBABE"
     })
     @DisplayName("encode(byte[], int, int, boolean)")
     public void testEncodeRange(boolean upperCase, String expected) {
