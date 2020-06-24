@@ -29,12 +29,11 @@ import java.util.Base64;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("javadoc")
-public class AsciiOutputStreamTest extends TestBase {
+class AsciiOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("write(int)")
-    public void testWriteInt() throws IOException {
+    void testWriteInt() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         StringWriter output = new StringWriter(SOURCE.length());
 
@@ -52,7 +51,7 @@ public class AsciiOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("write(byte[], int, int)")
-    public void testWriteByteArrayRange() throws IOException {
+    void testWriteByteArrayRange() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         StringWriter output = new StringWriter(SOURCE.length());
 
@@ -81,7 +80,7 @@ public class AsciiOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("flush()")
-    public void testFlush() throws IOException {
+    void testFlush() throws IOException {
         StringWriter output = spy(new StringWriter());
         try (OutputStream wrapped = new AsciiOutputStream(output)) {
             wrapped.flush();
@@ -93,7 +92,7 @@ public class AsciiOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("close()")
-    public void testClose() throws IOException {
+    void testClose() throws IOException {
         StringWriter output = spy(new StringWriter());
         try (OutputStream wrapped = new AsciiOutputStream(output)) {
             // don't do anything
@@ -104,7 +103,7 @@ public class AsciiOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("base64")
-    public void testBase64() throws IOException {
+    void testBase64() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         String base64 = Base64.getEncoder().encodeToString(bytes);
         StringWriter output = new StringWriter(base64.length());

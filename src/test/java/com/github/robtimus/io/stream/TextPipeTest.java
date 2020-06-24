@@ -20,6 +20,7 @@ package com.github.robtimus.io.stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -41,12 +42,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class TextPipeTest extends TestBase {
+@SuppressWarnings("nls")
+class TextPipeTest extends TestBase {
 
     @Test
     @DisplayName("closed()")
-    public void testClosed() {
+    void testClosed() {
         TextPipe pipe = new TextPipe();
         assertFalse(pipe.closed());
         pipe.input().close();
@@ -66,7 +67,7 @@ public class TextPipeTest extends TestBase {
 
     @Test
     @DisplayName("interrupt")
-    public void testInterrupt() throws InterruptedException {
+    void testInterrupt() throws InterruptedException {
         TextPipe pipe = new TextPipe();
         AtomicReference<InterruptedIOException> exception = new AtomicReference<>();
         Thread thread = new Thread(() -> {
@@ -84,11 +85,11 @@ public class TextPipeTest extends TestBase {
 
     @Nested
     @DisplayName("input()")
-    public class Input {
+    class Input {
 
         @Test
         @DisplayName("pipe()")
-        public void testPipe() {
+        void testPipe() {
             TextPipe pipe = new TextPipe();
             @SuppressWarnings("resource")
             PipeReader input = pipe.input();
@@ -97,7 +98,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("read()")
-        public void testReadChar() throws IOException {
+        void testReadChar() throws IOException {
             testReadChar(s -> s);
             testReadChar(StringBuilder::new);
             testReadChar(StringBuffer::new);
@@ -120,7 +121,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("read(char[], int, int)")
-        public void testReadCharArrayRange() throws IOException {
+        void testReadCharArrayRange() throws IOException {
             testReadCharArrayRange(s -> s);
             testReadCharArrayRange(StringBuilder::new);
             testReadCharArrayRange(StringBuffer::new);
@@ -145,7 +146,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("skip(long)")
-        public void testSkip() throws IOException {
+        void testSkip() throws IOException {
             String expected = SOURCE.substring(0, 5) + SOURCE.substring(11, SOURCE.length());
             StringWriter output = new StringWriter(expected.length());
 
@@ -168,7 +169,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("ready()")
-        public void testAvailable() throws IOException, InterruptedException {
+        void testAvailable() throws IOException, InterruptedException {
             TextPipe pipe = new TextPipe();
             new Thread(() -> writeDataInChunks(pipe, SOURCE, 5)).start();
             try (Reader input = pipe.input()) {
@@ -187,7 +188,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("operations with write error")
-        public void testOperationsWithWriteError() throws IOException {
+        void testOperationsWithWriteError() throws IOException {
             TextPipe pipe = new TextPipe();
             try (Reader input = pipe.input()) {
                 IOException error = new IOException();
@@ -220,11 +221,11 @@ public class TextPipeTest extends TestBase {
 
         @Nested
         @DisplayName("writer died")
-        public class WriterDied {
+        class WriterDied {
 
             @Test
             @DisplayName("read()")
-            public void testReadChar() throws IOException {
+            void testReadChar() throws IOException {
                 TextPipe pipe = new TextPipe();
                 new Thread(() -> writeAndDie(pipe.output())).start();
                 try (Reader input = pipe.input()) {
@@ -239,7 +240,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("read(char[], int, int)")
-            public void testReadCharArrayRange() throws IOException {
+            void testReadCharArrayRange() throws IOException {
                 TextPipe pipe = new TextPipe();
                 new Thread(() -> writeAndDie(pipe.output())).start();
                 try (Reader input = pipe.input()) {
@@ -254,7 +255,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("skip(long)")
-            public void testSkip() throws IOException {
+            void testSkip() throws IOException {
                 TextPipe pipe = new TextPipe();
                 new Thread(() -> writeAndDie(pipe.output())).start();
                 try (Reader input = pipe.input()) {
@@ -271,11 +272,11 @@ public class TextPipeTest extends TestBase {
 
     @Nested
     @DisplayName("output()")
-    public class Output {
+    class Output {
 
         @Test
         @DisplayName("pipe()")
-        public void testPipe() {
+        void testPipe() {
             TextPipe pipe = new TextPipe();
             @SuppressWarnings("resource")
             PipeWriter output = pipe.output();
@@ -284,7 +285,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("write(int)")
-        public void testWriteInt() throws IOException, InterruptedException {
+        void testWriteInt() throws IOException, InterruptedException {
             TextPipe pipe = new TextPipe();
             AtomicReference<String> result = new AtomicReference<>(null);
             CountDownLatch readLatch = new CountDownLatch(1);
@@ -302,7 +303,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("write(char[], int, int)")
-        public void testWriteCharArrayRange() throws IOException, InterruptedException {
+        void testWriteCharArrayRange() throws IOException, InterruptedException {
             char[] chars = SOURCE.toCharArray();
 
             TextPipe pipe = new TextPipe();
@@ -329,7 +330,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("write(String, int, int)")
-        public void testWriteStringRange() throws IOException, InterruptedException {
+        void testWriteStringRange() throws IOException, InterruptedException {
             TextPipe pipe = new TextPipe();
             AtomicReference<String> result = new AtomicReference<>(null);
             CountDownLatch readLatch = new CountDownLatch(1);
@@ -354,7 +355,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("append(CharSequence)")
-        public void testAppendCharSequence() throws IOException, InterruptedException {
+        void testAppendCharSequence() throws IOException, InterruptedException {
             testAppendCharSequence(s -> s);
             testAppendCharSequence(StringBuilder::new);
             testAppendCharSequence(StringBuffer::new);
@@ -383,7 +384,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("append(CharSequence, int, int)")
-        public void testAppendSubSequence() throws IOException, InterruptedException {
+        void testAppendSubSequence() throws IOException, InterruptedException {
             testAppendSubSequence(s -> s);
             testAppendSubSequence(StringBuilder::new);
             testAppendSubSequence(StringBuffer::new);
@@ -417,7 +418,7 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("append(char)")
-        public void testAppendChar() throws IOException, InterruptedException {
+        void testAppendChar() throws IOException, InterruptedException {
             TextPipe pipe = new TextPipe();
             AtomicReference<String> result = new AtomicReference<>(null);
             CountDownLatch readLatch = new CountDownLatch(1);
@@ -435,16 +436,16 @@ public class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("flush()")
-        public void testFlush() throws IOException {
+        void testFlush() throws IOException {
             TextPipe pipe = new TextPipe();
             try (Writer output = pipe.output()) {
-                output.flush();
+                assertDoesNotThrow(output::flush);
             }
         }
 
         @Test
         @DisplayName("operations with read error")
-        public void testOperationsWithReadError() throws IOException {
+        void testOperationsWithReadError() throws IOException {
             char[] chars = SOURCE.toCharArray();
 
             TextPipe pipe = new TextPipe();
@@ -484,11 +485,11 @@ public class TextPipeTest extends TestBase {
 
         @Nested
         @DisplayName("parallel writes")
-        public class ParallelWrites {
+        class ParallelWrites {
 
             @Test
             @DisplayName("write(int)")
-            public void testWriteInt() throws InterruptedException {
+            void testWriteInt() throws InterruptedException {
                 TextPipe pipe = new TextPipe();
                 AtomicReference<String> result = new AtomicReference<>(null);
                 CountDownLatch readLatch = new CountDownLatch(1);
@@ -518,7 +519,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("write(char[], int, int)")
-            public void testWriteCharArrayRange() throws InterruptedException {
+            void testWriteCharArrayRange() throws InterruptedException {
                 TextPipe pipe = new TextPipe();
                 AtomicReference<String> result = new AtomicReference<>(null);
                 CountDownLatch readLatch = new CountDownLatch(1);
@@ -548,7 +549,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("append(CharSequence, int, int)")
-            public void testAppendSubSequence() throws InterruptedException {
+            void testAppendSubSequence() throws InterruptedException {
                 TextPipe pipe = new TextPipe();
                 AtomicReference<String> result = new AtomicReference<>(null);
                 CountDownLatch readLatch = new CountDownLatch(1);
@@ -579,11 +580,11 @@ public class TextPipeTest extends TestBase {
 
         @Nested
         @DisplayName("reader died")
-        public class ReaderDied {
+        class ReaderDied {
 
             @Test
             @DisplayName("write(int)")
-            public void testWriteInt() throws IOException {
+            void testWriteInt() throws IOException {
                 TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
                 try (Writer output = pipe.output()) {
@@ -597,7 +598,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("write(char[], int, int)")
-            public void testWriteCharArrayRange() throws IOException {
+            void testWriteCharArrayRange() throws IOException {
                 char[] chars = SOURCE.toCharArray();
 
                 TextPipe pipe = new TextPipe();
@@ -613,7 +614,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("write(String, int, int)")
-            public void testWriteStringRange() throws IOException {
+            void testWriteStringRange() throws IOException {
                 TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
                 try (Writer output = pipe.output()) {
@@ -627,7 +628,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("append(CharSequence)")
-            public void testAppendCharSequence() throws IOException {
+            void testAppendCharSequence() throws IOException {
                 TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
                 try (Writer output = pipe.output()) {
@@ -641,7 +642,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("append(CharSequence, int, int)")
-            public void testAppendSubSequence() throws IOException {
+            void testAppendSubSequence() throws IOException {
                 TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
                 try (Writer output = pipe.output()) {
@@ -655,7 +656,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("append(char)")
-            public void testAppendChar() throws IOException {
+            void testAppendChar() throws IOException {
                 TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
                 try (Writer output = pipe.output()) {
@@ -669,7 +670,7 @@ public class TextPipeTest extends TestBase {
 
             @Test
             @DisplayName("flush()")
-            public void testFlush() throws IOException {
+            void testFlush() throws IOException {
                 TextPipe pipe = new TextPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
                 try (Writer output = pipe.output()) {

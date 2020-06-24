@@ -33,12 +33,12 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class AppendableWriterTest extends TestBase {
+@SuppressWarnings("nls")
+class AppendableWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(int)")
-    public void testWriteInt() throws IOException {
+    void testWriteInt() throws IOException {
         StringBuilder sb = new StringBuilder();
         try (Writer writer = new AppendableWriter(sb)) {
             for (int i = 0; i < SOURCE.length(); i++) {
@@ -50,7 +50,7 @@ public class AppendableWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(char[])")
-    public void testWriteCharArray() throws IOException {
+    void testWriteCharArray() throws IOException {
         StringBuilder sb = new StringBuilder();
         try (Writer writer = new AppendableWriter(sb)) {
             writer.write(SOURCE.toCharArray());
@@ -61,7 +61,7 @@ public class AppendableWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(char[], int, int)")
-    public void testWriteCharArrayRange() throws IOException {
+    void testWriteCharArrayRange() throws IOException {
         StringBuilder sb = new StringBuilder();
         try (Writer writer = new AppendableWriter(sb)) {
             char[] content = SOURCE.toCharArray();
@@ -82,7 +82,7 @@ public class AppendableWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(String)")
-    public void testWriteString() throws IOException {
+    void testWriteString() throws IOException {
         StringBuilder sb = new StringBuilder();
         try (Writer writer = new AppendableWriter(sb)) {
             writer.write(SOURCE);
@@ -92,7 +92,7 @@ public class AppendableWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(String, int, int)")
-    public void testWriteStringRange() throws IOException {
+    void testWriteStringRange() throws IOException {
         StringBuilder sb = new StringBuilder();
         try (Writer writer = new AppendableWriter(sb)) {
             int index = 0;
@@ -112,7 +112,7 @@ public class AppendableWriterTest extends TestBase {
 
     @Test
     @DisplayName("append(CharSequence)")
-    public void testAppendCharSequence() throws IOException {
+    void testAppendCharSequence() throws IOException {
         StringBuilder sb = new StringBuilder();
         try (Writer writer = new AppendableWriter(sb)) {
             writer.append(SOURCE);
@@ -123,7 +123,7 @@ public class AppendableWriterTest extends TestBase {
 
     @Test
     @DisplayName("append(CharSequence, int, int)")
-    public void testAppendCharSequenceRange() throws IOException {
+    void testAppendCharSequenceRange() throws IOException {
         StringBuilder sb = new StringBuilder();
         try (Writer writer = new AppendableWriter(sb)) {
             int index = 0;
@@ -148,7 +148,7 @@ public class AppendableWriterTest extends TestBase {
 
     @Test
     @DisplayName("append(char)")
-    public void testAppendChar() throws IOException {
+    void testAppendChar() throws IOException {
         StringBuilder sb = new StringBuilder();
         try (Writer writer = new AppendableWriter(sb)) {
             for (int i = 0; i < SOURCE.length(); i++) {
@@ -160,7 +160,7 @@ public class AppendableWriterTest extends TestBase {
 
     @TestFactory
     @DisplayName("flush()")
-    public DynamicTest[] testFlush() {
+    DynamicTest[] testFlush() {
         return new DynamicTest[] {
                 dynamicTest("not Flushable", () -> {
                     Appendable appendable = mock(Appendable.class);
@@ -183,7 +183,7 @@ public class AppendableWriterTest extends TestBase {
 
     @TestFactory
     @DisplayName("close()")
-    public DynamicTest[] testClose() throws Exception {
+    DynamicTest[] testClose() throws Exception {
         return new DynamicTest[] {
                 dynamicTest("not Closeable", () -> {
                     Appendable appendable = mock(Appendable.class);

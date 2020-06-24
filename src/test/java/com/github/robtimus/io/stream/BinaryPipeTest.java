@@ -20,6 +20,7 @@ package com.github.robtimus.io.stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -39,12 +40,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("javadoc")
-public class BinaryPipeTest extends TestBase {
+class BinaryPipeTest extends TestBase {
 
     @Test
     @DisplayName("closed()")
-    public void testClosed() {
+    void testClosed() {
         BinaryPipe pipe = new BinaryPipe();
         assertFalse(pipe.closed());
         pipe.input().close();
@@ -64,7 +64,7 @@ public class BinaryPipeTest extends TestBase {
 
     @Test
     @DisplayName("interrupt")
-    public void testInterrupt() throws InterruptedException {
+    void testInterrupt() throws InterruptedException {
         BinaryPipe pipe = new BinaryPipe();
         AtomicReference<InterruptedIOException> exception = new AtomicReference<>();
         Thread thread = new Thread(() -> {
@@ -82,11 +82,11 @@ public class BinaryPipeTest extends TestBase {
 
     @Nested
     @DisplayName("input()")
-    public class Input {
+    class Input {
 
         @Test
         @DisplayName("pipe()")
-        public void testPipe() {
+        void testPipe() {
             BinaryPipe pipe = new BinaryPipe();
             @SuppressWarnings("resource")
             PipeInputStream input = pipe.input();
@@ -95,7 +95,7 @@ public class BinaryPipeTest extends TestBase {
 
         @Test
         @DisplayName("read()")
-        public void testReadByte() throws IOException {
+        void testReadByte() throws IOException {
             byte[] expected = SOURCE.getBytes();
             ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
@@ -112,7 +112,7 @@ public class BinaryPipeTest extends TestBase {
 
         @Test
         @DisplayName("read(byte[], int, int)")
-        public void testReadByteArrayRange() throws IOException {
+        void testReadByteArrayRange() throws IOException {
             byte[] expected = SOURCE.getBytes();
             ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
@@ -131,7 +131,7 @@ public class BinaryPipeTest extends TestBase {
 
         @Test
         @DisplayName("skip(long)")
-        public void testSkip() throws IOException {
+        void testSkip() throws IOException {
             byte[] expected = (SOURCE.substring(0, 5) + SOURCE.substring(11, SOURCE.length())).getBytes();
             ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
@@ -154,7 +154,7 @@ public class BinaryPipeTest extends TestBase {
 
         @Test
         @DisplayName("available()")
-        public void testAvailable() throws IOException, InterruptedException {
+        void testAvailable() throws IOException, InterruptedException {
             BinaryPipe pipe = new BinaryPipe();
             new Thread(() -> writeDataInChunks(pipe, SOURCE.getBytes(), 5)).start();
             try (InputStream input = pipe.input()) {
@@ -173,7 +173,7 @@ public class BinaryPipeTest extends TestBase {
 
         @Test
         @DisplayName("operations with write error")
-        public void testOperationsWithWriteError() throws IOException {
+        void testOperationsWithWriteError() throws IOException {
             BinaryPipe pipe = new BinaryPipe();
             try (InputStream input = pipe.input()) {
                 IOException error = new IOException();
@@ -206,11 +206,11 @@ public class BinaryPipeTest extends TestBase {
 
         @Nested
         @DisplayName("writer died")
-        public class WriterDied {
+        class WriterDied {
 
             @Test
             @DisplayName("read()")
-            public void testReadByte() throws IOException {
+            void testReadByte() throws IOException {
                 BinaryPipe pipe = new BinaryPipe();
                 new Thread(() -> writeAndDie(pipe.output())).start();
                 try (InputStream input = pipe.input()) {
@@ -225,7 +225,7 @@ public class BinaryPipeTest extends TestBase {
 
             @Test
             @DisplayName("read(byte[], int, int)")
-            public void testReadByteArrayRange() throws IOException {
+            void testReadByteArrayRange() throws IOException {
                 BinaryPipe pipe = new BinaryPipe();
                 new Thread(() -> writeAndDie(pipe.output())).start();
                 try (InputStream input = pipe.input()) {
@@ -240,7 +240,7 @@ public class BinaryPipeTest extends TestBase {
 
             @Test
             @DisplayName("skip(long)")
-            public void testSkip() throws IOException {
+            void testSkip() throws IOException {
                 BinaryPipe pipe = new BinaryPipe();
                 new Thread(() -> writeAndDie(pipe.output())).start();
                 try (InputStream input = pipe.input()) {
@@ -257,11 +257,11 @@ public class BinaryPipeTest extends TestBase {
 
     @Nested
     @DisplayName("output()")
-    public class Output {
+    class Output {
 
         @Test
         @DisplayName("pipe()")
-        public void testPipe() {
+        void testPipe() {
             BinaryPipe pipe = new BinaryPipe();
             @SuppressWarnings("resource")
             PipeOutputStream output = pipe.output();
@@ -270,7 +270,7 @@ public class BinaryPipeTest extends TestBase {
 
         @Test
         @DisplayName("write(int)")
-        public void testWriteInt() throws IOException, InterruptedException {
+        void testWriteInt() throws IOException, InterruptedException {
             byte[] expected = SOURCE.getBytes();
 
             BinaryPipe pipe = new BinaryPipe();
@@ -290,7 +290,7 @@ public class BinaryPipeTest extends TestBase {
 
         @Test
         @DisplayName("write(byte[], int, int)")
-        public void testWriteByteArrayRange() throws IOException, InterruptedException {
+        void testWriteByteArrayRange() throws IOException, InterruptedException {
             byte[] expected = SOURCE.getBytes();
 
             BinaryPipe pipe = new BinaryPipe();
@@ -317,16 +317,16 @@ public class BinaryPipeTest extends TestBase {
 
         @Test
         @DisplayName("flush()")
-        public void testFlush() throws IOException {
+        void testFlush() throws IOException {
             BinaryPipe pipe = new BinaryPipe();
             try (OutputStream output = pipe.output()) {
-                output.flush();
+                assertDoesNotThrow(output::flush);
             }
         }
 
         @Test
         @DisplayName("operations with read error")
-        public void testOperationsWithReadError() throws IOException {
+        void testOperationsWithReadError() throws IOException {
             byte[] bytes = SOURCE.getBytes();
 
             BinaryPipe pipe = new BinaryPipe();
@@ -354,11 +354,11 @@ public class BinaryPipeTest extends TestBase {
 
         @Nested
         @DisplayName("parallel writes")
-        public class ParallelWrites {
+        class ParallelWrites {
 
             @Test
             @DisplayName("write(int)")
-            public void testWriteInt() throws InterruptedException {
+            void testWriteInt() throws InterruptedException {
                 byte[] bytes = SOURCE.getBytes();
 
                 BinaryPipe pipe = new BinaryPipe();
@@ -390,7 +390,7 @@ public class BinaryPipeTest extends TestBase {
 
             @Test
             @DisplayName("write(byte[], int, int)")
-            public void testWriteByteArrayRange() throws InterruptedException {
+            void testWriteByteArrayRange() throws InterruptedException {
                 byte[] bytes = SOURCE.getBytes();
 
                 BinaryPipe pipe = new BinaryPipe();
@@ -423,11 +423,11 @@ public class BinaryPipeTest extends TestBase {
 
         @Nested
         @DisplayName("reader died")
-        public class ReaderDied {
+        class ReaderDied {
 
             @Test
             @DisplayName("write(int)")
-            public void testWriteInt() throws IOException {
+            void testWriteInt() throws IOException {
                 BinaryPipe pipe = new BinaryPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
                 try (OutputStream output = pipe.output()) {
@@ -441,7 +441,7 @@ public class BinaryPipeTest extends TestBase {
 
             @Test
             @DisplayName("write(byte[], int, int)")
-            public void testWriteByteArrayRange() throws IOException {
+            void testWriteByteArrayRange() throws IOException {
                 byte[] bytes = SOURCE.getBytes();
 
                 BinaryPipe pipe = new BinaryPipe();
@@ -457,7 +457,7 @@ public class BinaryPipeTest extends TestBase {
 
             @Test
             @DisplayName("flush()")
-            public void testFlush() throws IOException {
+            void testFlush() throws IOException {
                 BinaryPipe pipe = new BinaryPipe();
                 new Thread(() -> skipAndDie(pipe.input())).start();
                 try (OutputStream output = pipe.output()) {

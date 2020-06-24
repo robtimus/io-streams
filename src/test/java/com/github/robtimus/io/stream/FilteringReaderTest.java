@@ -28,12 +28,12 @@ import java.io.StringReader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class FilteringReaderTest extends TestBase {
+@SuppressWarnings("nls")
+class FilteringReaderTest extends TestBase {
 
     @Test
     @DisplayName("read()")
-    public void testReadChar() throws IOException {
+    void testReadChar() throws IOException {
         String expected = SOURCE.replaceAll("\\s+", "");
         StringReader input = new StringReader(SOURCE);
         StringBuilder output = new StringBuilder(SOURCE.length());
@@ -49,7 +49,7 @@ public class FilteringReaderTest extends TestBase {
 
     @Test
     @DisplayName("read(char[], int, int)")
-    public void testReadByteArrayRange() throws IOException {
+    void testReadByteArrayRange() throws IOException {
         String expected = SOURCE.replaceAll("\\s+", "");
         StringReader input = new StringReader(SOURCE);
         StringBuilder output = new StringBuilder(SOURCE.length());
@@ -67,7 +67,7 @@ public class FilteringReaderTest extends TestBase {
 
     @Test
     @DisplayName("ready()")
-    public void testReady() throws IOException {
+    void testReady() throws IOException {
         StringReader input = new StringReader(SOURCE);
 
         try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
@@ -77,7 +77,7 @@ public class FilteringReaderTest extends TestBase {
 
     @Test
     @DisplayName("mark(int) and reset")
-    public void testMarkAndReset() throws IOException {
+    void testMarkAndReset() throws IOException {
         String expected = SOURCE.replaceAll("\\s+", "");
         StringReader input = new StringReader(SOURCE);
         StringBuilder output = new StringBuilder(SOURCE.length());
@@ -98,7 +98,7 @@ public class FilteringReaderTest extends TestBase {
 
     @Test
     @DisplayName("close()")
-    public void testClose() throws IOException {
+    void testClose() throws IOException {
         StringReader input = spy(new StringReader(""));
         try (Reader wrapped = new FilteringReader(input, Character::isWhitespace)) {
             // don't do anything

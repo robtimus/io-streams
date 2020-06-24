@@ -27,12 +27,12 @@ import java.io.Writer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class FilteringWriterTest extends TestBase {
+@SuppressWarnings("nls")
+class FilteringWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(int)")
-    public void testWriteInt() throws IOException {
+    void testWriteInt() throws IOException {
         String expected = SOURCE.replaceAll("\\s+", "");
         StringWriter output = new StringWriter(SOURCE.length());
 
@@ -46,7 +46,7 @@ public class FilteringWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(char[], int, int)")
-    public void testWriteCharArrayRange() throws IOException {
+    void testWriteCharArrayRange() throws IOException {
         String expected = SOURCE.replaceAll("\\s+", "");
         StringWriter output = new StringWriter(SOURCE.length());
 
@@ -72,7 +72,7 @@ public class FilteringWriterTest extends TestBase {
 
     @Test
     @DisplayName("flush()")
-    public void testFlush() throws IOException {
+    void testFlush() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = new FilteringWriter(output, Character::isWhitespace)) {
@@ -85,7 +85,7 @@ public class FilteringWriterTest extends TestBase {
 
     @Test
     @DisplayName("close()")
-    public void testClose() throws IOException {
+    void testClose() throws IOException {
         StringWriter output = spy(new StringWriter(0));
         try (Writer wrapped = new FilteringWriter(output, Character::isWhitespace)) {
             // don't do anything

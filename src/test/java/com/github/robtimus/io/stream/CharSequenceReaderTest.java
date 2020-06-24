@@ -30,12 +30,12 @@ import java.io.Writer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class CharSequenceReaderTest extends TestBase {
+@SuppressWarnings("nls")
+class CharSequenceReaderTest extends TestBase {
 
     @Test
     @DisplayName("read()")
-    public void testReadChar() throws IOException {
+    void testReadChar() throws IOException {
         Writer writer = new StringWriter();
         try (Reader reader = reader(SOURCE, 1, SOURCE.length() - 1)) {
             int c;
@@ -48,7 +48,7 @@ public class CharSequenceReaderTest extends TestBase {
 
     @Test
     @DisplayName("read(char[], int, int)")
-    public void testReadCharArrayRange() throws IOException {
+    void testReadCharArrayRange() throws IOException {
         Writer writer = new StringWriter();
         try (Reader reader = reader(SOURCE, 1, SOURCE.length() - 1)) {
             assertEquals(0, reader.read(new char[5], 0, 0));
@@ -68,7 +68,7 @@ public class CharSequenceReaderTest extends TestBase {
 
     @Test
     @DisplayName("skip(long)")
-    public void testSkip() throws IOException {
+    void testSkip() throws IOException {
         Writer writer = new StringWriter();
         try (Reader reader = reader(SOURCE, 1, SOURCE.length() - 1)) {
             char[] data = new char[10];
@@ -86,7 +86,7 @@ public class CharSequenceReaderTest extends TestBase {
 
     @Test
     @DisplayName("ready()")
-    public void testReady() throws IOException {
+    void testReady() throws IOException {
         try (Reader reader = reader(SOURCE, 1, SOURCE.length() - 1)) {
             for (int i = 1; i < SOURCE.length() - 1; i++) {
                 assertTrue(reader.ready());
@@ -99,7 +99,7 @@ public class CharSequenceReaderTest extends TestBase {
 
     @Test
     @DisplayName("mark(int) and reset()")
-    public void testMarkReset() throws IOException {
+    void testMarkReset() throws IOException {
         Writer writer = new StringWriter();
         try (Reader reader = reader(SOURCE, 1, SOURCE.length() - 1)) {
             assertTrue(reader.markSupported());
@@ -114,7 +114,7 @@ public class CharSequenceReaderTest extends TestBase {
 
     @Test
     @DisplayName("operations on closed stream")
-    public void testOperationsOnClosedStream() throws IOException {
+    void testOperationsOnClosedStream() throws IOException {
         @SuppressWarnings("resource")
         Reader reader = reader(SOURCE);
         reader.close();

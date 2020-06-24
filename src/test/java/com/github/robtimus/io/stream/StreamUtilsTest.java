@@ -32,12 +32,12 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class StreamUtilsTest extends TestBase {
+@SuppressWarnings("nls")
+class StreamUtilsTest extends TestBase {
 
     @TestFactory
     @DisplayName("writer(Appendable)")
-    public DynamicTest[] testWriter() {
+    DynamicTest[] testWriter() {
         return new DynamicTest[] {
                 dynamicTest("Writer", () -> {
                     Writer writer = new StringWriter();
@@ -59,7 +59,7 @@ public class StreamUtilsTest extends TestBase {
 
     @Test
     @DisplayName("checkOffsetAndLength(byte[], int, int)")
-    public void testCheckOffsetAndLengthForByteArray() {
+    void testCheckOffsetAndLengthForByteArray() {
         byte[] array = SOURCE.getBytes();
         checkOffsetAndLength(array, 0, array.length);
         assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(array, -1, array.length));
@@ -71,7 +71,7 @@ public class StreamUtilsTest extends TestBase {
 
     @Test
     @DisplayName("checkOffsetAndLength(char[], int, int)")
-    public void testCheckOffsetAndLengthForCharArray() {
+    void testCheckOffsetAndLengthForCharArray() {
         char[] array = SOURCE.toCharArray();
         checkOffsetAndLength(array, 0, array.length);
         assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(array, -1, array.length));
@@ -83,7 +83,7 @@ public class StreamUtilsTest extends TestBase {
 
     @Test
     @DisplayName("checkOffsetAndLength(CharSequence, int, int)")
-    public void testCheckOffsetAndLengthForCharSequence() {
+    void testCheckOffsetAndLengthForCharSequence() {
         CharSequence sequence = SOURCE;
         checkOffsetAndLength(sequence, 0, sequence.length());
         assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, -1, sequence.length()));
@@ -95,7 +95,7 @@ public class StreamUtilsTest extends TestBase {
 
     @Test
     @DisplayName("checkStartAndEnd(CharSequence, int, int)")
-    public void testCheckStartAndEndForCharSequence() {
+    void testCheckStartAndEndForCharSequence() {
         checkStartAndEnd(SOURCE, 0, SOURCE.length());
         assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(SOURCE, -1, SOURCE.length()));
         assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(SOURCE, 1, -1));

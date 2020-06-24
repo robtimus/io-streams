@@ -57,7 +57,7 @@ public final class AsciiInputStream extends InputStream {
     @Override
     public int read() throws IOException {
         int read = input.read();
-        return read == -1 ? -1 : convert((char) read);
+        return read == -1 ? -1 : convert((char) read) & 0xFF;
     }
 
     @Override

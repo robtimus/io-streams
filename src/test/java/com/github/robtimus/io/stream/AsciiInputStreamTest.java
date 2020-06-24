@@ -33,12 +33,12 @@ import java.util.Base64;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class AsciiInputStreamTest extends TestBase {
+@SuppressWarnings("nls")
+class AsciiInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("read()")
-    public void testReadByte() throws IOException {
+    void testReadByte() throws IOException {
         byte[] expected = SOURCE.getBytes();
         ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
@@ -60,7 +60,7 @@ public class AsciiInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("read(byte[], int, int)")
-    public void testReadByteArrayRange() throws IOException {
+    void testReadByteArrayRange() throws IOException {
         byte[] expected = SOURCE.getBytes();
         ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);
 
@@ -98,7 +98,7 @@ public class AsciiInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("available()")
-    public void testAvailable() throws IOException {
+    void testAvailable() throws IOException {
         try (Reader reader = reader(SOURCE);
                 InputStream wrapped = new AsciiInputStream(reader)) {
 
@@ -112,7 +112,7 @@ public class AsciiInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("close()")
-    public void testClose() throws IOException {
+    void testClose() throws IOException {
         StringReader input = spy(new StringReader(""));
         try (InputStream wrapped = new AsciiInputStream(input)) {
             // don't do anything
@@ -123,7 +123,7 @@ public class AsciiInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("base64")
-    public void testBase64() throws IOException {
+    void testBase64() throws IOException {
         byte[] expected = SOURCE.getBytes();
         String base64 = Base64.getEncoder().encodeToString(expected);
         ByteArrayOutputStream output = new ByteArrayOutputStream(expected.length);

@@ -33,12 +33,12 @@ import java.io.Writer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class DontCloseWriterTest extends TestBase {
+@SuppressWarnings("nls")
+class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(int)")
-    public void testWriteInt() throws IOException {
+    void testWriteInt() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = dontClose(output)) {
@@ -53,7 +53,7 @@ public class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(char[])")
-    public void testWriteCharArray() throws IOException {
+    void testWriteCharArray() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = dontClose(output)) {
@@ -66,7 +66,7 @@ public class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(char[], int, int)")
-    public void testWriteCharArrayRange() throws IOException {
+    void testWriteCharArrayRange() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = dontClose(output)) {
@@ -85,7 +85,7 @@ public class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(String)")
-    public void testWriteString() throws IOException {
+    void testWriteString() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = dontClose(output)) {
@@ -98,7 +98,7 @@ public class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("write(String, int, int)")
-    public void testWriteStringRange() throws IOException {
+    void testWriteStringRange() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = dontClose(output)) {
@@ -116,7 +116,7 @@ public class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("append(CharSequence)")
-    public void testAppendCharSequence() throws IOException {
+    void testAppendCharSequence() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = dontClose(output)) {
@@ -129,7 +129,7 @@ public class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("append(CharSequence, int, int)")
-    public void testAppendCharSequenceRange() throws IOException {
+    void testAppendCharSequenceRange() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = dontClose(output)) {
@@ -147,7 +147,7 @@ public class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("append(char)")
-    public void testAppendChar() throws IOException {
+    void testAppendChar() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = dontClose(output)) {
@@ -162,7 +162,7 @@ public class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("flush()")
-    public void testFlush() throws IOException {
+    void testFlush() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         try (Writer wrapped = dontClose(output)) {
@@ -174,7 +174,7 @@ public class DontCloseWriterTest extends TestBase {
 
     @Test
     @DisplayName("operations on closed stream")
-    public void testOperationsOnClosedStream() throws IOException {
+    void testOperationsOnClosedStream() throws IOException {
         StringWriter output = spy(new StringWriter(SOURCE.length()));
 
         @SuppressWarnings("resource")

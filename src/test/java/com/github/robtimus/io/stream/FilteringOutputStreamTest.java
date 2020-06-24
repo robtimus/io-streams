@@ -27,12 +27,12 @@ import java.io.OutputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class FilteringOutputStreamTest extends TestBase {
+@SuppressWarnings("nls")
+class FilteringOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("write(int)")
-    public void testWriteInt() throws IOException {
+    void testWriteInt() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         byte[] expected = SOURCE.replaceAll("\\s+", "").getBytes();
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
@@ -47,7 +47,7 @@ public class FilteringOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("write(byte[], int, int)")
-    public void testWriteByteArrayRange() throws IOException {
+    void testWriteByteArrayRange() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         byte[] expected = SOURCE.replaceAll("\\s+", "").getBytes();
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
@@ -74,7 +74,7 @@ public class FilteringOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("flush()")
-    public void testFlush() throws IOException {
+    void testFlush() throws IOException {
         ByteArrayOutputStream output = spy(new ByteArrayOutputStream());
 
         try (OutputStream wrapped = new FilteringOutputStream(output, Character::isWhitespace)) {
@@ -87,7 +87,7 @@ public class FilteringOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("close()")
-    public void testClose() throws IOException {
+    void testClose() throws IOException {
         ByteArrayOutputStream output = spy(new ByteArrayOutputStream(0));
         try (OutputStream wrapped = new FilteringOutputStream(output, Character::isWhitespace)) {
             // don't do anything

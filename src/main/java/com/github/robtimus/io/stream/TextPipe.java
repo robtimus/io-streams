@@ -179,7 +179,7 @@ public final class TextPipe {
             }
             throwWriteError();
             if (start < end) {
-                long result = Math.min(n, end - start);
+                long result = Math.min(n, (long) end - start);
                 start += result;
                 checkEmpty();
                 return result;
@@ -449,6 +449,7 @@ public final class TextPipe {
 
     private void await(Condition condition) throws IOException {
         try {
+            // if this call waits shorter than AWAIT_TIME that's fine, the check will simply be performed earlier
             condition.awaitNanos(AWAIT_TIME);
         } catch (InterruptedException e) {
             // Restore the interrupted status

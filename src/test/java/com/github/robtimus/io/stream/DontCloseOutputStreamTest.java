@@ -32,12 +32,11 @@ import java.io.OutputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("javadoc")
-public class DontCloseOutputStreamTest extends TestBase {
+class DontCloseOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("write(int)")
-    public void testWriteInt() throws IOException {
+    void testWriteInt() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayOutputStream output = spy(new ByteArrayOutputStream(bytes.length));
 
@@ -53,7 +52,7 @@ public class DontCloseOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("write(byte[])")
-    public void testWriteByteArray() throws IOException {
+    void testWriteByteArray() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayOutputStream output = spy(new ByteArrayOutputStream(bytes.length));
 
@@ -67,7 +66,7 @@ public class DontCloseOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("write(byte[], int, int)")
-    public void testWriteByteArrayRange() throws IOException {
+    void testWriteByteArrayRange() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayOutputStream output = spy(new ByteArrayOutputStream(bytes.length));
 
@@ -86,7 +85,7 @@ public class DontCloseOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("flush()")
-    public void testFlush() throws IOException {
+    void testFlush() throws IOException {
         ByteArrayOutputStream output = spy(new ByteArrayOutputStream());
 
         try (OutputStream wrapped = dontClose(output)) {
@@ -98,7 +97,7 @@ public class DontCloseOutputStreamTest extends TestBase {
 
     @Test
     @DisplayName("operations on closed stream")
-    public void testOperationsOnClosedStream() throws IOException {
+    void testOperationsOnClosedStream() throws IOException {
         ByteArrayOutputStream output = spy(new ByteArrayOutputStream());
 
         @SuppressWarnings("resource")

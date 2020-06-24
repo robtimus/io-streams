@@ -36,12 +36,11 @@ import java.io.InputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("javadoc")
-public class DontCloseInputStreamTest extends TestBase {
+class DontCloseInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("read()")
-    public void testReadByte() throws IOException {
+    void testReadByte() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayInputStream input = spy(new ByteArrayInputStream(bytes));
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
@@ -59,7 +58,7 @@ public class DontCloseInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("read(byte[])")
-    public void testReadByteArray() throws IOException {
+    void testReadByteArray() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayInputStream input = spy(new ByteArrayInputStream(bytes));
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
@@ -78,7 +77,7 @@ public class DontCloseInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("read(byte[], int, int)")
-    public void testReadByteArrayRange() throws IOException {
+    void testReadByteArrayRange() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayInputStream input = spy(new ByteArrayInputStream(bytes));
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
@@ -98,7 +97,7 @@ public class DontCloseInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("skip(long)")
-    public void testSkip() throws IOException {
+    void testSkip() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayInputStream input = spy(new ByteArrayInputStream(bytes));
 
@@ -112,7 +111,7 @@ public class DontCloseInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("available()")
-    public void testAvailable() throws IOException {
+    void testAvailable() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayInputStream input = spy(new ByteArrayInputStream(bytes));
 
@@ -125,7 +124,7 @@ public class DontCloseInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("mark(int) and reset")
-    public void testMarkAndReset() throws IOException {
+    void testMarkAndReset() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayInputStream input = spy(new ByteArrayInputStream(bytes));
         ByteArrayOutputStream output = new ByteArrayOutputStream(bytes.length);
@@ -150,7 +149,7 @@ public class DontCloseInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("operations on closed stream")
-    public void testOperationsOnClosedStream() throws IOException {
+    void testOperationsOnClosedStream() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayInputStream input = spy(new ByteArrayInputStream(bytes));
 

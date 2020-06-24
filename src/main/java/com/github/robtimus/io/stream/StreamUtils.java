@@ -37,7 +37,7 @@ import java.util.Objects;
 public final class StreamUtils {
 
     private StreamUtils() {
-        throw new Error("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
+        throw new IllegalStateException("cannot create instances of " + getClass().getName()); //$NON-NLS-1$
     }
 
     // wrapping

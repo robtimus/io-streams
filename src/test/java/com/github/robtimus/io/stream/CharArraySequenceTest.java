@@ -25,12 +25,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings("javadoc")
-public class CharArraySequenceTest extends TestBase {
+class CharArraySequenceTest extends TestBase {
 
     @Test
     @DisplayName("reset(char[], int, int)")
-    public void testReset() {
+    void testReset() {
         char[] array = SOURCE.toCharArray();
         CharArraySequence sequence = new CharArraySequence();
 
@@ -43,7 +42,7 @@ public class CharArraySequenceTest extends TestBase {
 
     @Test
     @DisplayName("resetWithStartAndEnd(char[], int, int)")
-    public void testResetWithStartAndEnd() {
+    void testResetWithStartAndEnd() {
         char[] array = SOURCE.toCharArray();
         CharArraySequence sequence = new CharArraySequence();
 
@@ -60,7 +59,7 @@ public class CharArraySequenceTest extends TestBase {
 
     @Test
     @DisplayName("resetWithOffsetAndLength(char[], int, int)")
-    public void testResetWithOffsetAndLength() {
+    void testResetWithOffsetAndLength() {
         char[] array = SOURCE.toCharArray();
         CharArraySequence sequence = new CharArraySequence();
 
@@ -77,7 +76,7 @@ public class CharArraySequenceTest extends TestBase {
 
     @Test
     @DisplayName("charAt(int) and length()")
-    public void testCharAtAndLength() {
+    void testCharAtAndLength() {
         CharArraySequence sequence = new CharArraySequence();
         sequence.reset(SOURCE.toCharArray());
 
@@ -95,7 +94,7 @@ public class CharArraySequenceTest extends TestBase {
 
     @Test
     @DisplayName("toString()")
-    public void testToString() {
+    void testToString() {
         CharArraySequence sequence = new CharArraySequence();
         sequence.reset(SOURCE.toCharArray());
 
@@ -106,11 +105,11 @@ public class CharArraySequenceTest extends TestBase {
 
     @Nested
     @DisplayName("subSequence(int, int)")
-    public class SubSequence {
+    class SubSequence {
 
         @Test
         @DisplayName("invalid indexes")
-        public void testInvalidIndexes() {
+        void testInvalidIndexes() {
             CharArraySequence sequence = new CharArraySequence();
             sequence.reset(SOURCE.toCharArray());
 
@@ -121,7 +120,7 @@ public class CharArraySequenceTest extends TestBase {
 
         @Test
         @DisplayName("charAt(int) and length()")
-        public void testCharAtAndLength() {
+        void testCharAtAndLength() {
             testCharAtAndLength(SOURCE, 0, SOURCE.length());
             testCharAtAndLength(SOURCE, 3, SOURCE.length());
             testCharAtAndLength(SOURCE, 0, 8);
@@ -139,7 +138,7 @@ public class CharArraySequenceTest extends TestBase {
 
         @Test
         @DisplayName("toString()")
-        public void testToString() {
+        void testToString() {
             String string = SOURCE.substring(3, 8);
             CharArraySequence sequence = new CharArraySequence();
             sequence.reset(SOURCE.toCharArray());
@@ -150,11 +149,11 @@ public class CharArraySequenceTest extends TestBase {
 
         @Nested
         @DisplayName("subSequence(int, int)")
-        public class SubSubSequence {
+        class SubSubSequence {
 
             @Test
             @DisplayName("charAt(int) and length()")
-            public void testCharAtAndLength() {
+            void testCharAtAndLength() {
                 testCharAtAndLength(SOURCE, 0, String::length);
                 testCharAtAndLength(SOURCE, 1, String::length);
                 testCharAtAndLength(SOURCE, 0, s -> 4);
@@ -174,7 +173,7 @@ public class CharArraySequenceTest extends TestBase {
 
             @Test
             @DisplayName("toString()")
-            public void testToString() {
+            void testToString() {
                 String string = SOURCE.substring(3, 8).substring(1, 4);
                 CharArraySequence sequence = new CharArraySequence();
                 sequence.reset(SOURCE.toCharArray());

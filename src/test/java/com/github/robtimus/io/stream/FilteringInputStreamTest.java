@@ -29,12 +29,12 @@ import java.io.InputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@SuppressWarnings({ "javadoc", "nls" })
-public class FilteringInputStreamTest extends TestBase {
+@SuppressWarnings("nls")
+class FilteringInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("read()")
-    public void testReadByte() throws IOException {
+    void testReadByte() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         byte[] expected = SOURCE.replaceAll("\\s+", "").getBytes();
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
@@ -51,7 +51,7 @@ public class FilteringInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("read(byte[], int, int)")
-    public void testReadByteArrayRange() throws IOException {
+    void testReadByteArrayRange() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         byte[] expected = SOURCE.replaceAll("\\s+", "").getBytes();
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
@@ -70,7 +70,7 @@ public class FilteringInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("skip(long)")
-    public void testSkip() throws IOException {
+    void testSkip() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         byte[] expected = SOURCE.replaceAll("\\s+", "").getBytes();
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
@@ -83,7 +83,7 @@ public class FilteringInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("available()")
-    public void testAvailable() throws IOException {
+    void testAvailable() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
 
@@ -94,7 +94,7 @@ public class FilteringInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("mark(int) and reset")
-    public void testMarkAndReset() throws IOException {
+    void testMarkAndReset() throws IOException {
         byte[] bytes = SOURCE.getBytes();
         byte[] expected = SOURCE.replaceAll("\\s+", "").getBytes();
         ByteArrayInputStream input = new ByteArrayInputStream(bytes);
@@ -116,7 +116,7 @@ public class FilteringInputStreamTest extends TestBase {
 
     @Test
     @DisplayName("close()")
-    public void testClose() throws IOException {
+    void testClose() throws IOException {
         ByteArrayInputStream input = spy(new ByteArrayInputStream(new byte[0]));
         try (InputStream wrapped = new FilteringInputStream(input, Character::isWhitespace)) {
             // don't do anything
