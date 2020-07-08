@@ -17,8 +17,6 @@
 
 package com.github.robtimus.io.stream;
 
-import java.io.Closeable;
-import java.io.Flushable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,6 +24,12 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.util.Objects;
+import org.apache.commons.io.input.CharSequenceReader;
+import org.apache.commons.io.input.CloseShieldInputStream;
+import org.apache.commons.io.input.CloseShieldReader;
+import org.apache.commons.io.output.AppendableWriter;
+import org.apache.commons.io.output.CloseShieldOutputStream;
+import org.apache.commons.io.output.CloseShieldWriter;
 
 /**
  * Utility methods for {@link InputStream InputStreams}, {@link OutputStream OutputStreams}, {@link Reader Readers} and {@link Writer Writers}.
@@ -58,8 +62,6 @@ public final class StreamUtils {
      * Returns a reader wrapper around a portion of a character sequence.
      * This reader is much like {@link StringReader}, except it supports any character sequence as well as sub sequences.
      * Like {@code StringReader} it supports {@link Reader#mark(int)} and {@link Reader#reset()}. Unlike {@code StringReader}, it's not thread safe.
-     * <p>
-     * After the returned reader has been closed, attempting to read from it will result in an {@link IOException}.
      *
      * @param sequence The character sequence to return a reader for.
      * @param start The index to start reading at, inclusive.
@@ -78,12 +80,7 @@ public final class StreamUtils {
     /**
      * Returns an appendable as a writer.
      * If the given appendable is a writer, it is returned unmodified. Otherwise, a wrapper is returned that will delegate all calls to the wrapped
-     * appendable. This includes {@link Writer#flush() flush()} if the wrapped appendable implements {@link Flushable},
-     * and {@link Writer#close() close()} if the wrapped appendable implements {@link Closeable} or {@link AutoCloseable}.
-     * <p>
-     * Note that the behaviour of closing a writer wrapper depends on the wrapped appendable. If it does not support closing, or if it still allows
-     * text to be appended after closing, then the closed writer allows text to be appended after closing. If it does not allow text to be appended
-     * after closing, then neither will the closed writer wrapper.
+     * appendable, with the exception of {@link Writer#flush() flush()} and {@link Writer#close() close()}.
      *
      * @param appendable The appendable to return a writer for.
      * @return The given appendable itself if it's already a writer, otherwise a wrapper around the given appendable.
@@ -91,14 +88,21 @@ public final class StreamUtils {
      */
     public static Writer writer(Appendable appendable) {
         Objects.requireNonNull(appendable);
-        return appendable instanceof Writer ? (Writer) appendable : new AppendableWriter(appendable);
+        return appendable instanceof Writer ? (Writer) appendable : new AppendableWriter<>(appendable);
     }
 
     /**
      * Wraps an input stream to prevent it from being closed.
      * This method can be used when a method wants to close a passed input stream while the input stream is still needed.
      * <p>
-     * The returned input stream delegates all methods except for {@link InputStream#close() close()} to the given input stream.
+     * This method is much like {@link CloseShieldInputStream}. However, unlike that class, IDEs can still show a warning if the wrapped input stream
+     * is not closed elsewhere. This can prevent accidentally forgetting to close input streams completely. For instance:
+     * <pre><code>
+     * try (InputStream input = new CloseShieldInputStream(new FileInputStream(file))) { // no warning
+     * }
+     * try (InputStream input = dontClose(new FileInputStream(file))) { // warning
+     * }
+     * </code></pre>
      *
      * @param input The input stream to wrap.
      * @return An input stream wrapper around the given input stream that will delegate all methods except for {@code close()}.
@@ -107,7 +111,7 @@ public final class StreamUtils {
     @SuppressWarnings("resource")
     public static InputStream dontClose(InputStream input) {
         Objects.requireNonNull(input);
-        return new DontCloseInputStream(input);
+        return new CloseShieldInputStream(input);
     }
 
     /**
@@ -116,7 +120,14 @@ public final class StreamUtils {
      * Another usage is in a try-with-resources block where a wrapping output stream needs to be closed to finish its work, but the wrapped output
      * stream should still remain open.
      * <p>
-     * The returned output stream delegates all methods except for {@link OutputStream#close() close()} to the given output stream.
+     * This method is much like {@link CloseShieldOutputStream}. However, unlike that class, IDEs can still show a warning if the wrapped output
+     * stream is not closed elsewhere. This can prevent accidentally forgetting to close output streams completely. For instance:
+     * <pre><code>
+     * try (OutputStream output = new CloseShieldOutputStream(new FileOutputStream(file))) { // no warning
+     * }
+     * try (OutputStream output = dontClose(new FileOutputStream(file))) { // warning
+     * }
+     * </code></pre>
      *
      * @param output The output stream to wrap.
      * @return An output stream wrapper around the given output stream that will delegate all methods except for {@code close()}.
@@ -125,14 +136,21 @@ public final class StreamUtils {
     @SuppressWarnings("resource")
     public static OutputStream dontClose(OutputStream output) {
         Objects.requireNonNull(output);
-        return new DontCloseOutputStream(output);
+        return new CloseShieldOutputStream(output);
     }
 
     /**
      * Wraps a reader to prevent it from being closed.
      * This method can be used when a method wants to close a passed reader while the reader is still needed.
      * <p>
-     * The returned reader delegates all methods except for {@link Reader#close() close()} to the given reader.
+     * This method is much like {@link CloseShieldReader}. However, unlike that class, IDEs can still show a warning if the wrapped reader is not
+     * closed elsewhere. This can prevent accidentally forgetting to close readers completely. For instance:
+     * <pre><code>
+     * try (Reader input = new CloseShieldReader(new FileReader(file))) { // no warning
+     * }
+     * try (Reader input = dontClose(new FileReader(file))) { // warning
+     * }
+     * </code></pre>
      *
      * @param input The reader to wrap.
      * @return A reader wrapper around the given reader that will delegate all methods except for {@code close()}.
@@ -141,7 +159,7 @@ public final class StreamUtils {
     @SuppressWarnings("resource")
     public static Reader dontClose(Reader input) {
         Objects.requireNonNull(input);
-        return new DontCloseReader(input);
+        return new CloseShieldReader(input);
     }
 
     /**
@@ -150,7 +168,14 @@ public final class StreamUtils {
      * Another usage is in a try-with-resources block where a wrapping writer needs to be closed to finish its work, but the wrapped writer should
      * still remain open.
      * <p>
-     * The returned writer delegates all methods except for {@link Writer#close() close()} to the given writer.
+     * This method is much like {@link CloseShieldWriter}. However, unlike that class, IDEs can still show a warning if the wrapped writer is not
+     * closed elsewhere. This can prevent accidentally forgetting to close writers completely. For instance:
+     * <pre><code>
+     * try (Writer output = new CloseShieldWriter(new FileWriter(file))) { // no warning
+     * }
+     * try (Writer output = dontClose(new FileWriter(file))) { // warning
+     * }
+     * </code></pre>
      *
      * @param output The writer to wrap.
      * @return A writer wrapper around the given writer that will delegate all methods except for {@code close()}.
@@ -159,7 +184,7 @@ public final class StreamUtils {
     @SuppressWarnings("resource")
     public static Writer dontClose(Writer output) {
         Objects.requireNonNull(output);
-        return new DontCloseWriter(output);
+        return new CloseShieldWriter(output);
     }
 
     // index checking
@@ -201,12 +226,6 @@ public final class StreamUtils {
     public static void checkOffsetAndLength(char[] array, int offset, int length) {
         if (offset < 0 || length < 0 || offset + length > array.length) {
             throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength.get(array.length, offset, length));
-        }
-    }
-
-    static void checkStartAndEnd(char[] array, int start, int end) {
-        if (start < 0 || end > array.length || start > end) {
-            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidStartOrEnd.get(array.length, start, end));
         }
     }
 

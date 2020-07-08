@@ -61,7 +61,17 @@
     <url>https://github.com/robtimus/io-streams/issues</url>
   </issueManagement>
 
+  <properties>
+    <version.commons-io>2.7</version.commons-io>
+  </properties>
+
   <dependencies>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
+      <version>${version.commons-io}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -130,6 +140,11 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <links>
+            <link>https://commons.apache.org/proper/commons-io/javadocs/api-release/</link>
+          </links>
+        </configuration>
       </plugin>
 
       <plugin>
