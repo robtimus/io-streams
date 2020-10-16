@@ -427,7 +427,7 @@ class RandomInputStreamTest {
 
         @Test
         @DisplayName("available()")
-        void testReady() {
+        void testAvailable() {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             try (RandomInputStream input = createinput()) {
                 byte[] buffer = new byte[10];

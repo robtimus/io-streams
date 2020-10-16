@@ -169,7 +169,7 @@ class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("ready()")
-        void testAvailable() throws IOException, InterruptedException {
+        void testReady() throws IOException, InterruptedException {
             TextPipe pipe = new TextPipe();
             new Thread(() -> writeDataInChunks(pipe, SOURCE, 5)).start();
             try (Reader input = pipe.input()) {
