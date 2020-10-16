@@ -17,6 +17,7 @@
 
 package com.github.robtimus.io.stream;
 
+import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.PipedOutputStream;
@@ -371,12 +372,6 @@ public final class BinaryPipe {
     }
 
     // general purpose methods
-
-    private void checkOffsetAndLength(byte[] array, int offset, int length) {
-        if (offset < 0 || length < 0 || offset + length > array.length) {
-            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength.get(array.length, offset, length));
-        }
-    }
 
     private void await(Condition condition) throws IOException {
         try {

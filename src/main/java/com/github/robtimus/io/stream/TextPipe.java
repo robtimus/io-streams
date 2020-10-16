@@ -17,6 +17,8 @@
 
 package com.github.robtimus.io.stream;
 
+import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
+import static com.github.robtimus.io.stream.StreamUtils.checkStartAndEnd;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.PipedWriter;
@@ -428,24 +430,6 @@ public final class TextPipe {
     }
 
     // general purpose methods
-
-    private void checkOffsetAndLength(char[] array, int offset, int length) {
-        if (offset < 0 || length < 0 || offset + length > array.length) {
-            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength.get(array.length, offset, length));
-        }
-    }
-
-    private void checkOffsetAndLength(CharSequence csq, int offset, int length) {
-        if (offset < 0 || length < 0 || offset + length > csq.length()) {
-            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidOffsetOrLength.get(csq.length(), offset, length));
-        }
-    }
-
-    private void checkStartAndEnd(CharSequence sequence, int start, int end) {
-        if (start < 0 || end > sequence.length() || start > end) {
-            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidStartOrEnd.get(sequence.length(), start, end));
-        }
-    }
 
     private void await(Condition condition) throws IOException {
         try {
