@@ -67,6 +67,9 @@ public final class PipeInputStream extends InputStream {
      * stream will cause an exception to be thrown. When reading from this input stream, {@code -1} is returned, except if an exception is set using
      * {@link PipeOutputStream#close(IOException)}.
      * <p>
+     * This method is like {@link #close(IOException)}, except it does not change the exception thrown from the pipe's output stream's methods.
+     * This allows the use of {@link #close(IOException)} inside try-with-resources blocks without the automatic closing resetting the error.
+     * <p>
      * It is possible to call {@code close()} and {@link #close(IOException)} several times. This can be used to change the exception to throw when
      * writing to the pipe's output stream.
      */
