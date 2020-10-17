@@ -19,8 +19,6 @@ package com.github.robtimus.io.stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import java.io.Closeable;
-import java.io.Flushable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -69,76 +67,5 @@ abstract class TestBase {
     void assertClosed(Executable executable) {
         IOException thrown = assertThrows(IOException.class, executable);
         assertEquals(Messages.stream.closed.get(), thrown.getMessage());
-    }
-
-    // the following classes are not final so they can be spied / mocked
-
-    static class FlushableAppendable implements Appendable, Flushable {
-
-        @Override
-        public Appendable append(CharSequence csq) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Appendable append(CharSequence csq, int start, int end) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Appendable append(char c) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void flush() throws IOException {
-            // does nothing
-        }
-    }
-
-    static class CloseableAppendable implements Appendable, Closeable {
-
-        @Override
-        public Appendable append(CharSequence csq) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Appendable append(CharSequence csq, int start, int end) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Appendable append(char c) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void close() throws IOException {
-            // does nothing
-        }
-    }
-
-    static class AutoCloseableAppendable implements Appendable, AutoCloseable {
-
-        @Override
-        public Appendable append(CharSequence csq) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Appendable append(CharSequence csq, int start, int end) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public Appendable append(char c) throws IOException {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public void close() throws Exception {
-            // does nothing
-        }
     }
 }
