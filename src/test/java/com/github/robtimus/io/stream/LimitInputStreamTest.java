@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.NullInputStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -181,7 +182,7 @@ class LimitInputStreamTest extends TestBase {
                 assertEquals(0, input.skip(-1));
                 assertEquals(10, input.skip(10));
                 assertEquals(1, input.skip(1));
-                copy(input, output);
+                IOUtils.copy(input, output);
                 assertEquals(0, input.skip(1));
             }
             assertArrayEquals(expected, output.toByteArray());
@@ -416,7 +417,7 @@ class LimitInputStreamTest extends TestBase {
                 assertEquals(0, input.skip(-1));
                 assertEquals(10, input.skip(10));
                 assertEquals(1, input.skip(1));
-                copy(input, output);
+                IOUtils.copy(input, output);
                 assertEquals(0, input.skip(1));
             }
             assertArrayEquals(expected, output.toByteArray());
@@ -524,7 +525,7 @@ class LimitInputStreamTest extends TestBase {
                 assertEquals(0, input.skip(-1));
                 assertEquals(10, input.skip(10));
                 assertEquals(1, input.skip(1));
-                copy(input, output);
+                IOUtils.copy(input, output);
                 assertEquals(0, input.skip(1));
             }
             assertArrayEquals(expected, output.toByteArray());
@@ -633,7 +634,7 @@ class LimitInputStreamTest extends TestBase {
                 assertEquals(0, input.skip(-1));
                 assertEquals(10, input.skip(10));
                 assertEquals(1, input.skip(1));
-                copy(input, output);
+                IOUtils.copy(input, output);
                 assertEquals(0, input.skip(1));
             }
             assertArrayEquals(expected, output.toByteArray());

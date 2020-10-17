@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -139,7 +140,7 @@ class TextPipeTest extends TestBase {
                 assertThrows(IndexOutOfBoundsException.class, () -> input.read(new char[5], 1, 5));
 
                 assertEquals(0, input.read(new char[5], 0, 0));
-                copy(input, output, 5);
+                IOUtils.copyLarge(input, output, new char[5]);
             }
             assertEquals(SOURCE, output.toString());
         }
@@ -161,7 +162,7 @@ class TextPipeTest extends TestBase {
                 assertThrows(IllegalArgumentException.class, () -> input.skip(-1));
                 assertEquals(5, input.skip(10));
                 assertEquals(1, input.skip(1));
-                copy(input, output);
+                IOUtils.copy(input, output);
                 assertEquals(0, input.skip(1));
             }
             assertEquals(expected, output.toString());

@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Base64;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -131,7 +132,7 @@ class AsciiInputStreamTest extends TestBase {
         try (InputStream wrapped = new AsciiInputStream(new StringReader(base64));
                 InputStream decoded = Base64.getDecoder().wrap(wrapped)) {
 
-            copy(decoded, output);
+            IOUtils.copy(decoded, output);
         }
         assertArrayEquals(expected, output.toByteArray());
     }

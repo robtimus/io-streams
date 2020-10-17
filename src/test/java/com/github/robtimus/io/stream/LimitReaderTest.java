@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CharSequenceReader;
 import org.apache.commons.io.input.NullReader;
 import org.junit.jupiter.api.DisplayName;
@@ -175,7 +176,7 @@ class LimitReaderTest extends TestBase {
                 assertThrows(IllegalArgumentException.class, () -> reader.skip(-1));
                 assertEquals(10, reader.skip(10));
                 assertEquals(1, reader.skip(1));
-                copy(reader, output);
+                IOUtils.copy(reader, output);
                 assertEquals(0, reader.skip(1));
             }
             assertEquals(expected, output.toString());
@@ -402,7 +403,7 @@ class LimitReaderTest extends TestBase {
                 assertThrows(IllegalArgumentException.class, () -> reader.skip(-1));
                 assertEquals(10, reader.skip(10));
                 assertEquals(1, reader.skip(1));
-                copy(reader, output);
+                IOUtils.copy(reader, output);
                 assertEquals(0, reader.skip(1));
             }
             assertEquals(expected, output.toString());
@@ -506,7 +507,7 @@ class LimitReaderTest extends TestBase {
                 assertThrows(IllegalArgumentException.class, () -> reader.skip(-1));
                 assertEquals(10, reader.skip(10));
                 assertEquals(1, reader.skip(1));
-                copy(reader, output);
+                IOUtils.copy(reader, output);
                 assertEquals(0, reader.skip(1));
             }
             assertEquals(expected, output.toString());
@@ -612,7 +613,7 @@ class LimitReaderTest extends TestBase {
                 assertThrows(IllegalArgumentException.class, () -> reader.skip(-1));
                 assertEquals(10, reader.skip(10));
                 assertEquals(1, reader.skip(1));
-                copy(reader, output);
+                IOUtils.copy(reader, output);
                 assertEquals(0, reader.skip(1));
             }
             assertEquals(expected, output.toString());

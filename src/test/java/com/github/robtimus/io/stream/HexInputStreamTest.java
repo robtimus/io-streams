@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Optional;
+import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -105,7 +106,7 @@ class HexInputStreamTest extends TestBase {
             try (HexInputStream input = new HexInputStream(reader(CAFEBABE_STRING))) {
                 assertEquals(0, input.read(new byte[5], 0, 0));
                 assertEquals(0, output.size());
-                copy(input, output, 5);
+                IOUtils.copy(input, output, 5);
             }
             assertArrayEquals(CAFEBABE_BYTES, output.toByteArray());
 
@@ -113,7 +114,7 @@ class HexInputStreamTest extends TestBase {
             try (HexInputStream input = new HexInputStream(new SlowReader(CAFEBABE_STRING))) {
                 assertEquals(0, input.read(new byte[5], 0, 0));
                 assertEquals(0, output.size());
-                copy(input, output, 5);
+                IOUtils.copy(input, output, 5);
             }
             assertArrayEquals(CAFEBABE_BYTES, output.toByteArray());
 
