@@ -19,6 +19,7 @@ package com.github.robtimus.io.stream;
 
 import static com.github.robtimus.io.stream.RandomReader.usingAllCharacters;
 import static com.github.robtimus.io.stream.RandomReader.usingAlphabet;
+import static com.github.robtimus.io.stream.RandomReader.usingGenerator;
 import static com.github.robtimus.io.stream.RandomReader.usingHex;
 import static com.github.robtimus.io.stream.RandomReader.usingNumbers;
 import static com.github.robtimus.io.stream.RandomReader.usingRange;
@@ -49,6 +50,30 @@ class RandomReaderTest {
             int c;
             while ((c = reader.read()) != -1) {
                 assertThat(c, both(greaterThanOrEqualTo((int) '0')).and(lessThanOrEqualTo((int) '9')));
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("Builder")
+    class BuilderTest {
+
+        @Nested
+        @DisplayName("withRandomLimit(int, int)")
+        class WithRandomLimit {
+
+            @Test
+            @DisplayName("negative min")
+            void testNegativeMin() {
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingNumbers().withRandomLimit(-1, 10));
+                assertEquals("-1 < 0", exception.getMessage());
+            }
+
+            @Test
+            @DisplayName("max not larger than min")
+            void testMaxNotLargerThanMin() {
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingNumbers().withRandomLimit(10, 10));
+                assertEquals("10 <= 10", exception.getMessage());
             }
         }
     }
@@ -144,6 +169,28 @@ class RandomReaderTest {
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingAlphabet(""));
                 assertEquals(Messages.RandomReader.emptyAlphabet.get(), exception.getMessage());
             }
+        }
+
+        @Test
+        @DisplayName("random limit")
+        void testRandomLimit() {
+            // no need to test everything again, just the initialization; use read(char[]) for that
+
+            final char first = ' ';
+            final int limit = 10 + first % 10;
+            StringBuilder expected = new StringBuilder(limit);
+            for (int i = 0, j = 1; i < limit; i++, j++) {
+                expected.append((char) (first + j));
+            }
+
+            StringBuilder sb = new StringBuilder(limit);
+            try (RandomReader reader = usingGenerator(Random::nextInt).withRandomLimit(10, 20).withRandom(new DummyRandom(first)).build()) {
+                char[] buffer = new char[limit];
+                assertEquals(buffer.length, reader.read(buffer));
+                sb.append(buffer);
+                assertEquals(-1, reader.read());
+            }
+            assertEquals(expected.toString(), sb.toString());
         }
     }
 

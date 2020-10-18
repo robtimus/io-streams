@@ -25,6 +25,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
+import java.util.function.ToLongFunction;
 
 /**
  * A reader that will return random characters.
@@ -46,7 +47,7 @@ public final class RandomReader extends Reader {
         this.random = builder.random != null ? builder.random : new SecureRandom();
         this.characterGenerator = builder.characterGenerator;
 
-        this.limit = builder.limit;
+        this.limit = builder.limitGenerator != null ? builder.limitGenerator.applyAsLong(random) : builder.limit;
         this.index = 0;
         this.mark = 0;
     }
@@ -246,6 +247,7 @@ public final class RandomReader extends Reader {
         private Random random;
 
         private long limit = -1;
+        private ToLongFunction<Random> limitGenerator = null;
 
         private Builder(ToIntFunction<Random> characterGenerator) {
             this.characterGenerator = characterGenerator;
@@ -266,12 +268,36 @@ public final class RandomReader extends Reader {
         /**
          * Specifies the maximum number of characters to return while reading. By default there is no limit.
          * Use a negative value to specify no limit.
+         * <p>
+         * Calling this method will discard any changes made by {@link #withRandomLimit(int, int)}.
          *
          * @param limit The limit to set.
          * @return This object.
          */
         public Builder withLimit(long limit) {
             this.limit = Math.max(limit, -1);
+            this.limitGenerator = null;
+            return this;
+        }
+
+        /**
+         * Specifies that a random number should be used for the maximum number of characters to return while reading. By default there is no limit.
+         * <p>
+         * Calling this method will cause any changes made by {@link #withLimit(long)} to be ignored.
+         *
+         * @param min The minimum allowed limit, inclusive.
+         * @param max The maximum allowed limit, exclusive.
+         * @return This object.
+         * @throws IllegalArgumentException If the minimum is negative, or the maximum is not larger than the minimum.
+         */
+        public Builder withRandomLimit(int min, int max) {
+            if (min < 0) {
+                throw new IllegalArgumentException(min + " < 0"); //$NON-NLS-1$
+            }
+            if (max <= min) {
+                throw new IllegalArgumentException(max + " <= " + min); //$NON-NLS-1$
+            }
+            this.limitGenerator = r -> min + r.nextInt(max - min);
             return this;
         }
 

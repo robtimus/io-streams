@@ -18,6 +18,7 @@
 package com.github.robtimus.io.stream;
 
 import static com.github.robtimus.io.stream.RandomInputStream.usingAllBytes;
+import static com.github.robtimus.io.stream.RandomInputStream.usingGenerator;
 import static com.github.robtimus.io.stream.RandomInputStream.usingRange;
 import static com.github.robtimus.io.stream.RandomInputStream.usingRangeFrom;
 import static com.github.robtimus.io.stream.RandomInputStream.usingRangeUntil;
@@ -49,6 +50,30 @@ class RandomInputStreamTest {
             int c;
             while ((c = input.read()) != -1) {
                 assertThat(c, both(greaterThanOrEqualTo(0)).and(lessThanOrEqualTo(255)));
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("Builder")
+    class BuilderTest {
+
+        @Nested
+        @DisplayName("withRandomLimit(int, int)")
+        class WithRandomLimit {
+
+            @Test
+            @DisplayName("negative min")
+            void testNegativeMin() {
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingAllBytes().withRandomLimit(-1, 10));
+                assertEquals("-1 < 0", exception.getMessage());
+            }
+
+            @Test
+            @DisplayName("max not larger than min")
+            void testMaxNotLargerThanMin() {
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingAllBytes().withRandomLimit(10, 10));
+                assertEquals("10 <= 10", exception.getMessage());
             }
         }
     }
@@ -98,6 +123,28 @@ class RandomInputStreamTest {
             UsingRangeUntil() {
                 super(() -> usingRangeUntil(100), repeatBytes(0, 100, MIN_EXPECTED_SEQUENCE_LENGTH));
             }
+        }
+
+        @Test
+        @DisplayName("random limit")
+        void testRandomLimit() {
+            // no need to test everything again, just the initialization; use read(char[]) for that
+
+            final char first = 32;
+            final int limit = 10 + first % 10;
+            byte[] expected = new byte[limit];
+            for (int i = 0, j = 1; i < limit; i++, j++) {
+                expected[i] = (byte) (first + j);
+            }
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(limit);
+            try (RandomInputStream input = usingGenerator(Random::nextInt).withRandomLimit(10, 20).withRandom(new DummyRandom(first)).build()) {
+                byte[] buffer = new byte[limit];
+                assertEquals(buffer.length, input.read(buffer));
+                baos.write(buffer, 0, buffer.length);
+                assertEquals(-1, input.read());
+            }
+            assertArrayEquals(expected, baos.toByteArray());
         }
     }
 
@@ -504,7 +551,11 @@ class RandomInputStreamTest {
         private int next;
 
         private DummyRandom() {
-            next = 0;
+            this(0);
+        }
+
+        private DummyRandom(int start) {
+            this.next = start;
         }
 
         @Override
