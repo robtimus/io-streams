@@ -234,15 +234,17 @@ public class MultiLineReader implements Iterable<Entry>, Closeable {
         }
 
         private Entry readNextEntry() throws IOException {
-            if (!initialized) {
-                // not initialized yet; readLine() is called for the first time
+            if (lastLine == null) {
+                // either readLine() hasn't been called yet, or the last line has been read
+                if (initialized) {
+                    return null;
+                }
                 lastLine = reader.readLine();
                 initialized = true;
-            }
-            if (lastLine == null) {
-                // either the first readLine() above already returned null (empty file),
-                // or the last readLine() above returned null, which means the previous entry was the last one
-                return null;
+                if (lastLine == null) {
+                    // empty file
+                    return null;
+                }
             }
             List<String> lines = new ArrayList<>();
             lines.add(lastLine);
