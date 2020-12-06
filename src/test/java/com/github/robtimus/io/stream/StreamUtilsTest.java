@@ -20,12 +20,8 @@ package com.github.robtimus.io.stream;
 import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
 import static com.github.robtimus.io.stream.StreamUtils.checkStartAndEnd;
 import static com.github.robtimus.io.stream.StreamUtils.dontClose;
-import static com.github.robtimus.io.stream.StreamUtils.writer;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
@@ -40,7 +36,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import org.apache.commons.io.output.AppendableWriter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -48,28 +43,6 @@ import org.junit.jupiter.api.TestFactory;
 
 @SuppressWarnings("nls")
 class StreamUtilsTest extends TestBase {
-
-    @TestFactory
-    @DisplayName("writer(Appendable)")
-    DynamicTest[] testWriter() {
-        return new DynamicTest[] {
-                dynamicTest("Writer", () -> {
-                    Writer writer = new StringWriter();
-                    @SuppressWarnings("resource")
-                    Writer writer2 = writer(writer);
-                    assertSame(writer, writer2);
-                }),
-                dynamicTest("StringBuilder", () -> {
-                    StringBuilder sb = new StringBuilder();
-                    @SuppressWarnings("resource")
-                    Writer writer = writer(sb);
-                    assertThat(writer, instanceOf(AppendableWriter.class));
-                }),
-                dynamicTest("null", () -> {
-                    assertThrows(NullPointerException.class, () -> writer(null));
-                }),
-        };
-    }
 
     @TestFactory
     @DisplayName("dontClose(InputStream)")

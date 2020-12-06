@@ -21,13 +21,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
-import java.io.StringReader;
 import java.io.Writer;
 import java.util.Objects;
-import org.apache.commons.io.input.CharSequenceReader;
 import org.apache.commons.io.input.CloseShieldInputStream;
 import org.apache.commons.io.input.CloseShieldReader;
-import org.apache.commons.io.output.AppendableWriter;
 import org.apache.commons.io.output.CloseShieldOutputStream;
 import org.apache.commons.io.output.CloseShieldWriter;
 
@@ -45,51 +42,6 @@ public final class StreamUtils {
     }
 
     // wrapping
-
-    /**
-     * Returns a reader wrapper around a character sequence. This is a utility method that delegates to
-     * {@link #reader(CharSequence, int, int) reader(sequence, 0, sequence.length())}.
-     *
-     * @param sequence The character sequence to return a reader for.
-     * @return A reader wrapper around the given character sequence.
-     * @throws NullPointerException If the given character sequence is {@code null}.
-     */
-    public static Reader reader(CharSequence sequence) {
-        return reader(sequence, 0, sequence.length());
-    }
-
-    /**
-     * Returns a reader wrapper around a portion of a character sequence.
-     * This reader is much like {@link StringReader}, except it supports any character sequence as well as sub sequences.
-     * Like {@code StringReader} it supports {@link Reader#mark(int)} and {@link Reader#reset()}. Unlike {@code StringReader}, it's not thread safe.
-     *
-     * @param sequence The character sequence to return a reader for.
-     * @param start The index to start reading at, inclusive.
-     * @param end The index to stop reading at, exclusive.
-     * @return A reader wrapper around the given portion of the given character sequence.
-     * @throws NullPointerException If the given character sequence is {@code null}.
-     * @throws IndexOutOfBoundsException If the given start index is negative,
-     *                                       the given end index is larger than the given character sequence's length,
-     *                                       or the given start index is larger than the given end index.
-     */
-    public static Reader reader(CharSequence sequence, int start, int end) {
-        checkStartAndEnd(sequence, start, end);
-        return new CharSequenceReader(sequence, start, end);
-    }
-
-    /**
-     * Returns an appendable as a writer.
-     * If the given appendable is a writer, it is returned unmodified. Otherwise, a wrapper is returned that will delegate all calls to the wrapped
-     * appendable, with the exception of {@link Writer#flush() flush()} and {@link Writer#close() close()}.
-     *
-     * @param appendable The appendable to return a writer for.
-     * @return The given appendable itself if it's already a writer, otherwise a wrapper around the given appendable.
-     * @throws NullPointerException If the given appendable is {@code null}.
-     */
-    public static Writer writer(Appendable appendable) {
-        Objects.requireNonNull(appendable);
-        return appendable instanceof Writer ? (Writer) appendable : new AppendableWriter<>(appendable);
-    }
 
     /**
      * Wraps an input stream to prevent it from being closed.

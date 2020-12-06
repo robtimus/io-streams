@@ -20,7 +20,7 @@ package com.github.robtimus.io.stream;
 import static com.github.robtimus.io.stream.StreamUtils.checkOffsetAndLength;
 import static com.github.robtimus.io.stream.StreamUtils.checkStartAndEnd;
 import static com.github.robtimus.io.stream.StreamUtils.streamClosedException;
-import static com.github.robtimus.io.stream.StreamUtils.writer;
+import static org.apache.commons.io.IOUtils.writer;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
