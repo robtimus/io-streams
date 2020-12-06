@@ -187,7 +187,7 @@ public final class RandomInputStream extends InputStream {
     }
 
     /**
-     * Returns a builder for random input streams that uses a custom generator for characters.
+     * Returns a builder for random input streams that uses a custom generator for bytes.
      * For each generated value, only the 8 low-order bits are used; the 24 high-order bits are ignored.
      *
      * @param generator The generator to use.
@@ -213,8 +213,8 @@ public final class RandomInputStream extends InputStream {
         private long limit = -1;
         private ToLongFunction<Random> limitGenerator = null;
 
-        private Builder(ToIntFunction<Random> characterGenerator) {
-            this.byteGenerator = characterGenerator;
+        private Builder(ToIntFunction<Random> byteGenerator) {
+            this.byteGenerator = byteGenerator;
         }
 
         /**
@@ -230,7 +230,7 @@ public final class RandomInputStream extends InputStream {
         }
 
         /**
-         * Specifies the maximum number of characters to return while reading. By default there is no limit.
+         * Specifies the maximum number of bytes to return while reading. By default there is no limit.
          * Use a negative value to specify no limit.
          * <p>
          * Calling this method will discard any changes made by {@link #withRandomLimit(int, int)}.
@@ -245,7 +245,7 @@ public final class RandomInputStream extends InputStream {
         }
 
         /**
-         * Specifies that a random number should be used for the maximum number of characters to return while reading. By default there is no limit.
+         * Specifies that a random number should be used for the maximum number of bytes to return while reading. By default there is no limit.
          * <p>
          * Calling this method will cause any changes made by {@link #withLimit(long)} to be ignored.
          *
