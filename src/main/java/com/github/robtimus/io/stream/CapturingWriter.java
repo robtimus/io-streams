@@ -20,6 +20,7 @@ package com.github.robtimus.io.stream;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.apache.commons.io.output.ProxyCollectionWriter;
 import org.apache.commons.io.output.TeeWriter;
@@ -41,8 +42,9 @@ public final class CapturingWriter extends Writer {
 
     private boolean closed = false;
 
-    private Consumer<CapturingWriter> doneCallback;
-    private Consumer<CapturingWriter> limitReachedCallback;
+    private Consumer<? super CapturingWriter> doneCallback;
+    private Consumer<? super CapturingWriter> limitReachedCallback;
+    private final BiConsumer<? super CapturingWriter, ? super IOException> errorCallback;
 
     /**
      * Creates a new capturing writer.
@@ -52,132 +54,186 @@ public final class CapturingWriter extends Writer {
      * @throws NullPointerException If the given writer or config is {@code null}.
      */
     public CapturingWriter(Writer output, Config config) {
-        this.delegate = Objects.requireNonNull(output);
+        delegate = Objects.requireNonNull(output);
 
         captor = config.expectedCount < 0 ? new StringBuilder() : new StringBuilder(Math.min(config.expectedCount, config.limit));
         limit = config.limit;
 
         doneCallback = config.doneCallback;
         limitReachedCallback = config.limitReachedCallback;
+        errorCallback = config.errorCallback;
     }
 
     @Override
     public void write(int c) throws IOException {
-        delegate.write(c);
+        try {
+            delegate.write(c);
 
-        totalChars++;
-        if (captor.length() < limit) {
-            captor.append((char) c);
-            checkLimitReached();
+            totalChars++;
+            if (captor.length() < limit) {
+                captor.append((char) c);
+                checkLimitReached();
+            }
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
     }
 
     @Override
     public void write(char[] c) throws IOException {
-        delegate.write(c);
+        try {
+            delegate.write(c);
 
-        totalChars += c.length;
+            totalChars += c.length;
 
-        int allowed = Math.min(limit - captor.length(), c.length);
-        if (allowed > 0) {
-            captor.append(c, 0, allowed);
-            checkLimitReached();
+            int allowed = Math.min(limit - captor.length(), c.length);
+            if (allowed > 0) {
+                captor.append(c, 0, allowed);
+                checkLimitReached();
+            }
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
     }
 
     @Override
     public void write(char[] c, int off, int len) throws IOException {
-        delegate.write(c, off, len);
+        try {
+            delegate.write(c, off, len);
 
-        totalChars += len;
+            totalChars += len;
 
-        int allowed = Math.min(limit - captor.length(), len);
-        if (allowed > 0) {
-            captor.append(c, off, allowed);
-            checkLimitReached();
+            int allowed = Math.min(limit - captor.length(), len);
+            if (allowed > 0) {
+                captor.append(c, off, allowed);
+                checkLimitReached();
+            }
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
     }
 
     @Override
     public void write(String str) throws IOException {
-        delegate.write(str);
+        try {
+            delegate.write(str);
 
-        totalChars += str.length();
+            totalChars += str.length();
 
-        int allowed = Math.min(limit - captor.length(), str.length());
-        if (allowed > 0) {
-            captor.append(str, 0, allowed);
-            checkLimitReached();
+            int allowed = Math.min(limit - captor.length(), str.length());
+            if (allowed > 0) {
+                captor.append(str, 0, allowed);
+                checkLimitReached();
+            }
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
     }
 
     @Override
     public void write(String str, int off, int len) throws IOException {
-        delegate.write(str, off, len);
+        try {
+            delegate.write(str, off, len);
 
-        totalChars += len;
+            totalChars += len;
 
-        int allowed = Math.min(limit - captor.length(), len);
-        if (allowed > 0) {
-            captor.append(str, off, off + allowed);
-            checkLimitReached();
+            int allowed = Math.min(limit - captor.length(), len);
+            if (allowed > 0) {
+                captor.append(str, off, off + allowed);
+                checkLimitReached();
+            }
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
     }
 
     @Override
     public Writer append(CharSequence csq) throws IOException {
-        delegate.append(csq);
+        try {
+            delegate.append(csq);
 
-        CharSequence cs = csq != null ? csq : "null"; //$NON-NLS-1$
+            CharSequence cs = csq != null ? csq : "null"; //$NON-NLS-1$
 
-        totalChars += cs.length();
+            totalChars += cs.length();
 
-        int allowed = Math.min(limit - captor.length(), cs.length());
-        if (allowed > 0) {
-            captor.append(csq, 0, allowed);
-            checkLimitReached();
+            int allowed = Math.min(limit - captor.length(), cs.length());
+            if (allowed > 0) {
+                captor.append(csq, 0, allowed);
+                checkLimitReached();
+            }
+
+            return this;
+
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
-
-        return this;
     }
 
     @Override
     public Writer append(CharSequence csq, int start, int end) throws IOException {
-        delegate.append(csq, start, end);
+        try {
+            delegate.append(csq, start, end);
 
-        totalChars += end - start;
+            totalChars += end - start;
 
-        int allowed = Math.min(limit - captor.length(), end - start);
-        if (allowed > 0) {
-            captor.append(csq, start, start + allowed);
-            checkLimitReached();
+            int allowed = Math.min(limit - captor.length(), end - start);
+            if (allowed > 0) {
+                captor.append(csq, start, start + allowed);
+                checkLimitReached();
+            }
+
+            return this;
+
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
-
-        return this;
     }
 
     @Override
     public Writer append(char c) throws IOException {
-        delegate.write(c);
+        try {
+            delegate.write(c);
 
-        totalChars++;
-        if (captor.length() < limit) {
-            captor.append(c);
-            checkLimitReached();
+            totalChars++;
+            if (captor.length() < limit) {
+                captor.append(c);
+                checkLimitReached();
+            }
+
+            return this;
+
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
-
-        return this;
     }
 
     @Override
     public void flush() throws IOException {
-        delegate.flush();
+        try {
+            delegate.flush();
+        } catch (IOException e) {
+            onError(e);
+            throw e;
+        }
     }
 
     @Override
     public void close() throws IOException {
-        delegate.close();
-        markAsClosed();
+        try {
+            delegate.close();
+            markAsClosed();
+        } catch (IOException e) {
+            onError(e);
+            throw e;
+        }
     }
 
     /**
@@ -199,6 +255,12 @@ public final class CapturingWriter extends Writer {
         if (totalChars >= limit && limitReachedCallback != null) {
             limitReachedCallback.accept(this);
             limitReachedCallback = null;
+        }
+    }
+
+    private void onError(IOException error) {
+        if (errorCallback != null) {
+            errorCallback.accept(this, error);
         }
     }
 
@@ -249,16 +311,18 @@ public final class CapturingWriter extends Writer {
 
         private final int expectedCount;
 
-        private final Consumer<CapturingWriter> doneCallback;
-        private final Consumer<CapturingWriter> limitReachedCallback;
+        private final Consumer<? super CapturingWriter> doneCallback;
+        private final Consumer<? super CapturingWriter> limitReachedCallback;
+        private final BiConsumer<? super CapturingWriter, ? super IOException> errorCallback;
 
         private Config(Builder builder) {
-            this.limit = builder.limit;
+            limit = builder.limit;
 
-            this.expectedCount = builder.expectedCount;
+            expectedCount = builder.expectedCount;
 
-            this.doneCallback = builder.doneCallback;
-            this.limitReachedCallback = builder.limitReachedCallback;
+            doneCallback = builder.doneCallback;
+            limitReachedCallback = builder.limitReachedCallback;
+            errorCallback = builder.errorCallback;
         }
     }
 
@@ -273,8 +337,9 @@ public final class CapturingWriter extends Writer {
 
         private int expectedCount = -1;
 
-        private Consumer<CapturingWriter> doneCallback;
-        private Consumer<CapturingWriter> limitReachedCallback;
+        private Consumer<? super CapturingWriter> doneCallback;
+        private Consumer<? super CapturingWriter> limitReachedCallback;
+        private BiConsumer<? super CapturingWriter, ? super IOException> errorCallback;
 
         private Builder() {
         }
@@ -316,7 +381,7 @@ public final class CapturingWriter extends Writer {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder onDone(Consumer<CapturingWriter> callback) {
+        public Builder onDone(Consumer<? super CapturingWriter> callback) {
             doneCallback = Objects.requireNonNull(callback);
             return this;
         }
@@ -329,8 +394,21 @@ public final class CapturingWriter extends Writer {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder onLimitReached(Consumer<CapturingWriter> callback) {
+        public Builder onLimitReached(Consumer<? super CapturingWriter> callback) {
             limitReachedCallback = Objects.requireNonNull(callback);
+            return this;
+        }
+
+        /**
+         * Sets a callback that will be triggered when an {@link IOException} occurs while using built capturing writers.
+         * A capturing writer can trigger its error callback multiple times.
+         *
+         * @param callback The callback to set.
+         * @return This object.
+         * @throws NullPointerException If the given callback is {@code null}.
+         */
+        public Builder onError(BiConsumer<? super CapturingWriter, ? super IOException> callback) {
+            errorCallback = Objects.requireNonNull(callback);
             return this;
         }
 

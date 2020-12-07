@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -51,8 +52,9 @@ public final class CapturingReader extends Reader {
     private boolean consumed = false;
     private boolean closed = false;
 
-    private Consumer<CapturingReader> doneCallback;
-    private Consumer<CapturingReader> limitReachedCallback;
+    private Consumer<? super CapturingReader> doneCallback;
+    private Consumer<? super CapturingReader> limitReachedCallback;
+    private final BiConsumer<? super CapturingReader, ? super IOException> errorCallback;
 
     /**
      * Creates a new capturing reader.
@@ -62,7 +64,7 @@ public final class CapturingReader extends Reader {
      * @throws NullPointerException If the given reader or config is {@code null}.
      */
     public CapturingReader(Reader input, Config config) {
-        this.delegate = Objects.requireNonNull(input);
+        delegate = Objects.requireNonNull(input);
 
         captor = config.expectedCount < 0 ? new StringBuilder() : new StringBuilder(Math.min(config.expectedCount, config.limit));
         limit = config.limit;
@@ -70,83 +72,117 @@ public final class CapturingReader extends Reader {
 
         doneCallback = config.doneCallback;
         limitReachedCallback = config.limitReachedCallback;
+        errorCallback = config.errorCallback;
     }
 
     // don't delegate read(CharBuffer), the default implementation is good enough
 
     @Override
     public int read() throws IOException {
-        int c = delegate.read();
-        if (c == -1) {
-            markAsConsumed();
-        } else {
-            totalChars++;
+        try {
+            int c = delegate.read();
+            if (c == -1) {
+                markAsConsumed();
+            } else {
+                totalChars++;
 
-            if (captor.length() < limit) {
-                captor.append((char) c);
-                checkLimitReached();
+                if (captor.length() < limit) {
+                    captor.append((char) c);
+                    checkLimitReached();
+                }
+                checkDone();
             }
-            checkDone();
+            return c;
+
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
-        return c;
     }
 
     @Override
     public int read(char[] c) throws IOException {
-        int n = delegate.read(c);
-        if (n == -1) {
-            markAsConsumed();
-        } else {
-            totalChars += n;
+        try {
+            int n = delegate.read(c);
+            if (n == -1) {
+                markAsConsumed();
+            } else {
+                totalChars += n;
 
-            int allowed = Math.min(limit - captor.length(), n);
-            if (allowed > 0) {
-                captor.append(c, 0, allowed);
-                checkLimitReached();
+                int allowed = Math.min(limit - captor.length(), n);
+                if (allowed > 0) {
+                    captor.append(c, 0, allowed);
+                    checkLimitReached();
+                }
+                checkDone();
             }
-            checkDone();
+            return n;
+
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
-        return n;
     }
 
     @Override
     public int read(char[] c, int off, int len) throws IOException {
-        int n = delegate.read(c, off, len);
-        if (n == -1) {
-            markAsConsumed();
-        } else {
-            totalChars += n;
+        try {
+            int n = delegate.read(c, off, len);
+            if (n == -1) {
+                markAsConsumed();
+            } else {
+                totalChars += n;
 
-            int allowed = Math.min(limit - captor.length(), n);
-            if (allowed > 0) {
-                captor.append(c, off, allowed);
-                checkLimitReached();
+                int allowed = Math.min(limit - captor.length(), n);
+                if (allowed > 0) {
+                    captor.append(c, off, allowed);
+                    checkLimitReached();
+                }
+                checkDone();
             }
-            checkDone();
+            return n;
+
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
-        return n;
     }
 
     // don't delegate skip, so no content is lost
 
     @Override
     public void close() throws IOException {
-        delegate.close();
-        markAsClosed();
+        try {
+            delegate.close();
+            markAsClosed();
+        } catch (IOException e) {
+            onError(e);
+            throw e;
+        }
     }
 
     @Override
     public void mark(int readlimit) throws IOException {
-        delegate.mark(readlimit);
-        mark = totalChars;
+        try {
+            delegate.mark(readlimit);
+            mark = totalChars;
+        } catch (IOException e) {
+            onError(e);
+            throw e;
+        }
     }
 
     @Override
     public void reset() throws IOException {
-        delegate.reset();
-        captor.delete((int) Math.min(mark, limit), captor.length());
-        totalChars = mark;
-        consumed = false;
+        try {
+            delegate.reset();
+            captor.delete((int) Math.min(mark, limit), captor.length());
+            totalChars = mark;
+            consumed = false;
+        } catch (IOException e) {
+            onError(e);
+            throw e;
+        }
     }
 
     @Override
@@ -181,6 +217,12 @@ public final class CapturingReader extends Reader {
         if (totalChars >= doneAfter && doneCallback != null) {
             doneCallback.accept(this);
             doneCallback = null;
+        }
+    }
+
+    private void onError(IOException error) {
+        if (errorCallback != null) {
+            errorCallback.accept(this, error);
         }
     }
 
@@ -243,18 +285,20 @@ public final class CapturingReader extends Reader {
 
         private final long doneAfter;
 
-        private final Consumer<CapturingReader> doneCallback;
-        private final Consumer<CapturingReader> limitReachedCallback;
+        private final Consumer<? super CapturingReader> doneCallback;
+        private final Consumer<? super CapturingReader> limitReachedCallback;
+        private final BiConsumer<? super CapturingReader, ? super IOException> errorCallback;
 
         private Config(Builder builder) {
-            this.limit = builder.limit;
+            limit = builder.limit;
 
-            this.expectedCount = builder.expectedCount;
+            expectedCount = builder.expectedCount;
 
-            this.doneAfter = builder.doneAfter;
+            doneAfter = builder.doneAfter;
 
-            this.doneCallback = builder.doneCallback;
-            this.limitReachedCallback = builder.limitReachedCallback;
+            doneCallback = builder.doneCallback;
+            limitReachedCallback = builder.limitReachedCallback;
+            errorCallback = builder.errorCallback;
         }
     }
 
@@ -271,8 +315,9 @@ public final class CapturingReader extends Reader {
 
         private long doneAfter = Long.MAX_VALUE;
 
-        private Consumer<CapturingReader> doneCallback;
-        private Consumer<CapturingReader> limitReachedCallback;
+        private Consumer<? super CapturingReader> doneCallback;
+        private Consumer<? super CapturingReader> limitReachedCallback;
+        private BiConsumer<? super CapturingReader, ? super IOException> errorCallback;
 
         private Builder() {
         }
@@ -336,7 +381,7 @@ public final class CapturingReader extends Reader {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder onDone(Consumer<CapturingReader> callback) {
+        public Builder onDone(Consumer<? super CapturingReader> callback) {
             doneCallback = Objects.requireNonNull(callback);
             return this;
         }
@@ -352,8 +397,21 @@ public final class CapturingReader extends Reader {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder onLimitReached(Consumer<CapturingReader> callback) {
+        public Builder onLimitReached(Consumer<? super CapturingReader> callback) {
             limitReachedCallback = Objects.requireNonNull(callback);
+            return this;
+        }
+
+        /**
+         * Sets a callback that will be triggered when an {@link IOException} occurs while using built capturing readers.
+         * A capturing reader can trigger its error callback multiple times.
+         *
+         * @param callback The callback to set.
+         * @return This object.
+         * @throws NullPointerException If the given callback is {@code null}.
+         */
+        public Builder onError(BiConsumer<? super CapturingReader, ? super IOException> callback) {
+            errorCallback = Objects.requireNonNull(callback);
             return this;
         }
 

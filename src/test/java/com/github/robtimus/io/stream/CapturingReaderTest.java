@@ -26,6 +26,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import org.apache.commons.io.input.BrokenReader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -422,6 +423,161 @@ class CapturingReaderTest extends TestBase {
                         assertEquals(0, limitReachedCount.getAndIncrement());
                     })
                     .build());
+        }
+    }
+
+    @Nested
+    class WithErrors {
+
+        @Nested
+        class WithErrorHandler {
+
+            @Test
+            @DisplayName("read()")
+            void testReadChar() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Reader reader = createReader(doneCount, limitReachedCount, errorCount)) {
+                        reader.read();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: read + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("read(char[])")
+            void testReadIntoCharArray() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Reader reader = createReader(doneCount, limitReachedCount, errorCount)) {
+                        reader.read(new char[10]);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: read + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("read(char[], int, int)")
+            void testReadIntoCharArrayPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Reader reader = createReader(doneCount, limitReachedCount, errorCount)) {
+                        reader.read(new char[20], 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: read + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("mark and reset")
+            void testMarkAndReset() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Reader reader = createReader(doneCount, limitReachedCount, errorCount)) {
+                        assertThrows(IOException.class, () -> reader.mark(5));
+                        reader.reset();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 3: mark + reset + close
+                assertEquals(3, errorCount.get());
+            }
+
+            @SuppressWarnings("resource")
+            private Reader createReader(AtomicInteger doneCount, AtomicInteger limitReachedCount, AtomicInteger errorCount) {
+                return new CapturingReader(new BrokenReader(), CapturingReader.config()
+                        .onDone(input -> doneCount.getAndIncrement())
+                        .onLimitReached(input -> limitReachedCount.getAndIncrement())
+                        .onError((input, error) -> errorCount.getAndIncrement())
+                        .build());
+            }
+        }
+
+        @Nested
+        class WithoutErrorHandler {
+
+            @Test
+            @DisplayName("read()")
+            void testReadChar() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Reader reader = createReader(doneCount, limitReachedCount)) {
+                        reader.read();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("read(char[])")
+            void testReadIntoCharArray() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Reader reader = createReader(doneCount, limitReachedCount)) {
+                        reader.read(new char[10]);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("read(char[], int, int)")
+            void testReadIntoCharArrayPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Reader reader = createReader(doneCount, limitReachedCount)) {
+                        reader.read(new char[20], 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("mark and reset")
+            void testMarkAndReset() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Reader reader = createReader(doneCount, limitReachedCount)) {
+                        assertThrows(IOException.class, () -> reader.mark(5));
+                        reader.reset();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @SuppressWarnings("resource")
+            private Reader createReader(AtomicInteger doneCount, AtomicInteger limitReachedCount) {
+                return new CapturingReader(new BrokenReader(), CapturingReader.config()
+                        .onDone(input -> doneCount.getAndIncrement())
+                        .onLimitReached(input -> limitReachedCount.getAndIncrement())
+                        .build());
+            }
         }
     }
 

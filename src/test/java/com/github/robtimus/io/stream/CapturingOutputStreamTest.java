@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.servlet.DispatcherType;
 import javax.servlet.Servlet;
+import org.apache.commons.io.output.BrokenOutputStream;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.StringContentProvider;
@@ -246,6 +247,159 @@ class CapturingOutputStreamTest extends TestBase {
                         limitReachedCallback.accept(input);
                     })
                     .build());
+        }
+    }
+
+    @Nested
+    class WithErrors {
+
+        @Nested
+        class WithErrorHandler {
+
+            @Test
+            @DisplayName("write(int)")
+            void testWriteByte() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (OutputStream output = createOutputStream(doneCount, limitReachedCount, errorCount)) {
+                        output.write(0);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: write + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("write(byte[])")
+            void testWriteByteArray() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (OutputStream output = createOutputStream(doneCount, limitReachedCount, errorCount)) {
+                        output.write(new byte[10]);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: write + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("write(byte[], int, int)")
+            void testWriteByteArrayPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (OutputStream output = createOutputStream(doneCount, limitReachedCount, errorCount)) {
+                        output.write(new byte[20], 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: write + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("flush")
+            void testFlush() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (OutputStream output = createOutputStream(doneCount, limitReachedCount, errorCount)) {
+                        output.flush();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: flush + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @SuppressWarnings("resource")
+            private OutputStream createOutputStream(AtomicInteger doneCount, AtomicInteger limitReachedCount, AtomicInteger errorCount) {
+                return new CapturingOutputStream(new BrokenOutputStream(), CapturingOutputStream.config()
+                        .onDone(input -> doneCount.getAndIncrement())
+                        .onLimitReached(input -> limitReachedCount.getAndIncrement())
+                        .onError((input, error) -> errorCount.getAndIncrement())
+                        .build());
+            }
+        }
+
+        @Nested
+        class WithoutErrorHandler {
+
+            @Test
+            @DisplayName("write(int)")
+            void testWriteByte() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (OutputStream output = createOutputStream(doneCount, limitReachedCount)) {
+                        output.write(0);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("write(byte[])")
+            void testWriteByteArray() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (OutputStream output = createOutputStream(doneCount, limitReachedCount)) {
+                        output.write(new byte[10]);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("write(byte[], int, int)")
+            void testWriteByteArrayPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (OutputStream output = createOutputStream(doneCount, limitReachedCount)) {
+                        output.write(new byte[20], 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("flush")
+            void testFlush() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (OutputStream output = createOutputStream(doneCount, limitReachedCount)) {
+                        output.flush();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @SuppressWarnings("resource")
+            private OutputStream createOutputStream(AtomicInteger doneCount, AtomicInteger limitReachedCount) {
+                return new CapturingOutputStream(new BrokenOutputStream(), CapturingOutputStream.config()
+                        .onDone(input -> doneCount.getAndIncrement())
+                        .onLimitReached(input -> limitReachedCount.getAndIncrement())
+                        .build());
+            }
         }
     }
 

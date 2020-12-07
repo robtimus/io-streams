@@ -25,6 +25,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import org.apache.commons.io.output.BrokenWriter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -448,6 +449,314 @@ class CapturingWriterTest extends TestBase {
                         limitReachedCallback.accept(input);
                     })
                     .build());
+        }
+    }
+
+    @Nested
+    class WithErrors {
+
+        @Nested
+        class WithErrorHandler {
+
+            @Test
+            @DisplayName("write(int)")
+            void testWriteChar() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount, errorCount)) {
+                        writer.write(0);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: write + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("write(char[])")
+            void testWriteCharArray() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount, errorCount)) {
+                        writer.write(new char[10]);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: write + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("write(char[], int, int)")
+            void testWriteCharArrayPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount, errorCount)) {
+                        writer.write(new char[20], 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: write + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("write(String)")
+            void testWriteString() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount, errorCount)) {
+                        writer.write(SOURCE);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: write + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("write(String, int, int)")
+            void testWriteStringPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount, errorCount)) {
+                        writer.write(SOURCE, 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: write + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("append(CharSequence)")
+            void testAppendCharSequence() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount, errorCount)) {
+                        writer.append(SOURCE);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: append + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("append(CharSequence, int, int)")
+            void testAppendCharSequencePortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount, errorCount)) {
+                        writer.append(SOURCE, 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: append + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("append(char)")
+            void testAppendChar() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount, errorCount)) {
+                        writer.append('\0');
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: append + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("flush()")
+            void testFlush() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount, errorCount)) {
+                        writer.flush();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: flush + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @SuppressWarnings("resource")
+            private Writer createWriter(AtomicInteger doneCount, AtomicInteger limitReachedCount, AtomicInteger errorCount) {
+                return new CapturingWriter(new BrokenWriter(), CapturingWriter.config()
+                        .onDone(input -> doneCount.getAndIncrement())
+                        .onLimitReached(input -> limitReachedCount.getAndIncrement())
+                        .onError((input, error) -> errorCount.getAndIncrement())
+                        .build());
+            }
+        }
+
+        @Nested
+        class WithoutErrorHandler {
+
+            @Test
+            @DisplayName("write(int)")
+            void testWriteChar() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount)) {
+                        writer.write(0);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("write(char[])")
+            void testWriteCharArray() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount)) {
+                        writer.write(new char[10]);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("write(char[], int, int)")
+            void testWriteCharArrayPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount)) {
+                        writer.write(new char[20], 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("write(String)")
+            void testWriteString() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount)) {
+                        writer.write(SOURCE);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("write(String, int, int)")
+            void testWriteStringPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount)) {
+                        writer.write(SOURCE, 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("append(CharSequence)")
+            void testAppendCharSequence() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount)) {
+                        writer.append(SOURCE);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("append(CharSequence, int, int)")
+            void testAppendCharSequencePortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount)) {
+                        writer.append(SOURCE, 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("append(char)")
+            void testAppendChar() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount)) {
+                        writer.append('\0');
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("flush()")
+            void testFlush() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (Writer writer = createWriter(doneCount, limitReachedCount)) {
+                        writer.flush();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @SuppressWarnings("resource")
+            private Writer createWriter(AtomicInteger doneCount, AtomicInteger limitReachedCount) {
+                return new CapturingWriter(new BrokenWriter(), CapturingWriter.config()
+                        .onDone(input -> doneCount.getAndIncrement())
+                        .onLimitReached(input -> limitReachedCount.getAndIncrement())
+                        .build());
+            }
         }
     }
 

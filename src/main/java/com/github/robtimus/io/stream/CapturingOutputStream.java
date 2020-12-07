@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import org.apache.commons.io.output.TeeOutputStream;
 
@@ -41,8 +42,9 @@ public final class CapturingOutputStream extends OutputStream {
 
     private boolean closed = false;
 
-    private Consumer<CapturingOutputStream> doneCallback;
-    private Consumer<CapturingOutputStream> limitReachedCallback;
+    private Consumer<? super CapturingOutputStream> doneCallback;
+    private Consumer<? super CapturingOutputStream> limitReachedCallback;
+    private final BiConsumer<? super CapturingOutputStream, ? super IOException> errorCallback;
 
     /**
      * Creates a new capturing output stream.
@@ -52,61 +54,87 @@ public final class CapturingOutputStream extends OutputStream {
      * @throws NullPointerException If the given output stream or config is {@code null}.
      */
     public CapturingOutputStream(OutputStream output, Config config) {
-        this.delegate = Objects.requireNonNull(output);
+        delegate = Objects.requireNonNull(output);
 
         captor = config.expectedCount < 0 ? new ByteCaptor() : new ByteCaptor(Math.min(config.expectedCount, config.limit));
         limit = config.limit;
 
         doneCallback = config.doneCallback;
         limitReachedCallback = config.limitReachedCallback;
+        errorCallback = config.errorCallback;
     }
 
     @Override
     public void write(int b) throws IOException {
-        delegate.write(b);
+        try {
+            delegate.write(b);
 
-        totalBytes++;
-        if (captor.size() < limit) {
-            captor.write(b);
-            checkLimitReached();
+            totalBytes++;
+            if (captor.size() < limit) {
+                captor.write(b);
+                checkLimitReached();
+            }
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
     }
 
     @Override
     public void write(byte[] b) throws IOException {
-        delegate.write(b);
+        try {
+            delegate.write(b);
 
-        totalBytes += b.length;
+            totalBytes += b.length;
 
-        int allowed = Math.min(limit - captor.size(), b.length);
-        if (allowed > 0) {
-            captor.write(b, 0, allowed);
-            checkLimitReached();
+            int allowed = Math.min(limit - captor.size(), b.length);
+            if (allowed > 0) {
+                captor.write(b, 0, allowed);
+                checkLimitReached();
+            }
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        delegate.write(b, off, len);
+        try {
+            delegate.write(b, off, len);
 
-        totalBytes += len;
+            totalBytes += len;
 
-        int allowed = Math.min(limit - captor.size(), len);
-        if (allowed > 0) {
-            captor.write(b, off, allowed);
-            checkLimitReached();
+            int allowed = Math.min(limit - captor.size(), len);
+            if (allowed > 0) {
+                captor.write(b, off, allowed);
+                checkLimitReached();
+            }
+        } catch (IOException e) {
+            onError(e);
+            throw e;
         }
     }
 
     @Override
     public void flush() throws IOException {
-        delegate.flush();
+        try {
+            delegate.flush();
+        } catch (IOException e) {
+            onError(e);
+            throw e;
+        }
     }
 
     @Override
     public void close() throws IOException {
-        delegate.close();
-        markAsClosed();
+        try {
+            delegate.close();
+            markAsClosed();
+        } catch (IOException e) {
+            onError(e);
+            throw e;
+        }
     }
 
     /**
@@ -128,6 +156,12 @@ public final class CapturingOutputStream extends OutputStream {
         if (totalBytes >= limit && limitReachedCallback != null) {
             limitReachedCallback.accept(this);
             limitReachedCallback = null;
+        }
+    }
+
+    private void onError(IOException error) {
+        if (errorCallback != null) {
+            errorCallback.accept(this, error);
         }
     }
 
@@ -188,16 +222,18 @@ public final class CapturingOutputStream extends OutputStream {
 
         private final int expectedCount;
 
-        private final Consumer<CapturingOutputStream> doneCallback;
-        private final Consumer<CapturingOutputStream> limitReachedCallback;
+        private final Consumer<? super CapturingOutputStream> doneCallback;
+        private final Consumer<? super CapturingOutputStream> limitReachedCallback;
+        private final BiConsumer<? super CapturingOutputStream, ? super IOException> errorCallback;
 
         private Config(Builder builder) {
-            this.limit = builder.limit;
+            limit = builder.limit;
 
-            this.expectedCount = builder.expectedCount;
+            expectedCount = builder.expectedCount;
 
-            this.doneCallback = builder.doneCallback;
-            this.limitReachedCallback = builder.limitReachedCallback;
+            doneCallback = builder.doneCallback;
+            limitReachedCallback = builder.limitReachedCallback;
+            errorCallback = builder.errorCallback;
         }
     }
 
@@ -212,8 +248,9 @@ public final class CapturingOutputStream extends OutputStream {
 
         private int expectedCount = -1;
 
-        private Consumer<CapturingOutputStream> doneCallback;
-        private Consumer<CapturingOutputStream> limitReachedCallback;
+        private Consumer<? super CapturingOutputStream> doneCallback;
+        private Consumer<? super CapturingOutputStream> limitReachedCallback;
+        private BiConsumer<? super CapturingOutputStream, ? super IOException> errorCallback;
 
         private Builder() {
         }
@@ -255,7 +292,7 @@ public final class CapturingOutputStream extends OutputStream {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder onDone(Consumer<CapturingOutputStream> callback) {
+        public Builder onDone(Consumer<? super CapturingOutputStream> callback) {
             doneCallback = Objects.requireNonNull(callback);
             return this;
         }
@@ -268,8 +305,21 @@ public final class CapturingOutputStream extends OutputStream {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder onLimitReached(Consumer<CapturingOutputStream> callback) {
+        public Builder onLimitReached(Consumer<? super CapturingOutputStream> callback) {
             limitReachedCallback = Objects.requireNonNull(callback);
+            return this;
+        }
+
+        /**
+         * Sets a callback that will be triggered when an {@link IOException} occurs while using built capturing output streams.
+         * A capturing output stream can trigger its error callback multiple times.
+         *
+         * @param callback The callback to set.
+         * @return This object.
+         * @throws NullPointerException If the given callback is {@code null}.
+         */
+        public Builder onError(BiConsumer<? super CapturingOutputStream, ? super IOException> callback) {
+            errorCallback = Objects.requireNonNull(callback);
             return this;
         }
 

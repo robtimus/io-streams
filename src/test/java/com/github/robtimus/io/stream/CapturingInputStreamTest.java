@@ -37,6 +37,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.servlet.DispatcherType;
 import javax.servlet.Servlet;
+import org.apache.commons.io.input.BrokenInputStream;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.util.StringContentProvider;
@@ -463,6 +464,161 @@ class CapturingInputStreamTest extends TestBase {
                         assertEquals(0, limitReachedCount.getAndIncrement());
                     })
                     .build());
+        }
+    }
+
+    @Nested
+    class WithErrors {
+
+        @Nested
+        class WithErrorHandler {
+
+            @Test
+            @DisplayName("read()")
+            void testReadByte() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (InputStream input = createInputStream(doneCount, limitReachedCount, errorCount)) {
+                        input.read();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: read + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("read(byte[])")
+            void testReadIntoByteArray() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (InputStream input = createInputStream(doneCount, limitReachedCount, errorCount)) {
+                        input.read(new byte[10]);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: read + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("read(byte[], int, int)")
+            void testReadIntoByteArrayPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (InputStream input = createInputStream(doneCount, limitReachedCount, errorCount)) {
+                        input.read(new byte[20], 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: read + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @Test
+            @DisplayName("mark and reset")
+            void testMarkAndReset() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                AtomicInteger errorCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (InputStream input = createInputStream(doneCount, limitReachedCount, errorCount)) {
+                        assertDoesNotThrow(() -> input.mark(5));
+                        input.reset();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+                // 2: reset + close
+                assertEquals(2, errorCount.get());
+            }
+
+            @SuppressWarnings("resource")
+            private InputStream createInputStream(AtomicInteger doneCount, AtomicInteger limitReachedCount, AtomicInteger errorCount) {
+                return new CapturingInputStream(new BrokenInputStream(), CapturingInputStream.config()
+                        .onDone(input -> doneCount.getAndIncrement())
+                        .onLimitReached(input -> limitReachedCount.getAndIncrement())
+                        .onError((input, error) -> errorCount.getAndIncrement())
+                        .build());
+            }
+        }
+
+        @Nested
+        class WithoutErrorHandler {
+
+            @Test
+            @DisplayName("read()")
+            void testReadByte() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (InputStream input = createInputStream(doneCount, limitReachedCount)) {
+                        input.read();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("read(byte[])")
+            void testReadIntoByteArray() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (InputStream input = createInputStream(doneCount, limitReachedCount)) {
+                        input.read(new byte[10]);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("read(byte[], int, int)")
+            void testReadIntoByteArrayPortion() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (InputStream input = createInputStream(doneCount, limitReachedCount)) {
+                        input.read(new byte[20], 5, 10);
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @Test
+            @DisplayName("mark and reset")
+            void testMarkAndReset() {
+                AtomicInteger doneCount = new AtomicInteger(0);
+                AtomicInteger limitReachedCount = new AtomicInteger(0);
+                assertThrows(IOException.class, () -> {
+                    try (InputStream input = createInputStream(doneCount, limitReachedCount)) {
+                        assertDoesNotThrow(() -> input.mark(5));
+                        input.reset();
+                    }
+                });
+                assertEquals(0, doneCount.get());
+                assertEquals(0, limitReachedCount.get());
+            }
+
+            @SuppressWarnings("resource")
+            private InputStream createInputStream(AtomicInteger doneCount, AtomicInteger limitReachedCount) {
+                return new CapturingInputStream(new BrokenInputStream(), CapturingInputStream.config()
+                        .onDone(input -> doneCount.getAndIncrement())
+                        .onLimitReached(input -> limitReachedCount.getAndIncrement())
+                        .build());
+            }
         }
     }
 
