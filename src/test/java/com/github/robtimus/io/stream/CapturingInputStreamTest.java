@@ -181,12 +181,12 @@ class CapturingInputStreamTest extends TestBase {
             AtomicInteger limitReachedCount = new AtomicInteger(0);
 
             return new CapturingInputStream(new ByteArrayInputStream(INPUT), CapturingInputStream.config()
-                    .whenDone(input -> {
+                    .onDone(input -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         assertEquals(0, limitReachedCount.get());
                         doneCallback.accept(input);
                     })
-                    .whenLimitReached(input -> {
+                    .onLimitReached(input -> {
                         assertEquals(0, doneCount.get());
                         assertEquals(0, limitReachedCount.getAndIncrement());
                     })
@@ -324,11 +324,11 @@ class CapturingInputStreamTest extends TestBase {
             return new CapturingInputStream(new ByteArrayInputStream(INPUT), CapturingInputStream.config()
                     .withLimit(limit)
                     .withExpectedCount(INPUT.length)
-                    .whenDone(input -> {
+                    .onDone(input -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         doneCallback.accept(input);
                     })
-                    .whenLimitReached(input -> {
+                    .onLimitReached(input -> {
                         assertEquals(0, doneCount.get());
                         limitReachedCallback.accept(input);
                     })
@@ -452,12 +452,13 @@ class CapturingInputStreamTest extends TestBase {
             AtomicInteger limitReachedCount = new AtomicInteger(0);
 
             return new CapturingInputStream(new ByteArrayInputStream(INPUT), CapturingInputStream.config()
-                    .whenDoneAfter(INPUT.length - 5, input -> {
+                    .doneAfter(INPUT.length - 5)
+                    .onDone(input -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         assertEquals(0, limitReachedCount.get());
                         doneCallback.accept(input);
                     })
-                    .whenLimitReached(input -> {
+                    .onLimitReached(input -> {
                         assertEquals(0, doneCount.get());
                         assertEquals(0, limitReachedCount.getAndIncrement());
                     })
@@ -476,10 +477,10 @@ class CapturingInputStreamTest extends TestBase {
         }
 
         @Test
-        @DisplayName("whenDoneAfter with negative doneAfter")
-        void testWhenDoneWithNegativeDoneAfter() {
+        @DisplayName("doneAfter with negative doneAfter")
+        void testDoneWithNegativeDoneAfter() {
             Builder builder = CapturingInputStream.config();
-            assertThrows(IllegalArgumentException.class, () -> builder.whenDoneAfter(-1, System.out::println));
+            assertThrows(IllegalArgumentException.class, () -> builder.doneAfter(-1));
         }
     }
 

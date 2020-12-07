@@ -255,7 +255,7 @@ public final class CapturingOutputStream extends OutputStream {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder whenDone(Consumer<CapturingOutputStream> callback) {
+        public Builder onDone(Consumer<CapturingOutputStream> callback) {
             doneCallback = Objects.requireNonNull(callback);
             return this;
         }
@@ -268,7 +268,7 @@ public final class CapturingOutputStream extends OutputStream {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder whenLimitReached(Consumer<CapturingOutputStream> callback) {
+        public Builder onLimitReached(Consumer<CapturingOutputStream> callback) {
             limitReachedCallback = Objects.requireNonNull(callback);
             return this;
         }

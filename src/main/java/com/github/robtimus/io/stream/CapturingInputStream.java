@@ -315,39 +315,38 @@ public final class CapturingInputStream extends InputStream {
         }
 
         /**
-         * Sets a callback that will be triggered when reading from built capturing input streams is done. This can be because the input stream is
-         * {@link CapturingInputStream#isConsumed() consumed} or {@link CapturingInputStream#isClosed() closed}.
-         * A capturing input stream will only trigger its callback once.
+         * Sets the number of bytes after which built capturing input streams are considered to be done. The default is {@link Long#MAX_VALUE}.
+         * <p>
+         * Some frameworks don't fully consume all content. Instead they stop at a specific point. For instance, some JSON parsers stop reading as
+         * soon as the root object's closing closing curly brace is encountered.
+         * <p>
+         * Ideally such a framework is configured to consume all content. This method can be used as fallback if that's not possible.
+         * For instance, it can be called with an HTTP request's content length.
          *
-         * @param callback The callback to set.
+         * @param count The number of bytes after which to consider built capturing input streams as done.
          * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
+         * @throws IllegalArgumentException If the given number of bytes is negative.
          */
-        public Builder whenDone(Consumer<CapturingInputStream> callback) {
-            return whenDoneAfter(Long.MAX_VALUE, callback);
+        public Builder doneAfter(long count) {
+            if (count < 0) {
+                throw new IllegalArgumentException(count + " < 0"); //$NON-NLS-1$
+            }
+            doneAfter = count;
+            return this;
         }
 
         /**
          * Sets a callback that will be triggered when reading from built capturing input streams is done. This can be because the input stream is
-         * {@link CapturingInputStream#isConsumed() consumed} or {@link CapturingInputStream#isClosed() closed}.
+         * {@link CapturingInputStream#isConsumed() consumed} or {@link CapturingInputStream#isClosed() closed}, or because the amount set using
+         * {@link #doneAfter(long)} has been reached.
          * A capturing input stream will only trigger its callback once.
-         * <p>
-         * Some frameworks don't fully consume all content. Instead they stop after a specific number of bytes has been read, e.g. based on the
-         * content length of HTTP requests. This method allows a marker to be defined that, when reached, will trigger the callback, even if the
-         * stream hasn't been fully consumed or closed.
          *
-         * @param doneAfter The number of bytes after which to trigger the callback.
          * @param callback The callback to set.
          * @return This object.
-         * @throws IllegalArgumentException If the given number of bytes is negative.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder whenDoneAfter(long doneAfter, Consumer<CapturingInputStream> callback) {
-            if (doneAfter < 0) {
-                throw new IllegalArgumentException(doneAfter + " < 0"); //$NON-NLS-1$
-            }
+        public Builder onDone(Consumer<CapturingInputStream> callback) {
             doneCallback = Objects.requireNonNull(callback);
-            this.doneAfter = doneAfter;
             return this;
         }
 
@@ -362,7 +361,7 @@ public final class CapturingInputStream extends InputStream {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder whenLimitReached(Consumer<CapturingInputStream> callback) {
+        public Builder onLimitReached(Consumer<CapturingInputStream> callback) {
             limitReachedCallback = Objects.requireNonNull(callback);
             return this;
         }

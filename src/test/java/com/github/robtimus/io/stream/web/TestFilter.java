@@ -84,7 +84,8 @@ public class TestFilter implements Filter {
                 CapturingInputStream capturing = new CapturingInputStream(super.getInputStream(), CapturingInputStream.config()
                         .withLimit(5)
                         .withExpectedCount(getContentLength())
-                        .whenDoneAfter(getContentLengthLong(), input -> {
+                        .doneAfter(getContentLengthLong())
+                        .onDone(input -> {
                             capturedFromRequest = input.captured(StandardCharsets.UTF_8);
                             totalRequestBytes = input.totalBytes();
                         })
@@ -154,7 +155,7 @@ public class TestFilter implements Filter {
             if (outputStream == null) {
                 capturingOutputStream = new CapturingOutputStream(super.getOutputStream(), CapturingOutputStream.config()
                         .withLimit(5)
-                        .whenDone(input -> {
+                        .onDone(input -> {
                             capturedFromResponse = input.captured(StandardCharsets.UTF_8);
                             totalResponseBytes = input.totalBytes();
                         })

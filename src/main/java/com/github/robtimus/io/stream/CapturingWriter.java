@@ -316,7 +316,7 @@ public final class CapturingWriter extends Writer {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder whenDone(Consumer<CapturingWriter> callback) {
+        public Builder onDone(Consumer<CapturingWriter> callback) {
             doneCallback = Objects.requireNonNull(callback);
             return this;
         }
@@ -329,7 +329,7 @@ public final class CapturingWriter extends Writer {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder whenLimitReached(Consumer<CapturingWriter> callback) {
+        public Builder onLimitReached(Consumer<CapturingWriter> callback) {
             limitReachedCallback = Objects.requireNonNull(callback);
             return this;
         }

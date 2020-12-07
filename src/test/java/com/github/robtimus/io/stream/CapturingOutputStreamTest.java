@@ -136,12 +136,12 @@ class CapturingOutputStreamTest extends TestBase {
             AtomicInteger limitReachedCount = new AtomicInteger(0);
 
             return new CapturingOutputStream(delegate, CapturingOutputStream.config()
-                    .whenDone(output -> {
+                    .onDone(output -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         assertEquals(0, limitReachedCount.get());
                         doneCallback.accept(output);
                     })
-                    .whenLimitReached(output -> {
+                    .onLimitReached(output -> {
                         assertEquals(0, doneCount.get());
                         assertEquals(0, limitReachedCount.getAndIncrement());
                     })
@@ -237,11 +237,11 @@ class CapturingOutputStreamTest extends TestBase {
             return new CapturingOutputStream(delegate, CapturingOutputStream.config()
                     .withLimit(limit)
                     .withExpectedCount(INPUT.length)
-                    .whenDone(input -> {
+                    .onDone(input -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         doneCallback.accept(input);
                     })
-                    .whenLimitReached(input -> {
+                    .onLimitReached(input -> {
                         assertEquals(0, doneCount.get());
                         limitReachedCallback.accept(input);
                     })

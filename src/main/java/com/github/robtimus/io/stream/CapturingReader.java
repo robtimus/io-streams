@@ -29,8 +29,8 @@ import java.util.function.Consumer;
  * Using callbacks this class allows code to be executed when the stream has been fully consumed.
  * <p>
  * An example use for this class can be logging in an HTTP filter or HTTP client. Instead of copying the contents of a reader to memory, logging the
- * contents, and then passing a {@link StringReader} with the copied contents, you can create a capturing input stream with a callback that performs
- * the logging.
+ * contents, and then passing a {@link StringReader} with the copied contents, you can create a capturing reader with a callback that performs the
+ * logging.
  * <p>
  * {@code CapturingReader} supports {@link #mark(int)} and {@link #reset()} if its backing reader does. When {@link #reset()} is called, it will
  * "uncapture" any contents up to the previous mark. It will still only once call any of the callbacks.
@@ -306,39 +306,38 @@ public final class CapturingReader extends Reader {
         }
 
         /**
-         * Sets a callback that will be triggered when reading from built capturing readers is done. This can be because the reader is
-         * {@link CapturingReader#isConsumed() consumed} or {@link CapturingReader#isClosed() closed}.
-         * A capturing reader will only trigger its callback once.
+         * Sets the number of characters after which built capturing readers are considered to be done. The default is {@link Long#MAX_VALUE}.
+         * <p>
+         * Some frameworks don't fully consume all content. Instead they stop at a specific point. For instance, some JSON parsers stop reading as
+         * soon as the root object's closing closing curly brace is encountered.
+         * <p>
+         * Ideally such a framework is configured to consume all content. This method can be used as fallback if that's not possible.
+         * For instance, it can be called with an HTTP request's content length.
          *
-         * @param callback The callback to set.
+         * @param count The number of characters after which to consider built capturing readers as done.
          * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
+         * @throws IllegalArgumentException If the given number of characters is negative.
          */
-        public Builder whenDone(Consumer<CapturingReader> callback) {
-            return whenDoneAfter(Long.MAX_VALUE, callback);
+        public Builder doneAfter(long count) {
+            if (count < 0) {
+                throw new IllegalArgumentException(count + " < 0"); //$NON-NLS-1$
+            }
+            doneAfter = count;
+            return this;
         }
 
         /**
          * Sets a callback that will be triggered when reading from built capturing readers is done. This can be because the reader is
-         * {@link CapturingReader#isConsumed() consumed} or {@link CapturingReader#isClosed() closed}.
+         * {@link CapturingReader#isConsumed() consumed} or {@link CapturingReader#isClosed() closed}, or because the amount set using
+         * {@link #doneAfter(long)} has been reached.
          * A capturing reader will only trigger its callback once.
-         * <p>
-         * Some frameworks don't fully consume all content. Instead they stop after a specific number of characters has been read, e.g. based on the
-         * content length of HTTP requests. This method allows a marker to be defined that, when reached, will trigger the callback, even if the
-         * stream hasn't been fully consumed or closed.
          *
-         * @param doneAfter The number of characters after which to trigger the callback.
          * @param callback The callback to set.
          * @return This object.
-         * @throws IllegalArgumentException If the given number of characters is negative.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder whenDoneAfter(long doneAfter, Consumer<CapturingReader> callback) {
-            if (doneAfter < 0) {
-                throw new IllegalArgumentException(doneAfter + " < 0"); //$NON-NLS-1$
-            }
+        public Builder onDone(Consumer<CapturingReader> callback) {
             doneCallback = Objects.requireNonNull(callback);
-            this.doneAfter = doneAfter;
             return this;
         }
 
@@ -353,7 +352,7 @@ public final class CapturingReader extends Reader {
          * @return This object.
          * @throws NullPointerException If the given callback is {@code null}.
          */
-        public Builder whenLimitReached(Consumer<CapturingReader> callback) {
+        public Builder onLimitReached(Consumer<CapturingReader> callback) {
             limitReachedCallback = Objects.requireNonNull(callback);
             return this;
         }

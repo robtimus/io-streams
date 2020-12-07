@@ -145,12 +145,12 @@ class CapturingReaderTest extends TestBase {
             AtomicInteger limitReachedCount = new AtomicInteger(0);
 
             return new CapturingReader(new StringReader(SOURCE), CapturingReader.config()
-                    .whenDone(reader -> {
+                    .onDone(reader -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         assertEquals(0, limitReachedCount.get());
                         doneCallback.accept(reader);
                     })
-                    .whenLimitReached(reader -> {
+                    .onLimitReached(reader -> {
                         assertEquals(0, doneCount.get());
                         assertEquals(0, limitReachedCount.getAndIncrement());
                     })
@@ -287,11 +287,11 @@ class CapturingReaderTest extends TestBase {
             return new CapturingReader(new StringReader(SOURCE), CapturingReader.config()
                     .withLimit(limit)
                     .withExpectedCount(SOURCE.length())
-                    .whenDone(reader -> {
+                    .onDone(reader -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         doneCallback.accept(reader);
                     })
-                    .whenLimitReached(reader -> {
+                    .onLimitReached(reader -> {
                         assertEquals(0, doneCount.get());
                         limitReachedCallback.accept(reader);
                     })
@@ -411,12 +411,13 @@ class CapturingReaderTest extends TestBase {
             AtomicInteger limitReachedCount = new AtomicInteger(0);
 
             return new CapturingReader(new StringReader(SOURCE), CapturingReader.config()
-                    .whenDoneAfter(SOURCE.length() - 5, reader -> {
+                    .doneAfter(SOURCE.length() - 5)
+                    .onDone(reader -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         assertEquals(0, limitReachedCount.get());
                         doneCallback.accept(reader);
                     })
-                    .whenLimitReached(reader -> {
+                    .onLimitReached(reader -> {
                         assertEquals(0, doneCount.get());
                         assertEquals(0, limitReachedCount.getAndIncrement());
                     })
@@ -435,10 +436,10 @@ class CapturingReaderTest extends TestBase {
         }
 
         @Test
-        @DisplayName("whenDoneAfter with negative doneAfter")
-        void testWhenDoneWithNegativeDoneAfter() {
+        @DisplayName("doneAfter with negative doneAfter")
+        void testDoneWithNegativeDoneAfter() {
             Builder builder = CapturingReader.config();
-            assertThrows(IllegalArgumentException.class, () -> builder.whenDoneAfter(-1, System.out::println));
+            assertThrows(IllegalArgumentException.class, () -> builder.doneAfter(-1));
         }
     }
 }

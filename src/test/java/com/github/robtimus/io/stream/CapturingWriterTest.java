@@ -222,12 +222,12 @@ class CapturingWriterTest extends TestBase {
             AtomicInteger limitReachedCount = new AtomicInteger(0);
 
             return new CapturingWriter(delegate, CapturingWriter.config()
-                    .whenDone(writer -> {
+                    .onDone(writer -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         assertEquals(0, limitReachedCount.get());
                         doneCallback.accept(writer);
                     })
-                    .whenLimitReached(writer -> {
+                    .onLimitReached(writer -> {
                         assertEquals(0, doneCount.get());
                         assertEquals(0, limitReachedCount.getAndIncrement());
                     })
@@ -439,11 +439,11 @@ class CapturingWriterTest extends TestBase {
             return new CapturingWriter(delegate, CapturingWriter.config()
                     .withLimit(limit)
                     .withExpectedCount(SOURCE.length())
-                    .whenDone(input -> {
+                    .onDone(input -> {
                         assertEquals(0, doneCount.getAndIncrement());
                         doneCallback.accept(input);
                     })
-                    .whenLimitReached(input -> {
+                    .onLimitReached(input -> {
                         assertEquals(0, doneCount.get());
                         limitReachedCallback.accept(input);
                     })
