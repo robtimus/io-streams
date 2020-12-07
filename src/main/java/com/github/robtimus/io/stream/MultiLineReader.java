@@ -49,7 +49,7 @@ import com.github.robtimus.io.stream.MultiLineReader.Entry;
  *
  * @author Rob Spoor
  */
-public class MultiLineReader implements Iterable<Entry>, Closeable {
+public final class MultiLineReader implements Iterable<Entry>, Closeable {
 
     private final BufferedReader reader;
 

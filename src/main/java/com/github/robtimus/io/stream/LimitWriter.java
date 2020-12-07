@@ -31,7 +31,7 @@ import java.util.Objects;
  *
  * @author Rob Spoor
  */
-public class LimitWriter extends Writer {
+public final class LimitWriter extends Writer {
 
     private final Writer writer;
 

@@ -25,7 +25,7 @@ import java.io.IOException;
  *
  * @author Rob Spoor
  */
-public class LimitExceededException extends IOException {
+public final class LimitExceededException extends IOException {
 
     private static final long serialVersionUID = -9143468798886412497L;
 

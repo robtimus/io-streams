@@ -30,7 +30,7 @@ import java.util.Objects;
  *
  * @author Rob Spoor
  */
-public class LimitReader extends Reader {
+public final class LimitReader extends Reader {
 
     private final Reader reader;
 

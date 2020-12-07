@@ -30,7 +30,7 @@ import java.util.Objects;
  *
  * @author Rob Spoor
  */
-public class LimitOutputStream extends OutputStream {
+public final class LimitOutputStream extends OutputStream {
 
     private final OutputStream output;
 
