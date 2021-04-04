@@ -544,7 +544,7 @@ class CapturingInputStreamTest extends TestBase {
 
             @SuppressWarnings("resource")
             private InputStream createInputStream(AtomicInteger doneCount, AtomicInteger limitReachedCount, AtomicInteger errorCount) {
-                return new CapturingInputStream(new BrokenInputStream(), CapturingInputStream.config()
+                return new CapturingInputStream(new AutoCloseableBrokenInputStream(), CapturingInputStream.config()
                         .onDone(input -> doneCount.getAndIncrement())
                         .onLimitReached(input -> limitReachedCount.getAndIncrement())
                         .onError((input, error) -> errorCount.getAndIncrement())
@@ -614,7 +614,7 @@ class CapturingInputStreamTest extends TestBase {
 
             @SuppressWarnings("resource")
             private InputStream createInputStream(AtomicInteger doneCount, AtomicInteger limitReachedCount) {
-                return new CapturingInputStream(new BrokenInputStream(), CapturingInputStream.config()
+                return new CapturingInputStream(new AutoCloseableBrokenInputStream(), CapturingInputStream.config()
                         .onDone(input -> doneCount.getAndIncrement())
                         .onLimitReached(input -> limitReachedCount.getAndIncrement())
                         .build());
@@ -735,6 +735,17 @@ class CapturingInputStreamTest extends TestBase {
 
             assertEquals("{\"val", testFilter.capturedFromRequest());
             assertEquals(12, testFilter.totalRequestBytes());
+        }
+    }
+
+    // Workaround for https://issues.apache.org/jira/browse/IO-729
+    private static final class AutoCloseableBrokenInputStream extends BrokenInputStream {
+
+        @Override
+        public void close() throws IOException {
+            // Don't throw the same exception as thrown from other methods,
+            // as that can trigger an IllegalArgumentException: Self-suppression not permitted
+            throw new IOException("Broken input stream");
         }
     }
 }

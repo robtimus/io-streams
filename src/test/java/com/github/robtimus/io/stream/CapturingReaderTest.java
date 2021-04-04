@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import com.github.robtimus.io.stream.CapturingReader.Builder;
 
+@SuppressWarnings("nls")
 class CapturingReaderTest extends TestBase {
 
     @Nested
@@ -503,7 +504,7 @@ class CapturingReaderTest extends TestBase {
 
             @SuppressWarnings("resource")
             private Reader createReader(AtomicInteger doneCount, AtomicInteger limitReachedCount, AtomicInteger errorCount) {
-                return new CapturingReader(new BrokenReader(), CapturingReader.config()
+                return new CapturingReader(new AutoCloseableBrokenReader(), CapturingReader.config()
                         .onDone(input -> doneCount.getAndIncrement())
                         .onLimitReached(input -> limitReachedCount.getAndIncrement())
                         .onError((input, error) -> errorCount.getAndIncrement())
@@ -573,7 +574,7 @@ class CapturingReaderTest extends TestBase {
 
             @SuppressWarnings("resource")
             private Reader createReader(AtomicInteger doneCount, AtomicInteger limitReachedCount) {
-                return new CapturingReader(new BrokenReader(), CapturingReader.config()
+                return new CapturingReader(new AutoCloseableBrokenReader(), CapturingReader.config()
                         .onDone(input -> doneCount.getAndIncrement())
                         .onLimitReached(input -> limitReachedCount.getAndIncrement())
                         .build());
@@ -596,6 +597,17 @@ class CapturingReaderTest extends TestBase {
         void testDoneWithNegativeDoneAfter() {
             Builder builder = CapturingReader.config();
             assertThrows(IllegalArgumentException.class, () -> builder.doneAfter(-1));
+        }
+    }
+
+    // Workaround for https://issues.apache.org/jira/browse/IO-729
+    private static final class AutoCloseableBrokenReader extends BrokenReader {
+
+        @Override
+        public void close() throws IOException {
+            // Don't throw the same exception as thrown from other methods,
+            // as that can trigger an IllegalArgumentException: Self-suppression not permitted
+            throw new IOException("Broken reader");
         }
     }
 }

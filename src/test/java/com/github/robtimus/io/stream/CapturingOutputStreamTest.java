@@ -326,7 +326,7 @@ class CapturingOutputStreamTest extends TestBase {
 
             @SuppressWarnings("resource")
             private OutputStream createOutputStream(AtomicInteger doneCount, AtomicInteger limitReachedCount, AtomicInteger errorCount) {
-                return new CapturingOutputStream(new BrokenOutputStream(), CapturingOutputStream.config()
+                return new CapturingOutputStream(new AutoCloseableBrokenOutputStream(), CapturingOutputStream.config()
                         .onDone(input -> doneCount.getAndIncrement())
                         .onLimitReached(input -> limitReachedCount.getAndIncrement())
                         .onError((input, error) -> errorCount.getAndIncrement())
@@ -395,7 +395,7 @@ class CapturingOutputStreamTest extends TestBase {
 
             @SuppressWarnings("resource")
             private OutputStream createOutputStream(AtomicInteger doneCount, AtomicInteger limitReachedCount) {
-                return new CapturingOutputStream(new BrokenOutputStream(), CapturingOutputStream.config()
+                return new CapturingOutputStream(new AutoCloseableBrokenOutputStream(), CapturingOutputStream.config()
                         .onDone(input -> doneCount.getAndIncrement())
                         .onLimitReached(input -> limitReachedCount.getAndIncrement())
                         .build());
@@ -509,6 +509,17 @@ class CapturingOutputStreamTest extends TestBase {
 
             assertEquals("{\"val", testFilter.capturedFromResponse());
             assertEquals(12, testFilter.totalResponseBytes());
+        }
+    }
+
+    // Workaround for https://issues.apache.org/jira/browse/IO-729
+    private static final class AutoCloseableBrokenOutputStream extends BrokenOutputStream {
+
+        @Override
+        public void close() throws IOException {
+            // Don't throw the same exception as thrown from other methods,
+            // as that can trigger an IllegalArgumentException: Self-suppression not permitted
+            throw new IOException("Broken output stream");
         }
     }
 }

@@ -613,7 +613,7 @@ class CapturingWriterTest extends TestBase {
 
             @SuppressWarnings("resource")
             private Writer createWriter(AtomicInteger doneCount, AtomicInteger limitReachedCount, AtomicInteger errorCount) {
-                return new CapturingWriter(new BrokenWriter(), CapturingWriter.config()
+                return new CapturingWriter(new AutoCloseableBrokenWriter(), CapturingWriter.config()
                         .onDone(input -> doneCount.getAndIncrement())
                         .onLimitReached(input -> limitReachedCount.getAndIncrement())
                         .onError((input, error) -> errorCount.getAndIncrement())
@@ -752,7 +752,7 @@ class CapturingWriterTest extends TestBase {
 
             @SuppressWarnings("resource")
             private Writer createWriter(AtomicInteger doneCount, AtomicInteger limitReachedCount) {
-                return new CapturingWriter(new BrokenWriter(), CapturingWriter.config()
+                return new CapturingWriter(new AutoCloseableBrokenWriter(), CapturingWriter.config()
                         .onDone(input -> doneCount.getAndIncrement())
                         .onLimitReached(input -> limitReachedCount.getAndIncrement())
                         .build());
@@ -768,6 +768,17 @@ class CapturingWriterTest extends TestBase {
         void testNegativeLimit() {
             Builder builder = CapturingWriter.config();
             assertThrows(IllegalArgumentException.class, () -> builder.withLimit(-1));
+        }
+    }
+
+    // Workaround for https://issues.apache.org/jira/browse/IO-729
+    private static final class AutoCloseableBrokenWriter extends BrokenWriter {
+
+        @Override
+        public void close() throws IOException {
+            // Don't throw the same exception as thrown from other methods,
+            // as that can trigger an IllegalArgumentException: Self-suppression not permitted
+            throw new IOException("Broken writer");
         }
     }
 }
