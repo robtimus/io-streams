@@ -138,7 +138,8 @@ public final class CapturingOutputStream extends OutputStream {
     }
 
     /**
-     * Marks the capturing as done. This method
+     * Marks the capturing as done. This method should be called in cases where this output stream cannot be closed, but the
+     * {@link Builder#onDone(Consumer) done callback} still needs to be executed.
      */
     public void done() {
         if (doneCallback != null) {

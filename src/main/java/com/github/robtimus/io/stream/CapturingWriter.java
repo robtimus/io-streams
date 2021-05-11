@@ -237,7 +237,8 @@ public final class CapturingWriter extends Writer {
     }
 
     /**
-     * Marks the capturing as done. This method
+     * Marks the capturing as done. This method should be called in cases where this writer cannot be closed, but the
+     * {@link Builder#onDone(Consumer) done callback} still needs to be executed.
      */
     public void done() {
         if (doneCallback != null) {
