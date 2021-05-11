@@ -199,7 +199,7 @@ public final class CapturingWriter extends Writer {
     @Override
     public Writer append(char c) throws IOException {
         try {
-            delegate.write(c);
+            delegate.append(c);
 
             totalChars++;
             if (captor.length() < limit) {
