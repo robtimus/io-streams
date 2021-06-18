@@ -62,7 +62,7 @@
   </issueManagement>
 
   <properties>
-    <version.commons-io>2.8.0</version.commons-io>
+    <version.commons-io>2.10.0</version.commons-io>
     <!-- 2.27 is the last version to use javax.servlet-api, after that it's jakarta.servlet-api -->
     <version.jersey>2.27</version.jersey>
     <version.jetty>9.4.35.v20201120</version.jetty>
