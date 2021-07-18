@@ -67,7 +67,7 @@ public final class BinaryPipe {
     public BinaryPipe() {
         single = new byte[1];
 
-        lock = new ReentrantLock(true);
+        lock = new ReentrantLock();
         closedOrNotEmpty = lock.newCondition();
         closedOrEmpty = lock.newCondition();
 

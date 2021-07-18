@@ -70,7 +70,7 @@ public final class TextPipe {
     public TextPipe() {
         single = new char[1];
 
-        lock = new ReentrantLock(true);
+        lock = new ReentrantLock();
         closedOrNotEmpty = lock.newCondition();
         closedOrEmpty = lock.newCondition();
 
