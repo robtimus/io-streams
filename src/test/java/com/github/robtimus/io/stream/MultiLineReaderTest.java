@@ -20,10 +20,10 @@ package com.github.robtimus.io.stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -315,7 +315,7 @@ class MultiLineReaderTest {
 
         private void assertLines(Entry entry, List<String> lines) {
             assertEquals(lines, entry.lines());
-            assertThat(entry.lines(), instanceOf(Collections.unmodifiableList(lines).getClass()));
+            assertInstanceOf(Collections.unmodifiableList(lines).getClass(), entry.lines());
         }
 
         @Test

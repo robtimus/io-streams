@@ -17,12 +17,11 @@
 
 package com.github.robtimus.io.stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -76,7 +75,7 @@ class BinaryPipeTest extends TestBase {
         thread.join();
 
         assertNotNull(exception.get());
-        assertThat(exception.get().getCause(), instanceOf(InterruptedException.class));
+        assertInstanceOf(InterruptedException.class, exception.get().getCause());
     }
 
     // these two classes use regular threads and not an executor, so the thread will have ended once the action has ended
