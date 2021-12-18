@@ -22,7 +22,7 @@
   <parent>
     <groupId>com.github.robtimus</groupId>
     <artifactId>robtimus-parent</artifactId>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
     <relativePath />
   </parent>
 
@@ -66,7 +66,7 @@
     <!-- 2.27 is the last version to use javax.servlet-api, after that it's jakarta.servlet-api -->
     <version.jersey>2.27</version.jersey>
     <version.jetty>9.4.44.v20210927</version.jetty>
-    <version.resteasy>5.0.0.Final</version.resteasy>
+    <version.resteasy>5.0.1.Final</version.resteasy>
   </properties>
 
   <dependencies>
