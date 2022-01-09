@@ -273,8 +273,8 @@ public final class CapturingInputStream extends InputStream {
      *
      * @return The created builder.
      */
-    public static Builder config() {
-        return new Builder();
+    public static Config.Builder config() {
+        return new Config.Builder();
     }
 
     /**
@@ -305,128 +305,128 @@ public final class CapturingInputStream extends InputStream {
             limitReachedCallback = builder.limitReachedCallback;
             errorCallback = builder.errorCallback;
         }
-    }
-
-    /**
-     * A builder for {@link Config capturing input stream configurations}.
-     *
-     * @author Rob Spoor
-     */
-    public static final class Builder {
-
-        private int limit = Integer.MAX_VALUE;
-
-        private int expectedCount = -1;
-
-        private long doneAfter = Long.MAX_VALUE;
-
-        private Consumer<? super CapturingInputStream> doneCallback;
-        private Consumer<? super CapturingInputStream> limitReachedCallback;
-        private BiConsumer<? super CapturingInputStream, ? super IOException> errorCallback;
-
-        private Builder() {
-        }
 
         /**
-         * Sets the maximum number of bytes to capture. The default value is {@link Integer#MAX_VALUE}.
+         * A builder for {@link Config capturing input stream configurations}.
          *
-         * @param limit The maximum number of bytes to capture.
-         * @return This object.
-         * @throws IllegalArgumentException If the given limit is negative.
+         * @author Rob Spoor
          */
-        public Builder withLimit(int limit) {
-            if (limit < 0) {
-                throw new IllegalArgumentException(limit + " < 0"); //$NON-NLS-1$
+        public static final class Builder {
+
+            private int limit = Integer.MAX_VALUE;
+
+            private int expectedCount = -1;
+
+            private long doneAfter = Long.MAX_VALUE;
+
+            private Consumer<? super CapturingInputStream> doneCallback;
+            private Consumer<? super CapturingInputStream> limitReachedCallback;
+            private BiConsumer<? super CapturingInputStream, ? super IOException> errorCallback;
+
+            private Builder() {
             }
-            this.limit = limit;
-            return this;
-        }
 
-        /**
-         * Sets the expected number of bytes that can be read from the wrapped input stream.
-         * This can be used for performance reasons; if this is set then the capture buffer will be pre-allocated.
-         * The default value is {@code -1}.
-         *
-         * @param expectedCount The expected number of bytes that can be read from the wrapped input stream, or a negative number if not known.
-         * @return This object.
-         */
-        public Builder withExpectedCount(int expectedCount) {
-            this.expectedCount = expectedCount;
-            return this;
-        }
-
-        /**
-         * Sets the number of bytes after which built capturing input streams are considered to be done. The default is {@link Long#MAX_VALUE}.
-         * <p>
-         * Some frameworks don't fully consume all content. Instead they stop at a specific point. For instance, some JSON parsers stop reading as
-         * soon as the root object's closing closing curly brace is encountered.
-         * <p>
-         * Ideally such a framework is configured to consume all content. This method can be used as fallback if that's not possible.
-         * For instance, it can be called with an HTTP request's content length.
-         *
-         * @param count The number of bytes after which to consider built capturing input streams as done.
-         * @return This object.
-         * @throws IllegalArgumentException If the given number of bytes is negative.
-         */
-        public Builder doneAfter(long count) {
-            if (count < 0) {
-                throw new IllegalArgumentException(count + " < 0"); //$NON-NLS-1$
+            /**
+             * Sets the maximum number of bytes to capture. The default value is {@link Integer#MAX_VALUE}.
+             *
+             * @param limit The maximum number of bytes to capture.
+             * @return This object.
+             * @throws IllegalArgumentException If the given limit is negative.
+             */
+            public Builder withLimit(int limit) {
+                if (limit < 0) {
+                    throw new IllegalArgumentException(limit + " < 0"); //$NON-NLS-1$
+                }
+                this.limit = limit;
+                return this;
             }
-            doneAfter = count;
-            return this;
-        }
 
-        /**
-         * Sets a callback that will be triggered when reading from built capturing input streams is done. This can be because the input stream is
-         * {@link CapturingInputStream#isConsumed() consumed} or {@link CapturingInputStream#isClosed() closed}, or because the amount set using
-         * {@link #doneAfter(long)} has been reached.
-         * A capturing input stream will only trigger its callback once.
-         *
-         * @param callback The callback to set.
-         * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
-         */
-        public Builder onDone(Consumer<? super CapturingInputStream> callback) {
-            doneCallback = Objects.requireNonNull(callback);
-            return this;
-        }
+            /**
+             * Sets the expected number of bytes that can be read from the wrapped input stream.
+             * This can be used for performance reasons; if this is set then the capture buffer will be pre-allocated.
+             * The default value is {@code -1}.
+             *
+             * @param expectedCount The expected number of bytes that can be read from the wrapped input stream, or a negative number if not known.
+             * @return This object.
+             */
+            public Builder withExpectedCount(int expectedCount) {
+                this.expectedCount = expectedCount;
+                return this;
+            }
 
-        /**
-         * Sets a callback that will be triggered when built capturing input streams hit their limit. If an input stream never reaches its limit its
-         * callback will never be called.
-         * <p>
-         * In case a capturing input stream has reached its limit and is then {@link CapturingInputStream#reset()} to before its limit, it will not
-         * call its callback again.
-         *
-         * @param callback The callback to set.
-         * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
-         */
-        public Builder onLimitReached(Consumer<? super CapturingInputStream> callback) {
-            limitReachedCallback = Objects.requireNonNull(callback);
-            return this;
-        }
+            /**
+             * Sets the number of bytes after which built capturing input streams are considered to be done. The default is {@link Long#MAX_VALUE}.
+             * <p>
+             * Some frameworks don't fully consume all content. Instead they stop at a specific point. For instance, some JSON parsers stop reading as
+             * soon as the root object's closing closing curly brace is encountered.
+             * <p>
+             * Ideally such a framework is configured to consume all content. This method can be used as fallback if that's not possible.
+             * For instance, it can be called with an HTTP request's content length.
+             *
+             * @param count The number of bytes after which to consider built capturing input streams as done.
+             * @return This object.
+             * @throws IllegalArgumentException If the given number of bytes is negative.
+             */
+            public Builder doneAfter(long count) {
+                if (count < 0) {
+                    throw new IllegalArgumentException(count + " < 0"); //$NON-NLS-1$
+                }
+                doneAfter = count;
+                return this;
+            }
 
-        /**
-         * Sets a callback that will be triggered when an {@link IOException} occurs while using built capturing input streams.
-         * A capturing input stream can trigger its error callback multiple times.
-         *
-         * @param callback The callback to set.
-         * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
-         */
-        public Builder onError(BiConsumer<? super CapturingInputStream, ? super IOException> callback) {
-            errorCallback = Objects.requireNonNull(callback);
-            return this;
-        }
+            /**
+             * Sets a callback that will be triggered when reading from built capturing input streams is done. This can be because the input stream is
+             * {@link CapturingInputStream#isConsumed() consumed} or {@link CapturingInputStream#isClosed() closed}, or because the amount set using
+             * {@link #doneAfter(long)} has been reached.
+             * A capturing input stream will only trigger its callback once.
+             *
+             * @param callback The callback to set.
+             * @return This object.
+             * @throws NullPointerException If the given callback is {@code null}.
+             */
+            public Builder onDone(Consumer<? super CapturingInputStream> callback) {
+                doneCallback = Objects.requireNonNull(callback);
+                return this;
+            }
 
-        /**
-         * Creates a new {@link Config capturing input stream configuration} with the settings from this builder.
-         *
-         * @return The created capturing input stream configuration.
-         */
-        public Config build() {
-            return new Config(this);
+            /**
+             * Sets a callback that will be triggered when built capturing input streams hit their limit. If an input stream never reaches its limit
+             * its callback will never be called.
+             * <p>
+             * In case a capturing input stream has reached its limit and is then {@link CapturingInputStream#reset()} to before its limit, it will
+             * not call its callback again.
+             *
+             * @param callback The callback to set.
+             * @return This object.
+             * @throws NullPointerException If the given callback is {@code null}.
+             */
+            public Builder onLimitReached(Consumer<? super CapturingInputStream> callback) {
+                limitReachedCallback = Objects.requireNonNull(callback);
+                return this;
+            }
+
+            /**
+             * Sets a callback that will be triggered when an {@link IOException} occurs while using built capturing input streams.
+             * A capturing input stream can trigger its error callback multiple times.
+             *
+             * @param callback The callback to set.
+             * @return This object.
+             * @throws NullPointerException If the given callback is {@code null}.
+             */
+            public Builder onError(BiConsumer<? super CapturingInputStream, ? super IOException> callback) {
+                errorCallback = Objects.requireNonNull(callback);
+                return this;
+            }
+
+            /**
+             * Creates a new {@link Config capturing input stream configuration} with the settings from this builder.
+             *
+             * @return The created capturing input stream configuration.
+             */
+            public Config build() {
+                return new Config(this);
+            }
         }
     }
 }

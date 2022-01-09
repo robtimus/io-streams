@@ -238,7 +238,7 @@ public final class CapturingWriter extends Writer {
 
     /**
      * Marks the capturing as done. This method should be called in cases where this writer cannot be closed, but the
-     * {@link Builder#onDone(Consumer) done callback} still needs to be executed.
+     * {@link Config.Builder#onDone(Consumer) done callback} still needs to be executed.
      */
     public void done() {
         if (doneCallback != null) {
@@ -297,8 +297,8 @@ public final class CapturingWriter extends Writer {
      *
      * @return The created builder.
      */
-    public static Builder config() {
-        return new Builder();
+    public static Config.Builder config() {
+        return new Config.Builder();
     }
 
     /**
@@ -325,101 +325,101 @@ public final class CapturingWriter extends Writer {
             limitReachedCallback = builder.limitReachedCallback;
             errorCallback = builder.errorCallback;
         }
-    }
-
-    /**
-     * A builder for {@link Config capturing writer configurations}.
-     *
-     * @author Rob Spoor
-     */
-    public static final class Builder {
-
-        private int limit = Integer.MAX_VALUE;
-
-        private int expectedCount = -1;
-
-        private Consumer<? super CapturingWriter> doneCallback;
-        private Consumer<? super CapturingWriter> limitReachedCallback;
-        private BiConsumer<? super CapturingWriter, ? super IOException> errorCallback;
-
-        private Builder() {
-        }
 
         /**
-         * Sets the maximum number of characters to capture. The default value is {@link Integer#MAX_VALUE}.
+         * A builder for {@link Config capturing writer configurations}.
          *
-         * @param limit The maximum number of characters to capture.
-         * @return This object.
-         * @throws IllegalArgumentException If the given limit is negative.
+         * @author Rob Spoor
          */
-        public Builder withLimit(int limit) {
-            if (limit < 0) {
-                throw new IllegalArgumentException(limit + " < 0"); //$NON-NLS-1$
+        public static final class Builder {
+
+            private int limit = Integer.MAX_VALUE;
+
+            private int expectedCount = -1;
+
+            private Consumer<? super CapturingWriter> doneCallback;
+            private Consumer<? super CapturingWriter> limitReachedCallback;
+            private BiConsumer<? super CapturingWriter, ? super IOException> errorCallback;
+
+            private Builder() {
             }
-            this.limit = limit;
-            return this;
-        }
 
-        /**
-         * Sets the expected number of characters that can be written to the wrapped writer.
-         * This can be used for performance reasons; if this is set then the capture buffer will be pre-allocated.
-         * The default value is {@code -1}.
-         *
-         * @param expectedCount The expected number of characters that can be written to the wrapped writer, or a negative number if not known.
-         * @return This object.
-         */
-        public Builder withExpectedCount(int expectedCount) {
-            this.expectedCount = expectedCount;
-            return this;
-        }
+            /**
+             * Sets the maximum number of characters to capture. The default value is {@link Integer#MAX_VALUE}.
+             *
+             * @param limit The maximum number of characters to capture.
+             * @return This object.
+             * @throws IllegalArgumentException If the given limit is negative.
+             */
+            public Builder withLimit(int limit) {
+                if (limit < 0) {
+                    throw new IllegalArgumentException(limit + " < 0"); //$NON-NLS-1$
+                }
+                this.limit = limit;
+                return this;
+            }
 
-        /**
-         * Sets a callback that will be triggered when reading from built capturing writers is done. This can be because the writer is
-         * {@link CapturingWriter#isClosed() closed} or because it has been explicitly marked as {@link CapturingWriter#done() done}.
-         * A capturing writer will only trigger its callback once.
-         *
-         * @param callback The callback to set.
-         * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
-         */
-        public Builder onDone(Consumer<? super CapturingWriter> callback) {
-            doneCallback = Objects.requireNonNull(callback);
-            return this;
-        }
+            /**
+             * Sets the expected number of characters that can be written to the wrapped writer.
+             * This can be used for performance reasons; if this is set then the capture buffer will be pre-allocated.
+             * The default value is {@code -1}.
+             *
+             * @param expectedCount The expected number of characters that can be written to the wrapped writer, or a negative number if not known.
+             * @return This object.
+             */
+            public Builder withExpectedCount(int expectedCount) {
+                this.expectedCount = expectedCount;
+                return this;
+            }
 
-        /**
-         * Sets a callback that will be triggered when built capturing writers hit their limit. If a writer never reaches its limit its callback will
-         * never be called.
-         *
-         * @param callback The callback to set.
-         * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
-         */
-        public Builder onLimitReached(Consumer<? super CapturingWriter> callback) {
-            limitReachedCallback = Objects.requireNonNull(callback);
-            return this;
-        }
+            /**
+             * Sets a callback that will be triggered when reading from built capturing writers is done. This can be because the writer is
+             * {@link CapturingWriter#isClosed() closed} or because it has been explicitly marked as {@link CapturingWriter#done() done}.
+             * A capturing writer will only trigger its callback once.
+             *
+             * @param callback The callback to set.
+             * @return This object.
+             * @throws NullPointerException If the given callback is {@code null}.
+             */
+            public Builder onDone(Consumer<? super CapturingWriter> callback) {
+                doneCallback = Objects.requireNonNull(callback);
+                return this;
+            }
 
-        /**
-         * Sets a callback that will be triggered when an {@link IOException} occurs while using built capturing writers.
-         * A capturing writer can trigger its error callback multiple times.
-         *
-         * @param callback The callback to set.
-         * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
-         */
-        public Builder onError(BiConsumer<? super CapturingWriter, ? super IOException> callback) {
-            errorCallback = Objects.requireNonNull(callback);
-            return this;
-        }
+            /**
+             * Sets a callback that will be triggered when built capturing writers hit their limit. If a writer never reaches its limit its callback
+             * will never be called.
+             *
+             * @param callback The callback to set.
+             * @return This object.
+             * @throws NullPointerException If the given callback is {@code null}.
+             */
+            public Builder onLimitReached(Consumer<? super CapturingWriter> callback) {
+                limitReachedCallback = Objects.requireNonNull(callback);
+                return this;
+            }
 
-        /**
-         * Creates a new {@link Config capturing writer configuration} with the settings from this builder.
-         *
-         * @return The created capturing writer configuration.
-         */
-        public Config build() {
-            return new Config(this);
+            /**
+             * Sets a callback that will be triggered when an {@link IOException} occurs while using built capturing writers.
+             * A capturing writer can trigger its error callback multiple times.
+             *
+             * @param callback The callback to set.
+             * @return This object.
+             * @throws NullPointerException If the given callback is {@code null}.
+             */
+            public Builder onError(BiConsumer<? super CapturingWriter, ? super IOException> callback) {
+                errorCallback = Objects.requireNonNull(callback);
+                return this;
+            }
+
+            /**
+             * Creates a new {@link Config capturing writer configuration} with the settings from this builder.
+             *
+             * @return The created capturing writer configuration.
+             */
+            public Config build() {
+                return new Config(this);
+            }
         }
     }
 }

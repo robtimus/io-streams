@@ -29,7 +29,7 @@ import org.apache.commons.io.output.BrokenWriter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import com.github.robtimus.io.stream.CapturingWriter.Builder;
+import com.github.robtimus.io.stream.CapturingWriter.Config.Builder;
 
 @SuppressWarnings("nls")
 class CapturingWriterTest extends TestBase {
@@ -761,13 +761,17 @@ class CapturingWriterTest extends TestBase {
     }
 
     @Nested
-    class BuilderTest {
+    class ConfigTest {
 
-        @Test
-        @DisplayName("negative limit")
-        void testNegativeLimit() {
-            Builder builder = CapturingWriter.config();
-            assertThrows(IllegalArgumentException.class, () -> builder.withLimit(-1));
+        @Nested
+        class BuilderTest {
+
+            @Test
+            @DisplayName("negative limit")
+            void testNegativeLimit() {
+                Builder builder = CapturingWriter.config();
+                assertThrows(IllegalArgumentException.class, () -> builder.withLimit(-1));
+            }
         }
     }
 

@@ -30,7 +30,7 @@ import org.apache.commons.io.input.BrokenReader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import com.github.robtimus.io.stream.CapturingReader.Builder;
+import com.github.robtimus.io.stream.CapturingReader.Config.Builder;
 
 @SuppressWarnings("nls")
 class CapturingReaderTest extends TestBase {
@@ -583,20 +583,24 @@ class CapturingReaderTest extends TestBase {
     }
 
     @Nested
-    class BuilderTest {
+    class ConfigTest {
 
-        @Test
-        @DisplayName("negative limit")
-        void testNegativeLimit() {
-            Builder builder = CapturingReader.config();
-            assertThrows(IllegalArgumentException.class, () -> builder.withLimit(-1));
-        }
+        @Nested
+        class BuilderTest {
 
-        @Test
-        @DisplayName("doneAfter with negative doneAfter")
-        void testDoneWithNegativeDoneAfter() {
-            Builder builder = CapturingReader.config();
-            assertThrows(IllegalArgumentException.class, () -> builder.doneAfter(-1));
+            @Test
+            @DisplayName("negative limit")
+            void testNegativeLimit() {
+                Builder builder = CapturingReader.config();
+                assertThrows(IllegalArgumentException.class, () -> builder.withLimit(-1));
+            }
+
+            @Test
+            @DisplayName("doneAfter with negative doneAfter")
+            void testDoneWithNegativeDoneAfter() {
+                Builder builder = CapturingReader.config();
+                assertThrows(IllegalArgumentException.class, () -> builder.doneAfter(-1));
+            }
         }
     }
 

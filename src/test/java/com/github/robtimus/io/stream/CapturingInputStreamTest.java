@@ -57,7 +57,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import com.github.robtimus.io.stream.CapturingInputStream.Builder;
+import com.github.robtimus.io.stream.CapturingInputStream.Config.Builder;
 import com.github.robtimus.io.stream.jaxrs.TestApplication;
 import com.github.robtimus.io.stream.web.TestFilter;
 
@@ -623,20 +623,24 @@ class CapturingInputStreamTest extends TestBase {
     }
 
     @Nested
-    class BuilderTest {
+    class ConfigTest {
 
-        @Test
-        @DisplayName("negative limit")
-        void testNegativeLimit() {
-            Builder builder = CapturingInputStream.config();
-            assertThrows(IllegalArgumentException.class, () -> builder.withLimit(-1));
-        }
+        @Nested
+        class BuilderTest {
 
-        @Test
-        @DisplayName("doneAfter with negative doneAfter")
-        void testDoneWithNegativeDoneAfter() {
-            Builder builder = CapturingInputStream.config();
-            assertThrows(IllegalArgumentException.class, () -> builder.doneAfter(-1));
+            @Test
+            @DisplayName("negative limit")
+            void testNegativeLimit() {
+                Builder builder = CapturingInputStream.config();
+                assertThrows(IllegalArgumentException.class, () -> builder.withLimit(-1));
+            }
+
+            @Test
+            @DisplayName("doneAfter with negative doneAfter")
+            void testDoneWithNegativeDoneAfter() {
+                Builder builder = CapturingInputStream.config();
+                assertThrows(IllegalArgumentException.class, () -> builder.doneAfter(-1));
+            }
         }
     }
 

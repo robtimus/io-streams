@@ -268,8 +268,8 @@ public final class CapturingReader extends Reader {
      *
      * @return The created builder.
      */
-    public static Builder config() {
-        return new Builder();
+    public static Config.Builder config() {
+        return new Config.Builder();
     }
 
     /**
@@ -300,128 +300,128 @@ public final class CapturingReader extends Reader {
             limitReachedCallback = builder.limitReachedCallback;
             errorCallback = builder.errorCallback;
         }
-    }
-
-    /**
-     * A builder for {@link Config capturing reader configurations}.
-     *
-     * @author Rob Spoor
-     */
-    public static final class Builder {
-
-        private int limit = Integer.MAX_VALUE;
-
-        private int expectedCount = -1;
-
-        private long doneAfter = Long.MAX_VALUE;
-
-        private Consumer<? super CapturingReader> doneCallback;
-        private Consumer<? super CapturingReader> limitReachedCallback;
-        private BiConsumer<? super CapturingReader, ? super IOException> errorCallback;
-
-        private Builder() {
-        }
 
         /**
-         * Sets the maximum number of characters to capture. The default value is {@link Integer#MAX_VALUE}.
+         * A builder for {@link Config capturing reader configurations}.
          *
-         * @param limit The maximum number of characters to capture.
-         * @return This object.
-         * @throws IllegalArgumentException If the given limit is negative.
+         * @author Rob Spoor
          */
-        public Builder withLimit(int limit) {
-            if (limit < 0) {
-                throw new IllegalArgumentException(limit + " < 0"); //$NON-NLS-1$
+        public static final class Builder {
+
+            private int limit = Integer.MAX_VALUE;
+
+            private int expectedCount = -1;
+
+            private long doneAfter = Long.MAX_VALUE;
+
+            private Consumer<? super CapturingReader> doneCallback;
+            private Consumer<? super CapturingReader> limitReachedCallback;
+            private BiConsumer<? super CapturingReader, ? super IOException> errorCallback;
+
+            private Builder() {
             }
-            this.limit = limit;
-            return this;
-        }
 
-        /**
-         * Sets the expected number of characters that can be read from the wrapped reader.
-         * This can be used for performance reasons; if this is set then the capture buffer will be pre-allocated.
-         * The default value is {@code -1}.
-         *
-         * @param expectedCount The expected number of characters that can be read from the wrapped reader, or a negative number if not known.
-         * @return This object.
-         */
-        public Builder withExpectedCount(int expectedCount) {
-            this.expectedCount = expectedCount;
-            return this;
-        }
-
-        /**
-         * Sets the number of characters after which built capturing readers are considered to be done. The default is {@link Long#MAX_VALUE}.
-         * <p>
-         * Some frameworks don't fully consume all content. Instead they stop at a specific point. For instance, some JSON parsers stop reading as
-         * soon as the root object's closing closing curly brace is encountered.
-         * <p>
-         * Ideally such a framework is configured to consume all content. This method can be used as fallback if that's not possible.
-         * For instance, it can be called with an HTTP request's content length.
-         *
-         * @param count The number of characters after which to consider built capturing readers as done.
-         * @return This object.
-         * @throws IllegalArgumentException If the given number of characters is negative.
-         */
-        public Builder doneAfter(long count) {
-            if (count < 0) {
-                throw new IllegalArgumentException(count + " < 0"); //$NON-NLS-1$
+            /**
+             * Sets the maximum number of characters to capture. The default value is {@link Integer#MAX_VALUE}.
+             *
+             * @param limit The maximum number of characters to capture.
+             * @return This object.
+             * @throws IllegalArgumentException If the given limit is negative.
+             */
+            public Builder withLimit(int limit) {
+                if (limit < 0) {
+                    throw new IllegalArgumentException(limit + " < 0"); //$NON-NLS-1$
+                }
+                this.limit = limit;
+                return this;
             }
-            doneAfter = count;
-            return this;
-        }
 
-        /**
-         * Sets a callback that will be triggered when reading from built capturing readers is done. This can be because the reader is
-         * {@link CapturingReader#isConsumed() consumed} or {@link CapturingReader#isClosed() closed}, or because the amount set using
-         * {@link #doneAfter(long)} has been reached.
-         * A capturing reader will only trigger its callback once.
-         *
-         * @param callback The callback to set.
-         * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
-         */
-        public Builder onDone(Consumer<? super CapturingReader> callback) {
-            doneCallback = Objects.requireNonNull(callback);
-            return this;
-        }
+            /**
+             * Sets the expected number of characters that can be read from the wrapped reader.
+             * This can be used for performance reasons; if this is set then the capture buffer will be pre-allocated.
+             * The default value is {@code -1}.
+             *
+             * @param expectedCount The expected number of characters that can be read from the wrapped reader, or a negative number if not known.
+             * @return This object.
+             */
+            public Builder withExpectedCount(int expectedCount) {
+                this.expectedCount = expectedCount;
+                return this;
+            }
 
-        /**
-         * Sets a callback that will be triggered when built capturing readers hit their limit. If a reader never reaches its limit its callback will
-         * never be called.
-         * <p>
-         * In case a capturing reader has reached its limit and is then {@link CapturingReader#reset()} to before its limit, it will not
-         * call its callback again.
-         *
-         * @param callback The callback to set.
-         * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
-         */
-        public Builder onLimitReached(Consumer<? super CapturingReader> callback) {
-            limitReachedCallback = Objects.requireNonNull(callback);
-            return this;
-        }
+            /**
+             * Sets the number of characters after which built capturing readers are considered to be done. The default is {@link Long#MAX_VALUE}.
+             * <p>
+             * Some frameworks don't fully consume all content. Instead they stop at a specific point. For instance, some JSON parsers stop reading as
+             * soon as the root object's closing closing curly brace is encountered.
+             * <p>
+             * Ideally such a framework is configured to consume all content. This method can be used as fallback if that's not possible.
+             * For instance, it can be called with an HTTP request's content length.
+             *
+             * @param count The number of characters after which to consider built capturing readers as done.
+             * @return This object.
+             * @throws IllegalArgumentException If the given number of characters is negative.
+             */
+            public Builder doneAfter(long count) {
+                if (count < 0) {
+                    throw new IllegalArgumentException(count + " < 0"); //$NON-NLS-1$
+                }
+                doneAfter = count;
+                return this;
+            }
 
-        /**
-         * Sets a callback that will be triggered when an {@link IOException} occurs while using built capturing readers.
-         * A capturing reader can trigger its error callback multiple times.
-         *
-         * @param callback The callback to set.
-         * @return This object.
-         * @throws NullPointerException If the given callback is {@code null}.
-         */
-        public Builder onError(BiConsumer<? super CapturingReader, ? super IOException> callback) {
-            errorCallback = Objects.requireNonNull(callback);
-            return this;
-        }
+            /**
+             * Sets a callback that will be triggered when reading from built capturing readers is done. This can be because the reader is
+             * {@link CapturingReader#isConsumed() consumed} or {@link CapturingReader#isClosed() closed}, or because the amount set using
+             * {@link #doneAfter(long)} has been reached.
+             * A capturing reader will only trigger its callback once.
+             *
+             * @param callback The callback to set.
+             * @return This object.
+             * @throws NullPointerException If the given callback is {@code null}.
+             */
+            public Builder onDone(Consumer<? super CapturingReader> callback) {
+                doneCallback = Objects.requireNonNull(callback);
+                return this;
+            }
 
-        /**
-         * Creates a new {@link Config capturing reader configuration} with the settings from this builder.
-         *
-         * @return The created capturing reader configuration.
-         */
-        public Config build() {
-            return new Config(this);
+            /**
+             * Sets a callback that will be triggered when built capturing readers hit their limit. If a reader never reaches its limit its callback
+             * will never be called.
+             * <p>
+             * In case a capturing reader has reached its limit and is then {@link CapturingReader#reset()} to before its limit, it will not
+             * call its callback again.
+             *
+             * @param callback The callback to set.
+             * @return This object.
+             * @throws NullPointerException If the given callback is {@code null}.
+             */
+            public Builder onLimitReached(Consumer<? super CapturingReader> callback) {
+                limitReachedCallback = Objects.requireNonNull(callback);
+                return this;
+            }
+
+            /**
+             * Sets a callback that will be triggered when an {@link IOException} occurs while using built capturing readers.
+             * A capturing reader can trigger its error callback multiple times.
+             *
+             * @param callback The callback to set.
+             * @return This object.
+             * @throws NullPointerException If the given callback is {@code null}.
+             */
+            public Builder onError(BiConsumer<? super CapturingReader, ? super IOException> callback) {
+                errorCallback = Objects.requireNonNull(callback);
+                return this;
+            }
+
+            /**
+             * Creates a new {@link Config capturing reader configuration} with the settings from this builder.
+             *
+             * @return The created capturing reader configuration.
+             */
+            public Config build() {
+                return new Config(this);
+            }
         }
     }
 }

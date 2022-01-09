@@ -55,7 +55,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import com.github.robtimus.io.stream.CapturingOutputStream.Builder;
+import com.github.robtimus.io.stream.CapturingOutputStream.Config.Builder;
 import com.github.robtimus.io.stream.jaxrs.TestApplication;
 import com.github.robtimus.io.stream.web.TestFilter;
 
@@ -404,13 +404,17 @@ class CapturingOutputStreamTest extends TestBase {
     }
 
     @Nested
-    class BuilderTest {
+    class ConfigTest {
 
-        @Test
-        @DisplayName("negative limit")
-        void testNegativeLimit() {
-            Builder builder = CapturingOutputStream.config();
-            assertThrows(IllegalArgumentException.class, () -> builder.withLimit(-1));
+        @Nested
+        class BuilderTest {
+
+            @Test
+            @DisplayName("negative limit")
+            void testNegativeLimit() {
+                Builder builder = CapturingOutputStream.config();
+                assertThrows(IllegalArgumentException.class, () -> builder.withLimit(-1));
+            }
         }
     }
 

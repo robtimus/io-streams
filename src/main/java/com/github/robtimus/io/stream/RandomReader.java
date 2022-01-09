@@ -199,10 +199,10 @@ public final class RandomReader extends Reader {
     }
 
     /**
-     * Returns a builder for random readers that can return characters from 0-9 and a-z.
+     * Returns a builder for random readers that can return characters from 0-9 and a-z or A-Z.
      *
      * @param upperCase {@code true} to use A-Z, or {@code false} to use a-z.
-     * @return A builder for random readers that can return characters from 0-9 and a-z.
+     * @return A builder for random readers that can return characters from 0-9 and a-z or A-Z.
      */
     public static Builder usingHex(boolean upperCase) {
         return usingGenerator(r -> randomHex(r, upperCase));
@@ -214,11 +214,11 @@ public final class RandomReader extends Reader {
     }
 
     /**
-     * Returns a builder for random readers that can return numbers.
+     * Returns a builder for random readers that can return digits.
      *
-     * @return A builder for random readers that can return numbers.
+     * @return A builder for random readers that can return digits.
      */
-    public static Builder usingNumbers() {
+    public static Builder usingDigits() {
         return usingGenerator(r -> '0' + r.nextInt(10));
     }
 

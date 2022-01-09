@@ -19,9 +19,9 @@ package com.github.robtimus.io.stream;
 
 import static com.github.robtimus.io.stream.RandomReader.usingAllCharacters;
 import static com.github.robtimus.io.stream.RandomReader.usingAlphabet;
+import static com.github.robtimus.io.stream.RandomReader.usingDigits;
 import static com.github.robtimus.io.stream.RandomReader.usingGenerator;
 import static com.github.robtimus.io.stream.RandomReader.usingHex;
-import static com.github.robtimus.io.stream.RandomReader.usingNumbers;
 import static com.github.robtimus.io.stream.RandomReader.usingRange;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.both;
@@ -46,7 +46,7 @@ class RandomReaderTest {
     @Test
     @DisplayName("with proper random")
     void testWithProperRandom() {
-        try (RandomReader reader = usingNumbers().withLimit(50).build()) {
+        try (RandomReader reader = usingDigits().withLimit(50).build()) {
             int c;
             while ((c = reader.read()) != -1) {
                 assertThat(c, both(greaterThanOrEqualTo((int) '0')).and(lessThanOrEqualTo((int) '9')));
@@ -65,14 +65,16 @@ class RandomReaderTest {
             @Test
             @DisplayName("negative min")
             void testNegativeMin() {
-                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingNumbers().withRandomLimit(-1, 10));
+                Builder builder = usingDigits();
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> builder.withRandomLimit(-1, 10));
                 assertEquals("-1 < 0", exception.getMessage());
             }
 
             @Test
             @DisplayName("max not larger than min")
             void testMaxNotLargerThanMin() {
-                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingNumbers().withRandomLimit(10, 10));
+                Builder builder = usingDigits();
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> builder.withRandomLimit(10, 10));
                 assertEquals("10 <= 10", exception.getMessage());
             }
         }
@@ -156,11 +158,11 @@ class RandomReaderTest {
         }
 
         @Nested
-        @DisplayName("usingNumbers()")
-        class UsingNumbers extends LimitedBaseTest {
+        @DisplayName("usingDigits()")
+        class UsingDigits extends LimitedBaseTest {
 
-            UsingNumbers() {
-                super(() -> usingNumbers(), repeatString("0123456789", MIN_EXPECTED_SEQUENCE_LENGTH));
+            UsingDigits() {
+                super(() -> usingDigits(), repeatString("0123456789", MIN_EXPECTED_SEQUENCE_LENGTH));
             }
 
             @Test
@@ -272,11 +274,11 @@ class RandomReaderTest {
         }
 
         @Nested
-        @DisplayName("usingNumbers()")
-        class UsingNumbers extends UnlimitedBaseTest {
+        @DisplayName("usingDigits()")
+        class UsingDigits extends UnlimitedBaseTest {
 
-            UsingNumbers() {
-                super(() -> usingNumbers(), repeatString("0123456789", MIN_EXPECTED_SEQUENCE_LENGTH));
+            UsingDigits() {
+                super(() -> usingDigits(), repeatString("0123456789", MIN_EXPECTED_SEQUENCE_LENGTH));
             }
 
             @Test

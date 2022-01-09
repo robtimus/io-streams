@@ -261,8 +261,9 @@ class HexInputStreamTest extends TestBase {
         @Test
         @DisplayName("invalid indexes")
         void testInvalidIndexes() {
-            assertThrows(IndexOutOfBoundsException.class, () -> decode(CAFEBABE_STRING, -1, CAFEBABE_STRING.length()));
-            assertThrows(IndexOutOfBoundsException.class, () -> decode(CAFEBABE_STRING, 0, CAFEBABE_STRING.length() + 1));
+            int length = CAFEBABE_STRING.length();
+            assertThrows(IndexOutOfBoundsException.class, () -> decode(CAFEBABE_STRING, -1, length));
+            assertThrows(IndexOutOfBoundsException.class, () -> decode(CAFEBABE_STRING, 0, length + 1));
             assertThrows(IndexOutOfBoundsException.class, () -> decode(CAFEBABE_STRING, 1, 0));
         }
 
@@ -275,16 +276,18 @@ class HexInputStreamTest extends TestBase {
         @Test
         @DisplayName("odd length hex")
         void testOddLengthHex() {
+            int length = CAFEBABE_STRING.length();
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                    () -> decode("x" + CAFEBABE_STRING + "Ax", 1, CAFEBABE_STRING.length() + 2));
+                    () -> decode("x" + CAFEBABE_STRING + "Ax", 1, length + 2));
             assertEquals(Messages.hex.eof.get(), exception.getMessage());
         }
 
         @Test
         @DisplayName("invalid hex")
         void testInvalidHex() {
+            int length = CAFEBABE_STRING.length();
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                    () -> decode("x" + CAFEBABE_STRING + "XAx", 1, CAFEBABE_STRING.length() + 3));
+                    () -> decode("x" + CAFEBABE_STRING + "XAx", 1, length + 3));
             assertEquals(Messages.hex.invalidChar.get('X'), exception.getMessage());
         }
     }
@@ -333,8 +336,9 @@ class HexInputStreamTest extends TestBase {
         @Test
         @DisplayName("invalid indexes")
         void testInvalidIndexes() {
-            assertThrows(IndexOutOfBoundsException.class, () -> tryDecode(CAFEBABE_STRING, -1, CAFEBABE_STRING.length()));
-            assertThrows(IndexOutOfBoundsException.class, () -> tryDecode(CAFEBABE_STRING, 0, CAFEBABE_STRING.length() + 1));
+            int length = CAFEBABE_STRING.length();
+            assertThrows(IndexOutOfBoundsException.class, () -> tryDecode(CAFEBABE_STRING, -1, length));
+            assertThrows(IndexOutOfBoundsException.class, () -> tryDecode(CAFEBABE_STRING, 0, length + 1));
             assertThrows(IndexOutOfBoundsException.class, () -> tryDecode(CAFEBABE_STRING, 1, 0));
         }
 
