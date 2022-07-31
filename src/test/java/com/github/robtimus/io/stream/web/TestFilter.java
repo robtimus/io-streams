@@ -66,6 +66,7 @@ public class TestFilter implements Filter {
         try {
             chain.doFilter(capturingRequest, capturingResponse);
         } finally {
+            System.err.printf("Done in filter%n");
             capturingResponse.done();
         }
     }
@@ -158,6 +159,7 @@ public class TestFilter implements Filter {
                         .onDone(input -> {
                             capturedFromResponse = input.captured(StandardCharsets.UTF_8);
                             totalResponseBytes = input.totalBytes();
+                            System.err.printf("onDone; captured = %s (%d)%n", capturedFromResponse, totalResponseBytes);
                         })
                         .build());
                 outputStream = new ServletOutputStream() {
