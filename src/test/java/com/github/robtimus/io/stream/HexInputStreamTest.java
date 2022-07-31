@@ -23,13 +23,12 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.StringReader;
 import java.util.Optional;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.CharSequenceReader;
@@ -196,7 +195,8 @@ class HexInputStreamTest extends TestBase {
     @Test
     @DisplayName("close()")
     void testClose() throws IOException {
-        StringReader reader = spy(new StringReader(CAFEBABE_STRING));
+        @SuppressWarnings("resource")
+        Reader reader = mock(Reader.class);
         try (HexInputStream input = new HexInputStream(reader)) {
             // don't do anything
         }

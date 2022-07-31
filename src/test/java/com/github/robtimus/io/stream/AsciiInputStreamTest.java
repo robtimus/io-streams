@@ -20,7 +20,7 @@ package com.github.robtimus.io.stream;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import java.io.ByteArrayOutputStream;
@@ -114,7 +114,8 @@ class AsciiInputStreamTest extends TestBase {
     @Test
     @DisplayName("close()")
     void testClose() throws IOException {
-        StringReader input = spy(new StringReader(""));
+        @SuppressWarnings("resource")
+        Reader input = mock(Reader.class);
         try (InputStream wrapped = new AsciiInputStream(input)) {
             // don't do anything
         }
