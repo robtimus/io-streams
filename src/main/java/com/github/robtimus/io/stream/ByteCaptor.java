@@ -34,7 +34,8 @@ final class ByteCaptor extends ByteArrayOutputStream {
         count = mark;
     }
 
-    String toString(Charset charset) {
+    // Note: on Java 11 and higher, this is an override with the same body
+    public String toString(Charset charset) {
         return new String(buf, 0, count, charset);
     }
 }
