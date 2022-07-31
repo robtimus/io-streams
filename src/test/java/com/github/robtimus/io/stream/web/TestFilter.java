@@ -17,8 +17,11 @@
 
 package com.github.robtimus.io.stream.web;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -45,6 +48,8 @@ public class TestFilter implements Filter {
     private String capturedFromResponse;
     private long totalResponseBytes;
 
+    private int invocationCount = 0;
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         // does nothing
@@ -66,8 +71,10 @@ public class TestFilter implements Filter {
         try {
             chain.doFilter(capturingRequest, capturingResponse);
         } finally {
-            System.err.printf("Done in filter%n");
             capturingResponse.done();
+            synchronized (this) {
+                invocationCount++;
+            }
         }
     }
 
@@ -159,7 +166,6 @@ public class TestFilter implements Filter {
                         .onDone(input -> {
                             capturedFromResponse = input.captured(StandardCharsets.UTF_8);
                             totalResponseBytes = input.totalBytes();
-                            System.err.printf("onDone; captured = %s (%d)%n", capturedFromResponse, totalResponseBytes);
                         })
                         .build());
                 outputStream = new ServletOutputStream() {
@@ -224,5 +230,18 @@ public class TestFilter implements Filter {
 
     public long totalResponseBytes() {
         return totalResponseBytes;
+    }
+
+    public synchronized int invocationCount() {
+        return invocationCount;
+    }
+
+    public synchronized void awaitInvocationCount(int expected) {
+        long startTime = System.nanoTime();
+        long maxWaitTime = TimeUnit.SECONDS.toNanos(5);
+        while (invocationCount != expected && System.nanoTime() - startTime < maxWaitTime) {
+            assertDoesNotThrow(() -> wait(1000));
+        }
+        assertEquals(expected, invocationCount);
     }
 }

@@ -503,7 +503,8 @@ class CapturingOutputStreamTest extends TestBase {
         @Test
         @DisplayName("capture")
         void testCapture() {
-            System.err.printf("Current class: %s%n", getClass().getName());
+            int invocationCount = testFilter.invocationCount();
+
             ContentResponse response = assertDoesNotThrow(() -> client.newRequest("localhost", serverConnector.getLocalPort())
                     .path("/echo")
                     .method(HttpMethod.POST)
@@ -512,11 +513,10 @@ class CapturingOutputStreamTest extends TestBase {
                     .send());
             assertEquals(200, response.getStatus());
 
-            System.err.printf("Checking captured data%n");
+            testFilter.awaitInvocationCount(invocationCount + 1);
 
             assertEquals("{\"val", testFilter.capturedFromResponse());
             assertEquals(12, testFilter.totalResponseBytes());
-            System.err.printf("Current class (end): %s%n", getClass().getName());
         }
     }
 
