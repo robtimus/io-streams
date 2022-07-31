@@ -34,6 +34,7 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DisplayName;
@@ -459,9 +460,12 @@ class BinaryPipeTest extends TestBase {
             @DisplayName("flush()")
             void testFlush() throws IOException {
                 BinaryPipe pipe = new BinaryPipe();
-                new Thread(() -> skipAndDie(pipe.input())).start();
+                Thread thread = new Thread(() -> skipAndDie(pipe.input()));
+                thread.start();
                 try (OutputStream output = pipe.output()) {
                     output.write(0);
+                    // flush doesn't do any writing, so if the thread hasn't died yet calling output.flush() will succeed
+                    awaitDied(thread);
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.flush();
                     });
@@ -560,5 +564,14 @@ class BinaryPipeTest extends TestBase {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private void awaitDied(Thread thread) {
+        long startTime = System.nanoTime();
+        long maxWaitTime = TimeUnit.SECONDS.toNanos(5);
+        while (thread.isAlive() && System.nanoTime() - startTime < maxWaitTime) {
+            assertDoesNotThrow(() -> Thread.sleep(50));
+        }
+        assertFalse(thread.isAlive());
     }
 }

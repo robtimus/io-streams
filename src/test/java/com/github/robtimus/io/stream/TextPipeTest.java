@@ -35,6 +35,7 @@ import java.io.Writer;
 import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import org.apache.commons.io.IOUtils;
@@ -672,9 +673,12 @@ class TextPipeTest extends TestBase {
             @DisplayName("flush()")
             void testFlush() throws IOException {
                 TextPipe pipe = new TextPipe();
-                new Thread(() -> skipAndDie(pipe.input())).start();
+                Thread thread = new Thread(() -> skipAndDie(pipe.input()));
+                thread.start();
                 try (Writer output = pipe.output()) {
                     output.write(0);
+                    // flush doesn't do any writing, so if the thread hasn't died yet calling output.flush() will succeed
+                    awaitDied(thread);
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.flush();
                     });
@@ -793,6 +797,15 @@ class TextPipeTest extends TestBase {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private void awaitDied(Thread thread) {
+        long startTime = System.nanoTime();
+        long maxWaitTime = TimeUnit.SECONDS.toNanos(5);
+        while (thread.isAlive() && System.nanoTime() - startTime < maxWaitTime) {
+            assertDoesNotThrow(() -> Thread.sleep(50));
+        }
+        assertFalse(thread.isAlive());
     }
 
     @SuppressWarnings("resource")
