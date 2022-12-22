@@ -119,7 +119,7 @@ class LimitOutputStreamTest extends TestBase {
                     int index = i;
                     LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.write(bytes[index]));
                     assertEquals(limit, exception.getLimit());
-                    assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                    assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                 }
             }
             assertArrayEquals(expected, output.toByteArray());
@@ -142,7 +142,7 @@ class LimitOutputStreamTest extends TestBase {
                         int i = index;
                         LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.write(bytes, i, to - i));
                         assertEquals(limit, exception.getLimit());
-                        assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                        assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                     } else {
                         writer.write(bytes, index, to - index);
                     }

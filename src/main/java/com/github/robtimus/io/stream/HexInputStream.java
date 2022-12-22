@@ -122,7 +122,7 @@ public final class HexInputStream extends InputStream {
             int n = source.read(cbuf, read, lenInHex - read);
             if (n == -1) {
                 // no more data and an odd number of characters - premature EOF
-                exception = new EOFException(Messages.hex.eof.get());
+                exception = new EOFException(Messages.hex.eof());
                 throw exception;
             }
             read += n;
@@ -133,7 +133,7 @@ public final class HexInputStream extends InputStream {
     private int convert(char c) throws IOException {
         int value = Character.digit(c, 16);
         if (value == -1) {
-            exception = new IOException(Messages.hex.invalidChar.get(c));
+            exception = new IOException(Messages.hex.invalidChar(c));
             throw exception;
         }
         return value;
@@ -182,7 +182,7 @@ public final class HexInputStream extends InputStream {
         checkStartAndEnd(hex, start, end);
         int length = end - start;
         if ((length & 1) == 1) {
-            throw new IllegalArgumentException(Messages.hex.eof.get());
+            throw new IllegalArgumentException(Messages.hex.eof());
         }
         byte[] b = new byte[length / 2];
         for (int i = 0, j = start; j < end; i++, j += 2) {
@@ -197,7 +197,7 @@ public final class HexInputStream extends InputStream {
         char c = hex.charAt(index);
         int value = Character.digit(c, 16);
         if (value == -1) {
-            throw new IllegalArgumentException(Messages.hex.invalidChar.get(c));
+            throw new IllegalArgumentException(Messages.hex.invalidChar(c));
         }
         return value;
     }

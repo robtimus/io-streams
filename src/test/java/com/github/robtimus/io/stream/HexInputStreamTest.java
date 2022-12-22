@@ -69,10 +69,10 @@ class HexInputStreamTest extends TestBase {
                         // ignore
                     }
                 });
-                assertEquals(Messages.hex.eof.get(), exception.getMessage());
+                assertEquals(Messages.hex.eof(), exception.getMessage());
 
                 exception = assertThrows(IOException.class, () -> input.read());
-                assertEquals(Messages.hex.eof.get(), exception.getMessage());
+                assertEquals(Messages.hex.eof(), exception.getMessage());
             }
         }
 
@@ -85,10 +85,10 @@ class HexInputStreamTest extends TestBase {
                         // ignore
                     }
                 });
-                assertEquals(Messages.hex.invalidChar.get('X'), exception.getMessage());
+                assertEquals(Messages.hex.invalidChar('X'), exception.getMessage());
 
                 exception = assertThrows(IOException.class, () -> input.read());
-                assertEquals(Messages.hex.invalidChar.get('X'), exception.getMessage());
+                assertEquals(Messages.hex.invalidChar('X'), exception.getMessage());
             }
         }
     }
@@ -142,10 +142,10 @@ class HexInputStreamTest extends TestBase {
                         // ignore
                     }
                 });
-                assertEquals(Messages.hex.eof.get(), exception.getMessage());
+                assertEquals(Messages.hex.eof(), exception.getMessage());
 
                 exception = assertThrows(IOException.class, () -> input.read(buffer));
-                assertEquals(Messages.hex.eof.get(), exception.getMessage());
+                assertEquals(Messages.hex.eof(), exception.getMessage());
             }
 
             try (HexInputStream input = new HexInputStream(new SlowReader(CAFEBABE_STRING + "A"))) {
@@ -155,10 +155,10 @@ class HexInputStreamTest extends TestBase {
                         // ignore
                     }
                 });
-                assertEquals(Messages.hex.eof.get(), exception.getMessage());
+                assertEquals(Messages.hex.eof(), exception.getMessage());
 
                 exception = assertThrows(IOException.class, () -> input.read(buffer));
-                assertEquals(Messages.hex.eof.get(), exception.getMessage());
+                assertEquals(Messages.hex.eof(), exception.getMessage());
             }
         }
 
@@ -172,10 +172,10 @@ class HexInputStreamTest extends TestBase {
                         // ignore
                     }
                 });
-                assertEquals(Messages.hex.invalidChar.get('X'), exception.getMessage());
+                assertEquals(Messages.hex.invalidChar('X'), exception.getMessage());
 
                 exception = assertThrows(IOException.class, () -> input.read(buffer));
-                assertEquals(Messages.hex.invalidChar.get('X'), exception.getMessage());
+                assertEquals(Messages.hex.invalidChar('X'), exception.getMessage());
             }
         }
     }
@@ -237,14 +237,14 @@ class HexInputStreamTest extends TestBase {
         @DisplayName("odd length hex")
         void testOddLengthHex() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> decode(CAFEBABE_STRING + "A"));
-            assertEquals(Messages.hex.eof.get(), exception.getMessage());
+            assertEquals(Messages.hex.eof(), exception.getMessage());
         }
 
         @Test
         @DisplayName("invalid hex")
         void testInvalidHex() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> decode(CAFEBABE_STRING + "XA"));
-            assertEquals(Messages.hex.invalidChar.get('X'), exception.getMessage());
+            assertEquals(Messages.hex.invalidChar('X'), exception.getMessage());
         }
     }
 
@@ -279,7 +279,7 @@ class HexInputStreamTest extends TestBase {
             int length = CAFEBABE_STRING.length();
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> decode("x" + CAFEBABE_STRING + "Ax", 1, length + 2));
-            assertEquals(Messages.hex.eof.get(), exception.getMessage());
+            assertEquals(Messages.hex.eof(), exception.getMessage());
         }
 
         @Test
@@ -288,7 +288,7 @@ class HexInputStreamTest extends TestBase {
             int length = CAFEBABE_STRING.length();
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> decode("x" + CAFEBABE_STRING + "XAx", 1, length + 3));
-            assertEquals(Messages.hex.invalidChar.get('X'), exception.getMessage());
+            assertEquals(Messages.hex.invalidChar('X'), exception.getMessage());
         }
     }
 

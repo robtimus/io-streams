@@ -247,7 +247,7 @@ public final class BinaryPipe {
     }
 
     private IOException writerDiedException() {
-        return new IOException(Messages.pipe.writerDied.get());
+        return new IOException(Messages.pipe.writerDied());
     }
 
     // output methods
@@ -353,7 +353,7 @@ public final class BinaryPipe {
 
     private void throwIfClosed() throws IOException {
         if (closed) {
-            throw new IOException(Messages.stream.closed.get());
+            throw new IOException(Messages.stream.closed());
         }
     }
 
@@ -368,7 +368,7 @@ public final class BinaryPipe {
     }
 
     private IOException readerDiedException() {
-        return new IOException(Messages.pipe.readerDied.get());
+        return new IOException(Messages.pipe.readerDied());
     }
 
     // general purpose methods

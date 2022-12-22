@@ -93,7 +93,7 @@ public final class MultiLineReader implements Iterable<Entry>, Closeable {
     @Override
     public Iterator<Entry> iterator() {
         if (returnedIterator) {
-            throw new IllegalStateException(Messages.MultiLineReader.iteratorAlreadyReturned.get());
+            throw new IllegalStateException(Messages.MultiLineReader.iteratorAlreadyReturned());
         }
         returnedIterator = true;
         return new EntryIterator();

@@ -201,7 +201,7 @@ class MultiLineReaderTest {
             try (MultiLineReader reader = createReader()) {
                 assertDoesNotThrow(reader::iterator);
                 IllegalStateException exception = assertThrows(IllegalStateException.class, reader::iterator);
-                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned.get(), exception.getMessage());
+                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned(), exception.getMessage());
             }
         }
 
@@ -211,7 +211,7 @@ class MultiLineReaderTest {
             try (MultiLineReader reader = createReader()) {
                 assertDoesNotThrow(reader::iterator);
                 IllegalStateException exception = assertThrows(IllegalStateException.class, reader::spliterator);
-                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned.get(), exception.getMessage());
+                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned(), exception.getMessage());
             }
         }
 
@@ -221,7 +221,7 @@ class MultiLineReaderTest {
             try (MultiLineReader reader = createReader()) {
                 assertDoesNotThrow(reader::iterator);
                 IllegalStateException exception = assertThrows(IllegalStateException.class, reader::entries);
-                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned.get(), exception.getMessage());
+                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned(), exception.getMessage());
             }
         }
 
@@ -231,7 +231,7 @@ class MultiLineReaderTest {
             try (MultiLineReader reader = createReader()) {
                 assertDoesNotThrow(reader::spliterator);
                 IllegalStateException exception = assertThrows(IllegalStateException.class, reader::iterator);
-                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned.get(), exception.getMessage());
+                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned(), exception.getMessage());
             }
         }
 
@@ -241,7 +241,7 @@ class MultiLineReaderTest {
             try (MultiLineReader reader = createReader()) {
                 assertDoesNotThrow(reader::spliterator);
                 IllegalStateException exception = assertThrows(IllegalStateException.class, reader::spliterator);
-                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned.get(), exception.getMessage());
+                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned(), exception.getMessage());
             }
         }
 
@@ -251,7 +251,7 @@ class MultiLineReaderTest {
             try (MultiLineReader reader = createReader()) {
                 assertDoesNotThrow(reader::spliterator);
                 IllegalStateException exception = assertThrows(IllegalStateException.class, reader::entries);
-                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned.get(), exception.getMessage());
+                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned(), exception.getMessage());
             }
         }
 
@@ -261,7 +261,7 @@ class MultiLineReaderTest {
             try (MultiLineReader reader = createReader()) {
                 assertDoesNotThrow(reader::entries);
                 IllegalStateException exception = assertThrows(IllegalStateException.class, reader::iterator);
-                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned.get(), exception.getMessage());
+                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned(), exception.getMessage());
             }
         }
 
@@ -271,7 +271,7 @@ class MultiLineReaderTest {
             try (MultiLineReader reader = createReader()) {
                 assertDoesNotThrow(reader::entries);
                 IllegalStateException exception = assertThrows(IllegalStateException.class, reader::spliterator);
-                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned.get(), exception.getMessage());
+                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned(), exception.getMessage());
             }
         }
 
@@ -281,7 +281,7 @@ class MultiLineReaderTest {
             try (MultiLineReader reader = createReader()) {
                 assertDoesNotThrow(reader::entries);
                 IllegalStateException exception = assertThrows(IllegalStateException.class, reader::entries);
-                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned.get(), exception.getMessage());
+                assertEquals(Messages.MultiLineReader.iteratorAlreadyReturned(), exception.getMessage());
             }
         }
 

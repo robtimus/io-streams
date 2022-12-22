@@ -253,7 +253,7 @@ public final class TextPipe {
     }
 
     private IOException writerDiedException() {
-        return new IOException(Messages.pipe.writerDied.get());
+        return new IOException(Messages.pipe.writerDied());
     }
 
     // output methods
@@ -411,7 +411,7 @@ public final class TextPipe {
 
     private void throwIfClosed() throws IOException {
         if (closed) {
-            throw new IOException(Messages.stream.closed.get());
+            throw new IOException(Messages.stream.closed());
         }
     }
 
@@ -426,7 +426,7 @@ public final class TextPipe {
     }
 
     private IOException readerDiedException() {
-        return new IOException(Messages.pipe.readerDied.get());
+        return new IOException(Messages.pipe.readerDied());
     }
 
     // general purpose methods

@@ -240,7 +240,7 @@ class LimitReaderTest extends TestBase {
                     }
                 });
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                 assertEquals(-1, reader.read());
             }
             assertEquals(expected, output.toString());
@@ -264,7 +264,7 @@ class LimitReaderTest extends TestBase {
                     }
                 });
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                 assertEquals(-1, reader.read(buffer));
             }
             assertEquals(expected, output.toString());
@@ -295,7 +295,7 @@ class LimitReaderTest extends TestBase {
                 assertThrows(IllegalArgumentException.class, () -> reader.skip(-1));
                 LimitExceededException exception = assertThrows(LimitExceededException.class, () -> reader.skip(1));
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                 assertEquals(0, reader.skip(1));
             }
             assertEquals(expected, output.toString());
@@ -337,7 +337,7 @@ class LimitReaderTest extends TestBase {
                     }
                 });
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
             }
             assertEquals(expected, output.toString());
         }

@@ -44,7 +44,7 @@ class AsciiOutputStreamTest extends TestBase {
 
             // with invalid ASCII
             IOException thrown = assertThrows(IOException.class, () -> wrapped.write(-1));
-            assertEquals(Messages.ascii.invalidByte.get(-1), thrown.getMessage());
+            assertEquals(Messages.ascii.invalidByte(-1), thrown.getMessage());
         }
         assertEquals(SOURCE, output.toString());
     }
@@ -65,7 +65,7 @@ class AsciiOutputStreamTest extends TestBase {
 
             // with invalid ASCII
             IOException thrown = assertThrows(IOException.class, () -> wrapped.write(new byte[] { 'h', 'e', 'l', 'l', 'o', ' ', -1, }));
-            assertEquals(Messages.ascii.invalidByte.get(-1), thrown.getMessage());
+            assertEquals(Messages.ascii.invalidByte(-1), thrown.getMessage());
         }
         assertEquals(SOURCE, output.toString());
 

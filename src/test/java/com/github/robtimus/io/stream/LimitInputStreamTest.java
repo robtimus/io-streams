@@ -249,7 +249,7 @@ class LimitInputStreamTest extends TestBase {
                     }
                 });
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                 assertEquals(-1, input.read());
             }
             assertArrayEquals(expected, output.toByteArray());
@@ -274,7 +274,7 @@ class LimitInputStreamTest extends TestBase {
                     }
                 });
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                 assertEquals(-1, input.read(buffer));
             }
             assertArrayEquals(expected, output.toByteArray());
@@ -305,7 +305,7 @@ class LimitInputStreamTest extends TestBase {
                 assertEquals(0, input.skip(-1));
                 LimitExceededException exception = assertThrows(LimitExceededException.class, () -> input.skip(1));
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                 assertEquals(0, input.skip(1));
             }
             assertArrayEquals(expected, output.toByteArray());
@@ -349,7 +349,7 @@ class LimitInputStreamTest extends TestBase {
                     }
                 });
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
             }
             assertArrayEquals(expected, output.toByteArray());
         }

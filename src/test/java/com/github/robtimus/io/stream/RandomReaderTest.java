@@ -121,7 +121,7 @@ class RandomReaderTest {
             @DisplayName("empty alphabet")
             void testStartLargerThanEnd() {
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingAlphabet(""));
-                assertEquals(Messages.RandomReader.emptyAlphabet.get(), exception.getMessage());
+                assertEquals(Messages.RandomReader.emptyAlphabet(), exception.getMessage());
             }
         }
 
@@ -169,7 +169,7 @@ class RandomReaderTest {
             @DisplayName("empty alphabet")
             void testStartLargerThanEnd() {
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingAlphabet(""));
-                assertEquals(Messages.RandomReader.emptyAlphabet.get(), exception.getMessage());
+                assertEquals(Messages.RandomReader.emptyAlphabet(), exception.getMessage());
             }
         }
 
@@ -237,7 +237,7 @@ class RandomReaderTest {
             @DisplayName("empty alphabet")
             void testStartLargerThanEnd() {
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingAlphabet(""));
-                assertEquals(Messages.RandomReader.emptyAlphabet.get(), exception.getMessage());
+                assertEquals(Messages.RandomReader.emptyAlphabet(), exception.getMessage());
             }
         }
 
@@ -285,7 +285,7 @@ class RandomReaderTest {
             @DisplayName("empty alphabet")
             void testStartLargerThanEnd() {
                 IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingAlphabet(""));
-                assertEquals(Messages.RandomReader.emptyAlphabet.get(), exception.getMessage());
+                assertEquals(Messages.RandomReader.emptyAlphabet(), exception.getMessage());
             }
         }
     }

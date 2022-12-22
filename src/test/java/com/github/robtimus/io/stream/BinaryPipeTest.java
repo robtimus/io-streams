@@ -220,7 +220,7 @@ class BinaryPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         input.read();
                     });
-                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.writerDied(), thrown.getMessage());
                 }
             }
 
@@ -235,7 +235,7 @@ class BinaryPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         input.read(new byte[5], 0, 5);
                     });
-                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.writerDied(), thrown.getMessage());
                 }
             }
 
@@ -250,7 +250,7 @@ class BinaryPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         input.skip(1);
                     });
-                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.writerDied(), thrown.getMessage());
                 }
             }
         }
@@ -436,7 +436,7 @@ class BinaryPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.write(0);
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
 
@@ -452,7 +452,7 @@ class BinaryPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.write(bytes, 0, bytes.length);
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
 
@@ -469,7 +469,7 @@ class BinaryPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.flush();
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
         }

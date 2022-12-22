@@ -184,7 +184,7 @@ public final class RandomReader extends Reader {
     public static Builder usingAlphabet(String alphabet) {
         Objects.requireNonNull(alphabet);
         if (alphabet.isEmpty()) {
-            throw new IllegalArgumentException(Messages.RandomReader.emptyAlphabet.get());
+            throw new IllegalArgumentException(Messages.RandomReader.emptyAlphabet());
         }
         return usingGenerator(r -> alphabet.charAt(r.nextInt(alphabet.length())));
     }

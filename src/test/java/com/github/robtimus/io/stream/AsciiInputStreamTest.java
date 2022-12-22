@@ -55,7 +55,7 @@ class AsciiInputStreamTest extends TestBase {
         String invalid = "é";
         try (InputStream wrapped = new AsciiInputStream(new StringReader(invalid))) {
             IOException thrown = assertThrows(IOException.class, () -> wrapped.read());
-            assertEquals(Messages.ascii.invalidChar.get(invalid.charAt(0)), thrown.getMessage());
+            assertEquals(Messages.ascii.invalidChar(invalid.charAt(0)), thrown.getMessage());
         }
     }
 
@@ -93,7 +93,7 @@ class AsciiInputStreamTest extends TestBase {
         String invalid = "hello é";
         try (InputStream wrapped = new AsciiInputStream(new StringReader(invalid))) {
             IOException thrown = assertThrows(IOException.class, () -> wrapped.read(new byte[1024]));
-            assertEquals(Messages.ascii.invalidChar.get(invalid.charAt(invalid.length() - 1)), thrown.getMessage());
+            assertEquals(Messages.ascii.invalidChar(invalid.charAt(invalid.length() - 1)), thrown.getMessage());
         }
     }
 

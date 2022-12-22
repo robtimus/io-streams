@@ -210,7 +210,7 @@ class LimitWriterTest extends TestBase {
                     int index = i;
                     LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.write(SOURCE.charAt(index)));
                     assertEquals(limit, exception.getLimit());
-                    assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                    assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                 }
             }
             assertEquals(expected, output.toString());
@@ -233,7 +233,7 @@ class LimitWriterTest extends TestBase {
                         int i = index;
                         LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.write(chars, i, to - i));
                         assertEquals(limit, exception.getLimit());
-                        assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                        assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                     } else {
                         writer.write(chars, index, to - index);
                     }
@@ -259,7 +259,7 @@ class LimitWriterTest extends TestBase {
                         int i = index;
                         LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.write(SOURCE, i, to - i));
                         assertEquals(limit, exception.getLimit());
-                        assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                        assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                     } else {
                         writer.write(SOURCE, index, to - index);
                     }
@@ -285,7 +285,7 @@ class LimitWriterTest extends TestBase {
                         int i = index;
                         LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.append(SOURCE.substring(i, to)));
                         assertEquals(limit, exception.getLimit());
-                        assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                        assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                     } else {
                         writer.append(SOURCE.substring(index, to));
                     }
@@ -303,7 +303,7 @@ class LimitWriterTest extends TestBase {
             try (Writer writer = new LimitWriter(output, limit, THROW)) {
                 LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.append(null));
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
             }
             assertEquals(expected, output.toString());
         }
@@ -324,7 +324,7 @@ class LimitWriterTest extends TestBase {
                         int i = index;
                         LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.append(SOURCE, i, to));
                         assertEquals(limit, exception.getLimit());
-                        assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                        assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                     } else {
                         writer.append(SOURCE, index, to);
                     }
@@ -342,7 +342,7 @@ class LimitWriterTest extends TestBase {
             try (Writer writer = new LimitWriter(output, limit, THROW)) {
                 LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.append(null, 0, 3));
                 assertEquals(limit, exception.getLimit());
-                assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
             }
             assertEquals(expected, output.toString());
         }
@@ -363,7 +363,7 @@ class LimitWriterTest extends TestBase {
                     int index = i;
                     LimitExceededException exception = assertThrows(LimitExceededException.class, () -> writer.append(SOURCE.charAt(index)));
                     assertEquals(limit, exception.getLimit());
-                    assertEquals(Messages.LimitExceededException.init.get(limit), exception.getMessage());
+                    assertEquals(Messages.LimitExceededException.init(limit), exception.getMessage());
                 }
             }
             assertEquals(expected, output.toString());

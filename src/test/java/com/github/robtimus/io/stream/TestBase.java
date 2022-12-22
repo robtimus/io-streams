@@ -38,6 +38,6 @@ abstract class TestBase {
 
     void assertClosed(Executable executable) {
         IOException thrown = assertThrows(IOException.class, executable);
-        assertEquals(Messages.stream.closed.get(), thrown.getMessage());
+        assertEquals(Messages.stream.closed(), thrown.getMessage());
     }
 }

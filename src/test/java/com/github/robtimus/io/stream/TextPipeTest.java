@@ -235,7 +235,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         input.read();
                     });
-                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.writerDied(), thrown.getMessage());
                 }
             }
 
@@ -250,7 +250,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         input.read(new char[5], 0, 5);
                     });
-                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.writerDied(), thrown.getMessage());
                 }
             }
 
@@ -265,7 +265,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         input.skip(1);
                     });
-                    assertEquals(Messages.pipe.writerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.writerDied(), thrown.getMessage());
                 }
             }
         }
@@ -593,7 +593,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.write(0);
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
 
@@ -609,7 +609,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.write(chars, 0, chars.length);
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
 
@@ -623,7 +623,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.write(SOURCE, 0, SOURCE.length());
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
 
@@ -637,7 +637,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.append(SOURCE);
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
 
@@ -651,7 +651,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.append(SOURCE, 0, SOURCE.length());
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
 
@@ -665,7 +665,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.write(0);
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
 
@@ -682,7 +682,7 @@ class TextPipeTest extends TestBase {
                     IOException thrown = assertThrows(IOException.class, () -> {
                         output.flush();
                     });
-                    assertEquals(Messages.pipe.readerDied.get(), thrown.getMessage());
+                    assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
         }

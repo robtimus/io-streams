@@ -37,7 +37,7 @@ public final class LimitExceededException extends IOException {
      * @param limit The limit that was exceeded.
      */
     public LimitExceededException(long limit) {
-        super(Messages.LimitExceededException.init.get(limit));
+        super(Messages.LimitExceededException.init(limit));
         this.limit = limit;
     }
 

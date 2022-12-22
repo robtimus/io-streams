@@ -91,7 +91,7 @@ public final class AsciiOutputStream extends OutputStream {
     private char convert(byte b) throws IOException {
         // b <= 127 by definition
         if (b < 0) {
-            throw new IOException(Messages.ascii.invalidByte.get(b));
+            throw new IOException(Messages.ascii.invalidByte(b));
         }
         // 0 <= b <= 127, valid ASCII
         return (char) b;

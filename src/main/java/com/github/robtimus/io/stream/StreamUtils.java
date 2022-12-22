@@ -51,13 +51,13 @@ public final class StreamUtils {
      */
     public static void checkOffsetAndLength(byte[] array, int offset, int length) {
         if (offset < 0 || length < 0 || offset + length > array.length) {
-            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength.get(array.length, offset, length));
+            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength(array.length, offset, length));
         }
     }
 
     static void checkStartAndEnd(byte[] array, int start, int end) {
         if (start < 0 || end > array.length || start > end) {
-            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidStartOrEnd.get(array.length, start, end));
+            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidStartOrEnd(array.length, start, end));
         }
     }
 
@@ -74,7 +74,7 @@ public final class StreamUtils {
      */
     public static void checkOffsetAndLength(char[] array, int offset, int length) {
         if (offset < 0 || length < 0 || offset + length > array.length) {
-            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength.get(array.length, offset, length));
+            throw new ArrayIndexOutOfBoundsException(Messages.array.invalidOffsetOrLength(array.length, offset, length));
         }
     }
 
@@ -91,7 +91,7 @@ public final class StreamUtils {
      */
     public static void checkOffsetAndLength(CharSequence sequence, int offset, int length) {
         if (offset < 0 || length < 0 || offset + length > sequence.length()) {
-            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidOffsetOrLength.get(sequence.length(), offset, length));
+            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidOffsetOrLength(sequence.length(), offset, length));
         }
     }
 
@@ -109,7 +109,7 @@ public final class StreamUtils {
      */
     public static void checkStartAndEnd(CharSequence sequence, int start, int end) {
         if (start < 0 || end > sequence.length() || start > end) {
-            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidStartOrEnd.get(sequence.length(), start, end));
+            throw new ArrayIndexOutOfBoundsException(Messages.charSequence.invalidStartOrEnd(sequence.length(), start, end));
         }
     }
 
@@ -121,6 +121,6 @@ public final class StreamUtils {
      * @return An {@code IOException} that indicates a stream is closed.
      */
     public static IOException streamClosedException() {
-        return new IOException(Messages.stream.closed.get());
+        return new IOException(Messages.stream.closed());
     }
 }

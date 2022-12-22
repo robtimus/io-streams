@@ -22,7 +22,7 @@
   <parent>
     <groupId>com.github.robtimus</groupId>
     <artifactId>robtimus-parent</artifactId>
-    <version>1.4.3</version>
+    <version>1.6</version>
     <relativePath />
   </parent>
 
@@ -67,6 +67,7 @@
     <version.jersey>2.27</version.jersey>
     <version.jetty>9.4.44.v20210927</version.jetty>
     <version.resteasy>5.0.1.Final</version.resteasy>
+    <version.slf4j>1.7.36</version.slf4j>
   </properties>
 
   <dependencies>
@@ -146,6 +147,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-nop</artifactId>
+      <version>${version.slf4j}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
