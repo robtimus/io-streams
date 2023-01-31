@@ -17,6 +17,7 @@
 
 package com.github.robtimus.io.stream;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,9 +34,9 @@ import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.CharBuffer;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import org.apache.commons.io.IOUtils;
@@ -170,12 +171,13 @@ class TextPipeTest extends TestBase {
 
         @Test
         @DisplayName("ready()")
-        void testReady() throws IOException, InterruptedException {
+        void testReady() throws IOException {
             TextPipe pipe = new TextPipe();
             new Thread(() -> writeDataInChunks(pipe, SOURCE, 5)).start();
             try (Reader input = pipe.input()) {
-                // add a small delay to allow the writer to write something
-                Thread.sleep(200);
+                // Wait until the output stream has written at least something
+                await().atMost(Duration.ofMillis(200)).until(input::ready);
+
                 for (int i = 5; i > 0; i--) {
                     assertTrue(input.ready());
                     input.read();
@@ -800,12 +802,7 @@ class TextPipeTest extends TestBase {
     }
 
     private void awaitDied(Thread thread) {
-        long startTime = System.nanoTime();
-        long maxWaitTime = TimeUnit.SECONDS.toNanos(5);
-        while (thread.isAlive() && System.nanoTime() - startTime < maxWaitTime) {
-            assertDoesNotThrow(() -> Thread.sleep(50));
-        }
-        assertFalse(thread.isAlive());
+        await().atMost(Duration.ofSeconds(5)).until(() -> !thread.isAlive());
     }
 
     @SuppressWarnings("resource")

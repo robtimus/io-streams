@@ -38,8 +38,8 @@ class LimitOutputStreamTest extends TestBase {
     @Test
     @DisplayName("negative limit")
     void testNegativeLimit() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
-                () -> new LimitOutputStream(NullOutputStream.NULL_OUTPUT_STREAM, -1));
+        OutputStream outputStream = NullOutputStream.NULL_OUTPUT_STREAM;
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new LimitOutputStream(outputStream, -1));
         assertEquals("-1 < 0", exception.getMessage());
     }
 

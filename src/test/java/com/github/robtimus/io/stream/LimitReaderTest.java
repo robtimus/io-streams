@@ -39,7 +39,9 @@ class LimitReaderTest extends TestBase {
     @Test
     @DisplayName("negative limit")
     void testNegativeLimit() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new LimitReader(new NullReader(), -1));
+        @SuppressWarnings("resource")
+        Reader reader = new NullReader();
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new LimitReader(reader, -1));
         assertEquals("-1 < 0", exception.getMessage());
     }
 

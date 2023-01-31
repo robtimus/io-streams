@@ -17,6 +17,7 @@
 
 package com.github.robtimus.io.stream;
 
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,9 +33,9 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.DisplayName;
@@ -155,12 +156,13 @@ class BinaryPipeTest extends TestBase {
 
         @Test
         @DisplayName("available()")
-        void testAvailable() throws IOException, InterruptedException {
+        void testAvailable() throws IOException {
             BinaryPipe pipe = new BinaryPipe();
             new Thread(() -> writeDataInChunks(pipe, SOURCE.getBytes(), 5)).start();
             try (InputStream input = pipe.input()) {
-                // add a small delay to allow the output stream to write something
-                Thread.sleep(200);
+                // Wait until the output stream has written at least something
+                await().atMost(Duration.ofMillis(200)).until(() -> input.available() > 0);
+
                 for (int i = 5; i > 0; i--) {
                     assertEquals(i, input.available());
                     input.read();
@@ -567,11 +569,6 @@ class BinaryPipeTest extends TestBase {
     }
 
     private void awaitDied(Thread thread) {
-        long startTime = System.nanoTime();
-        long maxWaitTime = TimeUnit.SECONDS.toNanos(5);
-        while (thread.isAlive() && System.nanoTime() - startTime < maxWaitTime) {
-            assertDoesNotThrow(() -> Thread.sleep(50));
-        }
-        assertFalse(thread.isAlive());
+        await().atMost(Duration.ofSeconds(5)).until(() -> !thread.isAlive());
     }
 }

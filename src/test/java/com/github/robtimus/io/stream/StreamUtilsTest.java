@@ -53,22 +53,27 @@ class StreamUtilsTest extends TestBase {
     @DisplayName("checkOffsetAndLength(CharSequence, int, int)")
     void testCheckOffsetAndLengthForCharSequence() {
         CharSequence sequence = SOURCE;
-        checkOffsetAndLength(sequence, 0, sequence.length());
-        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, -1, sequence.length()));
+        int length = sequence.length();
+
+        checkOffsetAndLength(sequence, 0, length);
+        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, -1, length));
         assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, 1, -1));
-        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, 0, sequence.length() + 1));
-        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, 1, sequence.length()));
+        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, 0, length + 1));
+        assertThrows(IndexOutOfBoundsException.class, () -> checkOffsetAndLength(sequence, 1, length));
         checkOffsetAndLength(sequence, 1, 0);
     }
 
     @Test
     @DisplayName("checkStartAndEnd(CharSequence, int, int)")
     void testCheckStartAndEndForCharSequence() {
-        checkStartAndEnd(SOURCE, 0, SOURCE.length());
-        assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(SOURCE, -1, SOURCE.length()));
-        assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(SOURCE, 1, -1));
-        assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(SOURCE, 0, SOURCE.length() + 1));
-        checkStartAndEnd(SOURCE, 1, SOURCE.length());
-        assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(SOURCE, 1, 0));
+        CharSequence sequence = SOURCE;
+        int length = sequence.length();
+
+        checkStartAndEnd(sequence, 0, length);
+        assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(sequence, -1, length));
+        assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(sequence, 1, -1));
+        assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(sequence, 0, length + 1));
+        checkStartAndEnd(sequence, 1, length);
+        assertThrows(IndexOutOfBoundsException.class, () -> checkStartAndEnd(sequence, 1, 0));
     }
 }

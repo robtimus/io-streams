@@ -38,7 +38,9 @@ class LimitInputStreamTest extends TestBase {
     @Test
     @DisplayName("negative limit")
     void testNegativeLimit() {
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new LimitInputStream(new NullInputStream(), -1));
+        @SuppressWarnings("resource")
+        InputStream input = new NullInputStream();
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new LimitInputStream(input, -1));
         assertEquals("-1 < 0", exception.getMessage());
     }
 

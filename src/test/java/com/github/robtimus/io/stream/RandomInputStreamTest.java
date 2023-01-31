@@ -65,14 +65,16 @@ class RandomInputStreamTest {
             @Test
             @DisplayName("negative min")
             void testNegativeMin() {
-                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingAllBytes().withRandomLimit(-1, 10));
+                Builder builder = usingAllBytes();
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> builder.withRandomLimit(-1, 10));
                 assertEquals("-1 < 0", exception.getMessage());
             }
 
             @Test
             @DisplayName("max not larger than min")
             void testMaxNotLargerThanMin() {
-                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> usingAllBytes().withRandomLimit(10, 10));
+                Builder builder = usingAllBytes();
+                IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> builder.withRandomLimit(10, 10));
                 assertEquals("10 <= 10", exception.getMessage());
             }
         }
