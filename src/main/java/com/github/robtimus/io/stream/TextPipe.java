@@ -451,7 +451,7 @@ public final class TextPipe {
         void copyTo(int start, char[] cbuf, int off, int len);
     }
 
-    private static class ArrayData implements Data {
+    private static final class ArrayData implements Data {
 
         private char[] array;
 
@@ -466,7 +466,7 @@ public final class TextPipe {
         }
     }
 
-    private static class CharSequenceData implements Data {
+    private static final class CharSequenceData implements Data {
 
         private CharSequence charSequence;
 
