@@ -37,7 +37,7 @@ class LimitWriterTest extends TestBase {
     @Test
     @DisplayName("negative limit")
     void testNegativeLimit() {
-        Writer writer = NullWriter.NULL_WRITER;
+        Writer writer = NullWriter.INSTANCE;
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new LimitWriter(writer, -1));
         assertEquals("-1 < 0", exception.getMessage());
     }

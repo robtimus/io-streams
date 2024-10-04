@@ -71,9 +71,11 @@ class TextPipeTest extends TestBase {
     @DisplayName("interrupt")
     void testInterrupt() throws InterruptedException {
         TextPipe pipe = new TextPipe();
+        @SuppressWarnings("resource")
+        Reader input = pipe.input();
         AtomicReference<InterruptedIOException> exception = new AtomicReference<>();
         Thread thread = new Thread(() -> {
-            exception.set(assertThrows(InterruptedIOException.class, () -> pipe.input().read()));
+            exception.set(assertThrows(InterruptedIOException.class, () -> input.read()));
         });
         thread.start();
         thread.interrupt();
@@ -301,7 +303,9 @@ class TextPipeTest extends TestBase {
             readLatch.await();
             assertEquals(SOURCE, result.get());
 
-            assertClosed(() -> pipe.output().write('*'));
+            @SuppressWarnings("resource")
+            Writer output = pipe.output();
+            assertClosed(() -> output.write('*'));
         }
 
         @Test
@@ -328,7 +332,9 @@ class TextPipeTest extends TestBase {
             readLatch.await();
             assertEquals(SOURCE, result.get());
 
-            assertClosed(() -> pipe.output().write(chars));
+            @SuppressWarnings("resource")
+            Writer output = pipe.output();
+            assertClosed(() -> output.write(chars));
         }
 
         @Test
@@ -353,7 +359,9 @@ class TextPipeTest extends TestBase {
             readLatch.await();
             assertEquals(SOURCE, result.get());
 
-            assertClosed(() -> pipe.output().write(SOURCE));
+            @SuppressWarnings("resource")
+            Writer output = pipe.output();
+            assertClosed(() -> output.write(SOURCE));
         }
 
         @Test
@@ -382,7 +390,8 @@ class TextPipeTest extends TestBase {
             readLatch.await();
             assertEquals(SOURCE + "null", result.get());
 
-            assertClosed(() -> pipe.output().append(SOURCE));
+            Writer output = pipe.output();
+            assertClosed(() -> output.append(SOURCE));
         }
 
         @Test
@@ -416,7 +425,9 @@ class TextPipeTest extends TestBase {
             readLatch.await();
             assertEquals(SOURCE + "ul", result.get());
 
-            assertClosed(() -> pipe.output().write(SOURCE, 0, 10));
+            @SuppressWarnings("resource")
+            Writer output = pipe.output();
+            assertClosed(() -> output.write(SOURCE, 0, 10));
         }
 
         @Test
@@ -434,7 +445,9 @@ class TextPipeTest extends TestBase {
             readLatch.await();
             assertEquals(SOURCE, result.get());
 
-            assertClosed(() -> pipe.output().write('*'));
+            @SuppressWarnings("resource")
+            Writer output = pipe.output();
+            assertClosed(() -> output.write('*'));
         }
 
         @Test
@@ -453,8 +466,11 @@ class TextPipeTest extends TestBase {
 
             TextPipe pipe = new TextPipe();
             try (Writer output = pipe.output()) {
+                @SuppressWarnings("resource")
+                PipeReader input = pipe.input();
+
                 IOException error = new IOException();
-                pipe.input().close(error);
+                input.close(error);
 
                 assertSame(error, assertThrows(IOException.class, () -> output.write(chars[0])));
                 assertSame(error, assertThrows(IOException.class, () -> output.write(chars, 0, 5)));
@@ -464,7 +480,7 @@ class TextPipeTest extends TestBase {
                 assertSame(error, assertThrows(IOException.class, () -> output.append(chars[0])));
                 assertSame(error, assertThrows(IOException.class, () -> output.flush()));
 
-                pipe.input().close();
+                input.close();
 
                 assertSame(error, assertThrows(IOException.class, () -> output.write(chars[0])));
                 assertSame(error, assertThrows(IOException.class, () -> output.write(chars, 0, 5)));
@@ -474,7 +490,7 @@ class TextPipeTest extends TestBase {
                 assertSame(error, assertThrows(IOException.class, () -> output.append(chars[0])));
                 assertSame(error, assertThrows(IOException.class, () -> output.flush()));
 
-                pipe.input().close(null);
+                input.close(null);
 
                 assertClosed(() -> output.write(chars[0]));
                 assertClosed(() -> output.write(chars, 0, 5));
@@ -517,7 +533,9 @@ class TextPipeTest extends TestBase {
                 Arrays.sort(actual);
                 assertArrayEquals(expected, actual);
 
-                assertClosed(() -> pipe.output().write(0));
+                @SuppressWarnings("resource")
+                Writer output = pipe.output();
+                assertClosed(() -> output.write(0));
             }
 
             @Test
@@ -547,7 +565,9 @@ class TextPipeTest extends TestBase {
                 Arrays.sort(actual);
                 assertArrayEquals(expected, actual);
 
-                assertClosed(() -> pipe.output().write(SOURCE));
+                @SuppressWarnings("resource")
+                Writer output = pipe.output();
+                assertClosed(() -> output.write(SOURCE));
             }
 
             @Test
@@ -577,7 +597,9 @@ class TextPipeTest extends TestBase {
                 Arrays.sort(actual);
                 assertArrayEquals(expected, actual);
 
-                assertClosed(() -> pipe.output().write(SOURCE));
+                @SuppressWarnings("resource")
+                Writer output = pipe.output();
+                assertClosed(() -> output.write(SOURCE));
             }
         }
 
@@ -665,7 +687,7 @@ class TextPipeTest extends TestBase {
                 try (Writer output = pipe.output()) {
                     output.write(0);
                     IOException thrown = assertThrows(IOException.class, () -> {
-                        output.write(0);
+                        output.append('\0');
                     });
                     assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }

@@ -87,6 +87,7 @@ public class TestFilter implements Filter {
         }
 
         @Override
+        @SuppressWarnings("resource")
         public ServletInputStream getInputStream() throws IOException {
             if (inputStream == null) {
                 CapturingInputStream capturing = new CapturingInputStream(super.getInputStream(), CapturingInputStream.config()

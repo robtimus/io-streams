@@ -68,9 +68,11 @@ class BinaryPipeTest extends TestBase {
     @DisplayName("interrupt")
     void testInterrupt() throws InterruptedException {
         BinaryPipe pipe = new BinaryPipe();
+        @SuppressWarnings("resource")
+        InputStream input = pipe.input();
         AtomicReference<InterruptedIOException> exception = new AtomicReference<>();
         Thread thread = new Thread(() -> {
-            exception.set(assertThrows(InterruptedIOException.class, () -> pipe.input().read()));
+            exception.set(assertThrows(InterruptedIOException.class, () -> input.read()));
         });
         thread.start();
         thread.interrupt();
@@ -288,7 +290,9 @@ class BinaryPipeTest extends TestBase {
             readLatch.await();
             assertArrayEquals(expected, result.get());
 
-            assertClosed(() -> pipe.output().write(0));
+            @SuppressWarnings("resource")
+            OutputStream output = pipe.output();
+            assertClosed(() -> output.write(0));
         }
 
         @Test
@@ -315,7 +319,9 @@ class BinaryPipeTest extends TestBase {
             readLatch.await();
             assertArrayEquals(expected, result.get());
 
-            assertClosed(() -> pipe.output().write(expected));
+            @SuppressWarnings("resource")
+            OutputStream output = pipe.output();
+            assertClosed(() -> output.write(expected));
         }
 
         @Test
@@ -334,20 +340,23 @@ class BinaryPipeTest extends TestBase {
 
             BinaryPipe pipe = new BinaryPipe();
             try (OutputStream output = pipe.output()) {
+                @SuppressWarnings("resource")
+                PipeInputStream input = pipe.input();
+
                 IOException error = new IOException();
-                pipe.input().close(error);
+                input.close(error);
 
                 assertSame(error, assertThrows(IOException.class, () -> output.write(bytes[0])));
                 assertSame(error, assertThrows(IOException.class, () -> output.write(bytes, 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> output.flush()));
 
-                pipe.input().close();
+                input.close();
 
                 assertSame(error, assertThrows(IOException.class, () -> output.write(bytes[0])));
                 assertSame(error, assertThrows(IOException.class, () -> output.write(bytes, 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> output.flush()));
 
-                pipe.input().close(null);
+                input.close(null);
 
                 assertClosed(() -> output.write(bytes[0]));
                 assertClosed(() -> output.write(bytes, 0, 5));
@@ -388,7 +397,9 @@ class BinaryPipeTest extends TestBase {
                 Arrays.sort(actual);
                 assertArrayEquals(expected, actual);
 
-                assertClosed(() -> pipe.output().write(0));
+                @SuppressWarnings("resource")
+                OutputStream output = pipe.output();
+                assertClosed(() -> output.write(0));
             }
 
             @Test
@@ -420,7 +431,9 @@ class BinaryPipeTest extends TestBase {
                 Arrays.sort(actual);
                 assertArrayEquals(expected, actual);
 
-                assertClosed(() -> pipe.output().write(bytes));
+                @SuppressWarnings("resource")
+                OutputStream output = pipe.output();
+                assertClosed(() -> output.write(bytes));
             }
         }
 
