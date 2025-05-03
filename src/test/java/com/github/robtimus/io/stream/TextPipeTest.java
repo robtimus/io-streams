@@ -75,7 +75,7 @@ class TextPipeTest extends TestBase {
         Reader input = pipe.input();
         AtomicReference<InterruptedIOException> exception = new AtomicReference<>();
         Thread thread = new Thread(() -> {
-            exception.set(assertThrows(InterruptedIOException.class, () -> input.read()));
+            exception.set(assertThrows(InterruptedIOException.class, input::read));
         });
         thread.start();
         thread.interrupt();
@@ -203,17 +203,17 @@ class TextPipeTest extends TestBase {
                 output.flush();
                 output.close(error);
 
-                assertSame(error, assertThrows(IOException.class, () -> input.read()));
+                assertSame(error, assertThrows(IOException.class, input::read));
                 assertSame(error, assertThrows(IOException.class, () -> input.read(new char[5], 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.skip(5)));
-                assertSame(error, assertThrows(IOException.class, () -> input.ready()));
+                assertSame(error, assertThrows(IOException.class, input::ready));
 
                 output.close();
 
-                assertSame(error, assertThrows(IOException.class, () -> input.read()));
+                assertSame(error, assertThrows(IOException.class, input::read));
                 assertSame(error, assertThrows(IOException.class, () -> input.read(new char[5], 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> input.skip(5)));
-                assertSame(error, assertThrows(IOException.class, () -> input.ready()));
+                assertSame(error, assertThrows(IOException.class, input::ready));
 
                 output.close(null);
 
@@ -236,9 +236,7 @@ class TextPipeTest extends TestBase {
                 try (Reader input = pipe.input()) {
                     // perform one read to consume the data
                     input.read();
-                    IOException thrown = assertThrows(IOException.class, () -> {
-                        input.read();
-                    });
+                    IOException thrown = assertThrows(IOException.class, input::read);
                     assertEquals(Messages.pipe.writerDied(), thrown.getMessage());
                 }
             }
@@ -478,7 +476,7 @@ class TextPipeTest extends TestBase {
                 assertSame(error, assertThrows(IOException.class, () -> output.append(SOURCE)));
                 assertSame(error, assertThrows(IOException.class, () -> output.append(SOURCE, 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> output.append(chars[0])));
-                assertSame(error, assertThrows(IOException.class, () -> output.flush()));
+                assertSame(error, assertThrows(IOException.class, output::flush));
 
                 input.close();
 
@@ -488,7 +486,7 @@ class TextPipeTest extends TestBase {
                 assertSame(error, assertThrows(IOException.class, () -> output.append(SOURCE)));
                 assertSame(error, assertThrows(IOException.class, () -> output.append(SOURCE, 0, 5)));
                 assertSame(error, assertThrows(IOException.class, () -> output.append(chars[0])));
-                assertSame(error, assertThrows(IOException.class, () -> output.flush()));
+                assertSame(error, assertThrows(IOException.class, output::flush));
 
                 input.close(null);
 
@@ -703,9 +701,7 @@ class TextPipeTest extends TestBase {
                     output.write(0);
                     // flush doesn't do any writing, so if the thread hasn't died yet calling output.flush() will succeed
                     awaitDied(thread);
-                    IOException thrown = assertThrows(IOException.class, () -> {
-                        output.flush();
-                    });
+                    IOException thrown = assertThrows(IOException.class, output::flush);
                     assertEquals(Messages.pipe.readerDied(), thrown.getMessage());
                 }
             }
