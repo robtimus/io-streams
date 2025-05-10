@@ -358,7 +358,7 @@ class BinaryPipeTest extends TestBase {
 
                 assertClosed(() -> output.write(bytes[0]));
                 assertClosed(() -> output.write(bytes, 0, 5));
-                assertClosed(() -> output.flush());
+                assertClosed(output::flush);
             }
         }
 

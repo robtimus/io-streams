@@ -69,7 +69,7 @@ class HexOutputStreamTest extends TestBase {
         assertClosed(() -> output.write(CAFEBABE[0]));
         assertClosed(() -> output.write(CAFEBABE));
         assertClosed(() -> output.write(CAFEBABE, 0, 0));
-        assertClosed(() -> output.flush());
+        assertClosed(output::flush);
         output.close();
     }
 

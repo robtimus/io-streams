@@ -291,11 +291,11 @@ class RandomReaderTest {
     }
 
     private static String repeatString(String s, int minSize) {
-        String sequence = s;
+        StringBuilder sequence = new StringBuilder(s);
         while (sequence.length() < minSize) {
-            sequence += sequence;
+            sequence.append(s);
         }
-        return sequence;
+        return sequence.toString();
     }
 
     private static String createString(int size, char from) {

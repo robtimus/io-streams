@@ -496,7 +496,7 @@ class TextPipeTest extends TestBase {
                 assertClosed(() -> output.append(SOURCE));
                 assertClosed(() -> output.append(SOURCE, 0, 5));
                 assertClosed(() -> output.append(chars[0]));
-                assertClosed(() -> output.flush());
+                assertClosed(output::flush);
             }
         }
 

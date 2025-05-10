@@ -54,7 +54,7 @@ class AsciiInputStreamTest extends TestBase {
         // with invalid ASCII
         String invalid = "é";
         try (InputStream wrapped = new AsciiInputStream(new StringReader(invalid))) {
-            IOException thrown = assertThrows(IOException.class, () -> wrapped.read());
+            IOException thrown = assertThrows(IOException.class, wrapped::read);
             assertEquals(Messages.ascii.invalidChar(invalid.charAt(0)), thrown.getMessage());
         }
     }

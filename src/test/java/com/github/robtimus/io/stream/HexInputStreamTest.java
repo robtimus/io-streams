@@ -71,7 +71,7 @@ class HexInputStreamTest extends TestBase {
                 });
                 assertEquals(Messages.hex.eof(), exception.getMessage());
 
-                exception = assertThrows(IOException.class, () -> input.read());
+                exception = assertThrows(IOException.class, input::read);
                 assertEquals(Messages.hex.eof(), exception.getMessage());
             }
         }
@@ -87,7 +87,7 @@ class HexInputStreamTest extends TestBase {
                 });
                 assertEquals(Messages.hex.invalidChar('X'), exception.getMessage());
 
-                exception = assertThrows(IOException.class, () -> input.read());
+                exception = assertThrows(IOException.class, input::read);
                 assertEquals(Messages.hex.invalidChar('X'), exception.getMessage());
             }
         }
@@ -210,10 +210,10 @@ class HexInputStreamTest extends TestBase {
         @SuppressWarnings("resource")
         HexInputStream input = new HexInputStream(new CharSequenceReader(""));
         input.close();
-        assertClosed(() -> input.read());
+        assertClosed(input::read);
         assertClosed(() -> input.read(new byte[0]));
         assertClosed(() -> input.read(new byte[0], 0, 0));
-        assertClosed(() -> input.available());
+        assertClosed(input::available);
         input.close();
     }
 
