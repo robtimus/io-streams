@@ -50,6 +50,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 import com.github.robtimus.io.stream.MultiLineReader.Entry;
 
 @SuppressWarnings("nls")
@@ -492,7 +493,7 @@ class MultiLineReaderTest {
     private static final class EntryEqualsArguments implements ArgumentsProvider {
 
         @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+        public Stream<? extends Arguments> provideArguments(ParameterDeclarations parameters, ExtensionContext context) {
             Entry entry = new Entry(Arrays.asList("Entry1", "- Entry1.1", "- Entry1.2"));
             Entry equalEntry = new Entry(new ArrayList<>(entry.lines()));
             Entry unequalEntry1 = new Entry(Arrays.asList("Entry1", "- Entry1.1"));
