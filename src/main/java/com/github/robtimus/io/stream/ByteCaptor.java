@@ -18,7 +18,6 @@
 package com.github.robtimus.io.stream;
 
 import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
 
 final class ByteCaptor extends ByteArrayOutputStream {
 
@@ -32,10 +31,5 @@ final class ByteCaptor extends ByteArrayOutputStream {
 
     void reset(int mark) {
         count = mark;
-    }
-
-    // Note: on Java 11 and higher, this is an override with the same body
-    public String toString(Charset charset) {
-        return new String(buf, 0, count, charset);
     }
 }

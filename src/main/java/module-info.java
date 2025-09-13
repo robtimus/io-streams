@@ -15,6 +15,9 @@
  * limitations under the License.
  */
 
+/**
+ * A collection of InputStream, OutputStream, Reader and Writer implementations.
+ */
 module com.github.robtimus.io.streams {
     requires transitive org.apache.commons.io;
 
